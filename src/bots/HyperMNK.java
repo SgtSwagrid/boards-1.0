@@ -28,7 +28,7 @@ public class HyperMNK {
     private static final Color BCKG_COLOR = new Color(225, 225, 255),
                                   HIGHLIGHT_COLOR = new Color(123, 239, 178);
     
-    private static final int BCKG_CONTRAST = 16;
+    private static final int BCKG_CONTRAST = 16;//test
     
     private static int PIECE_SIZE;
     
