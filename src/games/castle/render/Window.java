@@ -15,6 +15,9 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.PixelFormat;
 
+import games.castle.event.Input;
+import games.castle.event.Timing;
+
 public class Window {
 	
 	private static final int SCREEN_WIDTH, SCREEN_HEIGHT;
@@ -129,6 +132,8 @@ public class Window {
 					
 					update();
 					renderers.forEach(Renderer::render);
+					Input.update(Window.this);
+					Timing.update();
 				}
 				
 				acquireLock();

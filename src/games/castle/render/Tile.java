@@ -25,4 +25,8 @@ public class Tile {
 	public Texture getTexture() { return texture; }
 	
 	public Colour getColour() { return colour; }
+	
+	public void destroy() {
+		TileRenderer.INSTANCE.removeTile(this);
+	}
 }

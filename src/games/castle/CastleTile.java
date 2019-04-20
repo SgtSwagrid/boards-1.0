@@ -9,10 +9,10 @@ import java.util.Map.Entry;
 import org.lwjgl.util.vector.Vector2f;
 
 import games.castle.Castle.CastlePlayer;
+import games.castle.render.Button;
 import games.castle.render.Texture;
-import games.castle.render.Tile;
 
-public class CastleTile extends Tile {
+public class CastleTile extends Button {
 	
 	public static final int TILE_SIZE = 150;
 	
@@ -28,6 +28,8 @@ public class CastleTile extends Tile {
 		size = new Vector2f(TILE_SIZE, TILE_SIZE);
 		depth = RENDER_DEPTH;
 		texture = Texture.getTexture("res/texture/castle_tile.png");
+		
+		
 	}
 	
 	public CastleTile(Castle castle, int x, int y) {
