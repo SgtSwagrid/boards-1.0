@@ -40,22 +40,6 @@ public class Troop extends Button {
 		this.tile = tile;
 		colour = castle.getColour(owner);
 		tile.addTroop(this);
-		
-		onLeftClick(e -> {
-			
-			if(castle.getCurrentPlayer() == owner) {
-				
-				if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-					
-					if(selected) castle.removeSelectedTroop(this);
-					else castle.addSelectedTroop(this);
-					
-				} else {
-					castle.clearSelectedTroops();
-					castle.addSelectedTroop(this);
-				}
-			}
-		});
 	}
 	
 	public void move(CastleTile destination) {
@@ -95,6 +79,23 @@ public class Troop extends Button {
 		selectHighlight.get().destroy();
 		selectHighlight = Optional.empty();
 		selected = false;
+	}
+	
+	@Override
+	protected void onLeftClick() {
+			
+		if(castle.getCurrentPlayer() == owner) {
+			
+			if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+				
+				if(selected) castle.removeSelectedTroop(this);
+				else castle.addSelectedTroop(this);
+				
+			} else {
+				castle.clearSelectedTroops();
+				castle.addSelectedTroop(this);
+			}
+		}
 	}
 	
 	private class SelectHighlight extends Tile {

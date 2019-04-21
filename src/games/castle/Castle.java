@@ -1,16 +1,11 @@
 package games.castle;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import games.castle.event.Event;
-import games.castle.event.InputEvent.MouseEvent.MouseButtonEvent.ClickEvent;
 import games.castle.render.Colour;
-import games.castle.render.Tile;
 import games.castle.render.TileRenderer;
 import games.castle.render.Window;
 
