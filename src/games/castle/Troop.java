@@ -61,8 +61,6 @@ public class Troop extends Button {
 		int row = index % (tileSize / (TROOP_SIZE + TROOP_SPACING));
 		int column = index / (tileSize / (TROOP_SIZE + TROOP_SPACING));
 		
-		System.out.println(row + ", " + column);
-		
 		position.x = tile.getPosition().x - tileSize / 2 + row * (
 				TROOP_SIZE + TROOP_SPACING) + TROOP_SIZE / 2;
 		
