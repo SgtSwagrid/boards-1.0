@@ -2,10 +2,10 @@ package games;
 
 import java.util.Optional;
 
+import games.util.Chessboard;
 import swagui.api.Colour;
 import swagui.api.Texture;
 import swagui.api.Tile;
-import util.Chessboard;
 
 /**
  * <b>Game of the Amazons implementation.</b><br>
@@ -316,7 +316,7 @@ public class Amazons {
     
     /**
      * Supertype for all GotA player implementations.
-     * @author Alec Dorrington 
+     * @author Alec Dorrington
      */
     public interface AmazonsPlayer {
         
