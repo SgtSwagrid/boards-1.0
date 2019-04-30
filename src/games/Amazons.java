@@ -15,7 +15,7 @@ import util.Chessboard;
  * Bot players can be made by extending 'AmazonsPlayer'.<br>
  * Human players can be made by instantiating 'AmazonsController'.
  * 
- * @author Alec Dorrington
+ * @author Alec Dorringtons
  */
 public class Amazons {
     
