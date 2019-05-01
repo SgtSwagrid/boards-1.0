@@ -13,7 +13,7 @@ import swagui.api.Tile;
 public abstract class Piece<G extends Game> extends Tile {
     
     /** The chessboard on which this piece resides. */
-    private Chessboard board;
+    private ChessBoard board;
     
     /** The owner of this piece. */
     private Player<G> owner;
@@ -31,7 +31,7 @@ public abstract class Piece<G extends Game> extends Tile {
      * @param x the x position of this piece.
      * @param y the y position of this piece.
      */
-    protected Piece(Chessboard board, Player<G> owner, int ownerId, int x, int y) {
+    protected Piece(ChessBoard board, Player<G> owner, int ownerId, int x, int y) {
         
         super(board.getWindow());
         this.board = board;
@@ -47,14 +47,14 @@ public abstract class Piece<G extends Game> extends Tile {
         this.y = y;
         
         //Match the size of the piece to the grid size of the board.
-        setSize(Chessboard.TILE_SIZE, Chessboard.TILE_SIZE);
+        setSize(ChessBoard.TILE_SIZE, ChessBoard.TILE_SIZE);
         setColour(Colour.WHITE);
     }
     
     /**
      * @return the board on which this piece resides.
      */
-    public Chessboard getBoard() { return board; }
+    public ChessBoard getBoard() { return board; }
     
     /**
      * @return the player to whom this piece belongs.

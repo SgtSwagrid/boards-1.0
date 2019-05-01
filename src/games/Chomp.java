@@ -2,7 +2,7 @@ package games;
 
 import java.util.Optional;
 
-import games.util.Chessboard;
+import games.util.ChessBoard;
 import games.util.Game;
 import games.util.Player;
 
@@ -22,7 +22,7 @@ public class Chomp extends Game {
     private static final String TITLE = "Game of the Amazons";
     
     /** Chessboard instance, manages the window, and tile layout. */
-    private Chessboard board;
+    private ChessBoard board;
     
     /** Players participating in this game. */
     private Player<Chomp> player1, player2;

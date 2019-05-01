@@ -2,6 +2,10 @@ package games.util;
 
 import java.util.Optional;
 
+/**
+ * 
+ * @author Alec
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class Game {
     
@@ -24,10 +28,10 @@ public abstract class Game {
     protected void start() {
         
         for(int i = 0; i < players.length; i++) {
-            players[i].init(this, i);
+            players[i].init(this, i + 1);
         }
         
-        while(!winner.isPresent()) {
+        while(isRunning()) {
             
             currentPlayer = players[currentPlayerId - 1];
             
@@ -37,9 +41,14 @@ public abstract class Game {
             
             currentPlayerId = currentPlayerId % players.length + 1;
         }
+        onFinish();
     }
     
     protected void setupTurn() {}
     
     protected void verifyTurn() {}
+    
+    protected boolean isRunning() { return true; }
+    
+    protected void onFinish() {}
 }

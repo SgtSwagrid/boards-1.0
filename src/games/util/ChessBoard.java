@@ -19,7 +19,7 @@ import swagui.api.Window;
  * 
  * @author Alec Dorrignton
  */
-public class Chessboard {
+public class ChessBoard {
     
     /** Light tile colour. */
     public static final Colour TILE_COLOUR1 = Colour.rgb(248, 239, 186);
@@ -45,7 +45,7 @@ public class Chessboard {
      * @param height the height of the chessboard in number of tiles.
      * @param title the title of the window in which the chessboard resides.
      */
-    public Chessboard(int width, int height, String title) {
+    public ChessBoard(int width, int height, String title) {
         
         //Set the dimensions of this chessboard.
         this.width = width;
