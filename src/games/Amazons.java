@@ -3,21 +3,24 @@ package games;
 import java.util.Optional;
 
 import games.util.Chessboard;
+import games.util.Game;
+import games.util.IllegalMoveException;
+import games.util.Piece;
+import games.util.Player;
 import swagui.api.Colour;
 import swagui.api.Texture;
-import swagui.api.Tile;
 
 /**
  * <b>Game of the Amazons implementation.</b><br>
  * <br>
  * Rules: <a href="https://en.wikipedia.org/wiki/Game_of_the_Amazons">Wikipedia</a><br>
  * <br>
- * Bot players can be made by extending 'AmazonsPlayer'.<br>
+ * Bot players can be made by implementing 'Player<Amazons>'.<br>
  * Human players can be made by instantiating 'AmazonsController'.
  * 
  * @author Alec Dorrington
  */
-public class Amazons {
+public class Amazons extends Game {
     
     /** Title of the window. */
     private static final String TITLE = "Game of the Amazons";
@@ -31,16 +34,16 @@ public class Amazons {
     private Chessboard board;
     
     /** Grid of pieces indexed by position. */
-    private Piece[][] pieces;
+    private AmazonsPiece[][] pieces;
     /** Queen pieces grouped by owner. */
     private Queen[] player1Pieces, player2Pieces;
     
     /** Players participating in this game. */
-    private AmazonsPlayer player1, player2;
+    private Player<Amazons> player1, player2;
     /** The winner of the game. */
-    private Optional<AmazonsPlayer> winner = Optional.empty();
+    private Optional<Player<Amazons>> winner = Optional.empty();
     /** The player whose turn is currently active. */
-    private AmazonsPlayer currentPlayer;
+    private Player<Amazons> currentPlayer;
     /** The ID of the player whose turn is currently active. */
     private volatile int currentPlayerId = 1;
     
@@ -59,7 +62,9 @@ public class Amazons {
      * @param player1 the first (white) player to participate.
      * @param player2 the second (black) player to participate.
      */
-    public Amazons(int width, int height, AmazonsPlayer player1, AmazonsPlayer player2) {
+    public Amazons(int width, int height, Player<Amazons> player1, Player<Amazons> player2) {
+        
+        super(new Player[] {player1, player2});
         
         //Set the board dimensions.
         this.width = width;
@@ -194,14 +199,15 @@ public class Amazons {
             return 0;
         
         //Queen: ID of owner.
-        else return pieces[x][y].ownerId;
+        else return pieces[x][y].getOwnerId();
     }
     
     /**
      * Runs the game simulation to completion.<br>
      * Assumes the game board has already been created.
      */
-    private void start() {
+    @Override
+    protected void start() {
         
         //Call the implementation-specific initialisation code for each player.
         player1.init(this, 1);
@@ -244,7 +250,7 @@ public class Amazons {
         
         //Create board and window.
         board = new Chessboard(width, height, TITLE);
-        pieces = new Piece[width][height];
+        pieces = new AmazonsPiece[width][height];
         
         //Determine appropriate spacing for pieces given board size.
         int h_indent = (width - 1) / 3;
@@ -280,11 +286,11 @@ public class Amazons {
         for(Queen piece : friendlyPieces) {
             
             //Look at all the surrounding tiles for each opponent piece.
-            for(int x = Math.max(piece.x - 1, 0);
-                    x <= Math.min(piece.x + 1, width - 1); x++) {
+            for(int x = Math.max(piece.getBoardX() - 1, 0);
+                    x <= Math.min(piece.getBoardX() + 1, width - 1); x++) {
                 
-                for(int y = Math.max(piece.y - 1, 0);
-                        y <= Math.min(piece.y + 1, height - 1); y++) {
+                for(int y = Math.max(piece.getBoardY() - 1, 0);
+                        y <= Math.min(piece.getBoardY() + 1, height - 1); y++) {
                     
                     //The player has not yet won if the opponent has a free position to move to.
                     if(pieces[x][y] == null) return;
@@ -307,55 +313,25 @@ public class Amazons {
         
         //Set the colour for the winning pieces.
         for(Queen p : winningPieces)
-            board.setColour(p.x, p.y, HIGHLIGHT_COLOUR1);
+            board.setColour(p.getBoardX(), p.getBoardY(), HIGHLIGHT_COLOUR1);
         
         //Set the colour for the losing pieces.
         for(Queen p : losingPieces)
-            board.setColour(p.x, p.y, HIGHLIGHT_COLOUR2);
+            board.setColour(p.getBoardX(), p.getBoardY(), HIGHLIGHT_COLOUR2);
     }
     
     /**
-     * Supertype for all GotA player implementations.
-     * @author Alec Dorrington
-     */
-    public interface AmazonsPlayer {
-        
-        /**
-         * Called once before the game begins.
-         * @param game the game being played.
-         * @param playerId the ID of this player.
-         */
-        default void init(Amazons game, int playerId) {}
-        
-        /**
-         * Called once whenever the player is expected to take a turn.<br>
-         * Any implementation is required to call each of 'moveQueen()' and 'shootArrow()'
-         * exactly once each, in order, before returning.
-         * @param game the game being played.
-         * @param playerId the ID of this player.
-         */
-        void takeTurn(Amazons game, int playerId);
-        
-        /**
-         * Called to determine the name of this player.<br>
-         * Used only for display purposes.
-         * @return the player name (defaults to "Bot").
-         */
-        default String getName() { return "Bot"; }
-    }
-    
-    /**
-     * Implementation of AmazonsPlayer for use in inserting a human-controlled player.<br>
+     * Implementation of Player<Amazons> for use in inserting a human-controlled player.<br>
      * Each AmazonsController will make moves based on mouse input on the game display window.
      * @author Alec Dorrington
      */
-    public static final class AmazonsController implements AmazonsPlayer {
+    public static final class AmazonsController implements Player<Amazons> {
         
         /** The display name of this player. */
         private String name = "Controller";
         
         /** The piece currently selected by the mouse, if there is any. */
-        private Optional<Piece> selected = Optional.empty();
+        private Optional<AmazonsPiece> selected = Optional.empty();
         
         /**
          * Constructs a new AmazonsController with the default name of "Controller".
@@ -406,7 +382,7 @@ public class Amazons {
             
             //Select a queen.
             if(game.pieces[x][y] instanceof Queen &&
-                    game.pieces[x][y].ownerId == game.currentPlayerId) {
+                    game.pieces[x][y].getOwnerId() == game.currentPlayerId) {
                 
                 //Set the selected piece and highlight its tile.
                 game.board.resetColours();
@@ -419,7 +395,7 @@ public class Amazons {
                 
                 try {
                     //Try to move the selected piece to its new tile.
-                    game.moveQueen(selected.get().x, selected.get().y, x, y);
+                    game.moveQueen(selected.get().getBoardX(), selected.get().getBoardY(), x, y);
                     game.board.resetColours();
                     game.board.setColour(x, y, HIGHLIGHT_COLOUR2);
                     
@@ -462,15 +438,7 @@ public class Amazons {
      * Abstract supertype for GotA game pieces (queens and arrows).
      * @author Alec Dorrington
      */
-    private abstract class Piece extends Tile {
-        
-        /** The owner of this piece. */
-        AmazonsPlayer owner;
-        /** The ID of the owner of this piece. */
-        int ownerId;
-        
-        /** The board position of this piece. */
-        int x, y;
+    private abstract class AmazonsPiece extends Piece<Amazons> {
         
         /**
          * Constructs a new piece of a particular owner at a particular position.
@@ -479,24 +447,9 @@ public class Amazons {
          * @param x the x position of this piece.
          * @param y the y position of this piece.
          */
-        Piece(AmazonsPlayer owner, int ownerId, int x, int y) {
-            
-            super(board.getWindow());
-            
-            //Set the owner of this piece.
-            this.owner = owner;
-            this.ownerId = ownerId;
-            
-            //Store this piece in the pieces array.
-            pieces[x][y] = this;
-            //Set the graphical position of this tile.
-            board.movePiece(this, x, y);
-            this.x = x;
-            this.y = y;
-            
-            //Match the size of the piece to the cell size of the chessboard.
-            setSize(Chessboard.TILE_SIZE, Chessboard.TILE_SIZE);
-            setColour(Colour.WHITE);
+        AmazonsPiece(Player<Amazons> owner, int ownerId, int x, int y) {
+            super(board, owner, ownerId, x, y);
+            pieces[x][y] = this; //temp
         }
         
         /**
@@ -511,7 +464,7 @@ public class Amazons {
         void validateMove(int x_from, int y_from, int x_to, int y_to) {
             
             //Ensure piece is owned by the current player.
-            if(ownerId != currentPlayerId)
+            if(getOwnerId() != currentPlayerId)
                 throw new IllegalMoveException("Can't move an opponents piece.");
             
             //Ensure piece doesn't move on top of itself.
@@ -560,9 +513,9 @@ public class Amazons {
      * Represents a queen instance on the board.
      * @author Alec Dorrington
      */
-    private class Queen extends Piece {
+    private class Queen extends AmazonsPiece {
         
-        Queen(AmazonsPlayer owner, int ownerId, int x, int y) {
+        Queen(Player<Amazons> owner, int ownerId, int x, int y) {
             
             super(owner, ownerId, x, y);
             
@@ -575,17 +528,16 @@ public class Amazons {
         void movePiece(int x_to, int y_to) {
             
             //Ensure a move is valid before making it.
-            validateMove(x, y, x_to, y_to);
+            validateMove(getBoardX(), getBoardY(), x_to, y_to);
             
             //Move this piece in the pieces array.
-            pieces[x][y] = null;
+            pieces[getBoardX()][getBoardY()] = null;
             pieces[x_to][y_to] = this;
             
             //Move this piece graphically.
-            board.movePiece(this, x_to, y_to);
+            board.addPiece(this, x_to, y_to);
             
-            x = x_to;
-            y = y_to;
+            setPos(x_to, y_to);
         }
         
         /**
@@ -597,8 +549,8 @@ public class Amazons {
          */
         void shootArrow(int x_to, int y_to) {
             
-            validateMove(x, y, x_to, y_to);
-            new Arrow(owner, ownerId, x_to, y_to);
+            validateMove(getBoardX(), getBoardY(), x_to, y_to);
+            new Arrow(getOwner(), getOwnerId(), x_to, y_to);
         }
     }
     
@@ -606,9 +558,9 @@ public class Amazons {
      * Represents an arrow instance fired onto the board.
      * @author Alec Dorrington
      */
-    private class Arrow extends Piece {
+    private class Arrow extends AmazonsPiece {
         
-        private Arrow(AmazonsPlayer owner, int ownerId, int x, int y) {
+        private Arrow(Player<Amazons> owner, int ownerId, int x, int y) {
             
             super(owner, ownerId, x, y);
             
@@ -622,14 +574,5 @@ public class Amazons {
             //Arrows can't be moved.
             throw new IllegalMoveException("Arrows can't be moved.");
         }
-    }
-    
-    /**
-     * Exception to be thrown when a player makes a move which isn't valid.
-     * @author Alec Dorrington
-     */
-    @SuppressWarnings("serial")
-    private class IllegalMoveException extends RuntimeException {
-        IllegalMoveException(String message) { super(message); }
     }
 }

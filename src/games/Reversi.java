@@ -3,6 +3,7 @@ package games;
 import java.util.Optional;
 
 import games.util.Chessboard;
+import games.util.IllegalMoveException;
 import swagui.api.Colour;
 import swagui.api.Texture;
 import swagui.api.Tile;
@@ -12,7 +13,7 @@ import swagui.api.Tile;
  * <br>
  * Rules: <a href="https://en.wikipedia.org/wiki/Reversi">Wikipedia</a><br>
  * <br>
- * Bot players can be made by extending 'ReversiPlayer'.<br>
+ * Bot players can be made by implementing 'Player<Reversi>'.<br>
  * Human players can be made by instantiating 'ReversiController'.
  * 
  * @author Alec Dorrington
@@ -282,7 +283,7 @@ public class Reversi {
             //Store this piece in the pieces array.
             pieces[x][y] = this;
             //Set the graphical position of this tile.
-            board.movePiece(this, x, y);
+            board.addPiece(this, x, y);
             this.x = x;
             this.y = y;
             
@@ -333,14 +334,5 @@ public class Reversi {
                 yy += y_sign;
             }
         }
-    }
-    
-    /**
-     * Exception to be thrown when a player makes a move which isn't valid.
-     * @author Alec Dorrington
-     */
-    @SuppressWarnings("serial")
-    private class IllegalMoveException extends RuntimeException {
-        IllegalMoveException(String message) { super(message); }
     }
 }
