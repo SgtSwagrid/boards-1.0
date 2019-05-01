@@ -2,8 +2,6 @@ package games;
 
 import java.util.Optional;
 
-import games.Amazons.Arrow;
-import games.Amazons.IllegalMoveException;
 import games.util.Chessboard;
 import swagui.api.Colour;
 import swagui.api.Texture;
