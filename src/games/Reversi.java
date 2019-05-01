@@ -2,7 +2,7 @@ package games;
 
 import java.util.Optional;
 
-import games.util.Chessboard;
+import games.util.ChessBoard;
 import games.util.IllegalMoveException;
 import swagui.api.Colour;
 import swagui.api.Texture;
@@ -27,7 +27,7 @@ public class Reversi {
     public static final Colour HIGHLIGHT_COLOUR1 = Colour.rgb(249, 127, 81);
     
     /** Chessboard instance, manages the window, and piece layout. */
-    private Chessboard board;
+    private ChessBoard board;
     
     /** Grid of pieces indexed by position. */
     private Piece[][] pieces;
@@ -98,7 +98,7 @@ public class Reversi {
      */
     private void createBoard() {
         
-        board = new Chessboard(width, height, TITLE);
+        board = new ChessBoard(width, height, TITLE);
         
         pieces = new Piece[width][height];
         
@@ -288,7 +288,7 @@ public class Reversi {
             this.y = y;
             
             //Match the size of the piece to the cell size of the chessboard.
-            setSize(Chessboard.TILE_SIZE, Chessboard.TILE_SIZE);
+            setSize(ChessBoard.TILE_SIZE, ChessBoard.TILE_SIZE);
             setColour(Colour.WHITE);
             //Select the appropriate texture depending on the owner.
             setTexture(Texture.getTexture(ownerId == 1 ?

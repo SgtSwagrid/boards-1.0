@@ -1,12 +1,15 @@
 package games;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
 
-import games.util.Chessboard;
+import games.util.ChessBoard;
 import games.util.Game;
 import games.util.IllegalMoveException;
 import games.util.Piece;
 import games.util.Player;
+
 import swagui.api.Colour;
 import swagui.api.Texture;
 
@@ -31,21 +34,13 @@ public class Amazons extends Game {
     public static final Colour HIGHLIGHT_COLOUR2 = Colour.rgb(249, 127, 81);
     
     /** Chessboard instance, manages the window, and piece layout. */
-    private Chessboard board;
+    private ChessBoard board;
     
     /** Grid of pieces indexed by position. */
-    private Piece<Amazons>[][] pieces;
-    /** Queen pieces grouped by owner. */
-    private Queen[] player1Pieces, player2Pieces;
-    
-    /** Players participating in this game. */
-    private Player<Amazons> player1, player2;
-    /** The winner of the game. */
-    private Optional<Player<Amazons>> winner = Optional.empty();
-    /** The player whose turn is currently active. */
-    private Player<Amazons> currentPlayer;
-    /** The ID of the player whose turn is currently active. */
-    private volatile int currentPlayerId = 1;
+    private Piece<Amazons>[][] boardPieces;
+    /** Groups of pieces indexed by owner. */
+    @SuppressWarnings("unchecked")
+    private Set<Queen>[] playerPieces = new HashSet[] {new HashSet<>(), new HashSet<>()};
     
     /** The dimensions of the game board. */
     private int width, height;
@@ -69,10 +64,6 @@ public class Amazons extends Game {
         //Set the board dimensions.
         this.width = width;
         this.height = height;
-        
-        //Set the participating players.
-        this.player1 = player1;
-        this.player2 = player2;
         
         //Create a new game board, opening a window and placing initial pieces.
         createBoard();
@@ -102,14 +93,14 @@ public class Amazons extends Game {
             throw new IllegalMoveException("Can't move pieces twice.");
         
         //Ensure a piece exists at the given 'from' position.
-        if(pieces[x_from][y_from] == null)
+        if(boardPieces[x_from][y_from] == null)
             throw new IllegalMoveException("No such piece exists.");
         
         //Move the piece, subject to game constraints.
-        pieces[x_from][y_from].movePiece(x_to, y_to);
+        boardPieces[x_from][y_from].movePiece(x_to, y_to);
         
         //Remember the piece which was moved, for the arrow-shooting phase.
-        movedPiece = Optional.of((Queen) pieces[x_to][y_to]);
+        movedPiece = Optional.of((Queen) boardPieces[x_to][y_to]);
         turnPhase++;
     }
     
@@ -134,26 +125,10 @@ public class Amazons extends Game {
         //Fire the arrow, subject to game constraints.
         movedPiece.get().shootArrow(x, y);
         
-        //Check if this move allowed the current player to win the game. If so, end the game.
-        checkWin(currentPlayerId);
+        //Check if this move allowed the a player to win the game. If so, end the game.
+        checkWin();
         turnPhase++;
     }
-    
-    /**
-     * Checks if the game has concluded, or if it is still in progress.
-     * @return whether the game is still running.
-     */
-    public boolean isRunning() { return !winner.isPresent(); }
-    
-    /**
-     * @return the width of the game board.
-     */
-    public int getWidth() { return width; }
-    
-    /**
-     * @return the height of the game board.
-     */
-    public int getHeight() { return height; }
     
     /**
      * Returns the current state of the board.<br>
@@ -175,64 +150,83 @@ public class Amazons extends Game {
             for(int y = 0; y < height; y++) {
                 
                 //Determine index of piece on this tile.
-                board[x][y] = getPiece(x, y);
+                //Empty tile: '-1'.
+                if(boardPieces[x][y] == null)
+                    board[x][y] = -1;
+                
+                //Arrow: '0'.
+                else if(boardPieces[x][y] instanceof Arrow)
+                    board[x][y] = 0;
+                
+                //Queen: ID of owner.
+                else board[x][y] = boardPieces[x][y].getOwnerId();
             }
         }
         return board;
     }
     
     /**
-     * Returns the ID of the piece at a position.<br>
-     * See 'getState()' for details.
-     * @param x the x position of the piece.
-     * @param y the y position of the piece.
-     * @return the ID of the piece at this position.
+     * @return the width of the game board.
      */
-    private int getPiece(int x, int y) {
-        
-        //Empty tile: '-1'.
-        if(pieces[x][y] == null)
-            return -1;
-        
-        //Arrow: '0'.
-        else if(pieces[x][y] instanceof Arrow)
-            return 0;
-        
-        //Queen: ID of owner.
-        else return pieces[x][y].getOwnerId();
-    }
+    public int getWidth() { return width; }
     
     /**
-     * Runs the game simulation to completion.<br>
-     * Assumes the game board has already been created.
+     * @return the height of the game board.
      */
+    public int getHeight() { return height; }
+    
+    /**
+     * Create the chess board and place the initial queens.
+     */
+    @SuppressWarnings("unchecked")
+    private void createBoard() {
+        
+        //Create board and window.
+        board = new ChessBoard(width, height, TITLE);
+        boardPieces = new Piece[width][height];
+        
+        //Determine appropriate spacing for pieces given board size.
+        int h_indent = (width - 1) / 3;
+        int v_indent = (height - 1) / 3;
+        
+        //Place the queens in their starting positions.
+        new Queen(players[0], 1, 0, v_indent);
+        new Queen(players[0], 1, h_indent, 0);
+        new Queen(players[0], 1, width - 1 - h_indent, 0);
+        new Queen(players[0], 1, width - 1, v_indent);
+        
+        new Queen(players[1], 2, 0, height - 1 - v_indent);
+        new Queen(players[1], 2, h_indent, height - 1);
+        new Queen(players[1], 2, width - 1 - h_indent, height - 1);
+        new Queen(players[1], 2, width - 1, height - 1 - v_indent);
+    }
+    
     @Override
-    protected void start() {
+    protected void setupTurn() {
         
-        //Call the implementation-specific initialisation code for each player.
-        player1.init(this, 1);
-        player2.init(this, 2);
+        turnPhase = 0;
         
-        //While the game remains incomplete.
-        while(!winner.isPresent() && board.getWindow().isOpen()) {
-            
-            //Determine who is to be the next player.
-            currentPlayer = currentPlayerId == 1 ? player1 : player2;
-            String colour = currentPlayerId == 1 ? "White" : "Black";
-            board.getWindow().setTitle(TITLE + " - " + currentPlayer.getName()
-                    + "'s Turn (" + colour + ")");
-            
-            //Have the current player take their turn.
-            turnPhase = 0;
-            currentPlayer.takeTurn(this, currentPlayerId);
-            
-            //Ensure the player completed their turn.
-            if(turnPhase != 2 && board.getWindow().isOpen())
-                throw new IllegalMoveException("Player did not complete turn.");
-            
-            //Switch to the next player.
-            currentPlayerId = currentPlayerId % 2 + 1;
-        }
+        //Set the title to indicate the players turn.
+        String colour = currentPlayerId == 1 ? "White" : "Black";
+        board.getWindow().setTitle(TITLE + " - " + currentPlayer.getName()
+                + "'s Turn (" + colour + ")");
+    }
+    
+    @Override
+    protected void verifyTurn() {
+        
+        //Ensure the player completed their turn.
+        if(turnPhase != 2 && board.getWindow().isOpen())
+            throw new IllegalMoveException("Player did not complete turn.");
+    }
+    
+    @Override
+    protected boolean isRunning() {
+        return !winner.isPresent() && board.getWindow().isOpen();
+    }
+    
+    @Override
+    protected void onFinish() {
         
         //Display the winner of the game.
         if(winner.isPresent()) {
@@ -244,62 +238,34 @@ public class Amazons extends Game {
     }
     
     /**
-     * Create the chessboard and place the initial queens.
-     */
-    @SuppressWarnings("unchecked")
-    private void createBoard() {
-        
-        //Create board and window.
-        board = new Chessboard(width, height, TITLE);
-        pieces = new Piece[width][height];
-        
-        //Determine appropriate spacing for pieces given board size.
-        int h_indent = (width - 1) / 3;
-        int v_indent = (height - 1) / 3;
-        
-        //Create white pieces.
-        player1Pieces = new Queen[] {
-                new Queen(player1, 1, 0, v_indent),
-                new Queen(player1, 1, h_indent, 0),
-                new Queen(player1, 1, width - 1 - h_indent, 0),
-                new Queen(player1, 1, width - 1, v_indent)};
-        
-        //Create black pieces.
-        player2Pieces = new Queen[] {
-                new Queen(player2, 2, 0, height - 1 - v_indent),
-                new Queen(player2, 2, h_indent, height - 1),
-                new Queen(player2, 2, width - 1 - h_indent, height - 1),
-                new Queen(player2, 2, width - 1, height - 1 - v_indent)};
-    }
-    
-    /**
      * Check if the player of the given ID has won.<br>
      * Will declare them as the winner if this is so.
      * @param playerId the ID of the player for whom to check for victory.
      */
-    private void checkWin(int playerId) {
+    private void checkWin() {
         
-        //Get the pieces of the OTHER player.
-        playerId = playerId % 2 + 1;
-        Queen[] friendlyPieces = playerId == 1 ? player1Pieces : player2Pieces;
-        
-        //Check if any of the opponents pieces are free to move.
-        for(Queen piece : friendlyPieces) {
+        //For each player.
+        outer: for(int i = 0; i < 2; i++) {
             
-            //Look at all the surrounding tiles for each opponent piece.
-            for(int x = Math.max(piece.getCol() - 1, 0);
-                    x <= Math.min(piece.getCol() + 1, width - 1); x++) {
+            //Check if any of this players pieces are free to move.
+            for(Queen piece : playerPieces[i]) {
                 
-                for(int y = Math.max(piece.getRow() - 1, 0);
-                        y <= Math.min(piece.getRow() + 1, height - 1); y++) {
+                //Look at all the surrounding tiles for each opponent piece.
+                for(int x = Math.max(piece.getCol() - 1, 0);
+                        x <= Math.min(piece.getCol() + 1, width - 1); x++) {
                     
-                    //The player has not yet won if the opponent has a free position to move to.
-                    if(pieces[x][y] == null) return;
+                    for(int y = Math.max(piece.getRow() - 1, 0);
+                            y <= Math.min(piece.getRow() + 1, height - 1); y++) {
+                        
+                        //Player hasn't won if the opponent has somewhere to move.
+                        if(boardPieces[x][y] == null)
+                            continue outer;
+                    }
                 }
             }
+            //This player has nowhere to move, the other player wins.
+            winner = Optional.of(players[(i + 1) % 2]);
         }
-        //No free positions for the opponent were found.
-        winner = Optional.of(currentPlayer);
     }
     
     /**
@@ -308,16 +274,12 @@ public class Amazons extends Game {
      */
     private void highlightWinner(int winnerId) {
         
-        //Determine which pieces were winners and losers.
-        Queen[] winningPieces = winnerId == 1 ? player1Pieces : player2Pieces;
-        Queen[] losingPieces = winnerId == 1 ? player2Pieces : player1Pieces;
-        
         //Set the colour for the winning pieces.
-        for(Queen p : winningPieces)
+        for(Queen p : playerPieces[winnerId - 1])
             board.setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR1);
         
         //Set the colour for the losing pieces.
-        for(Queen p : losingPieces)
+        for(Queen p : playerPieces[winnerId % 2])
             board.setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR2);
     }
     
@@ -382,13 +344,13 @@ public class Amazons extends Game {
         private void moveQueen(Amazons game, int x, int y) {
             
             //Select a queen.
-            if(game.pieces[x][y] instanceof Queen &&
-                    game.pieces[x][y].getOwnerId() == game.currentPlayerId) {
+            if(game.boardPieces[x][y] instanceof Queen &&
+                    game.boardPieces[x][y].getOwnerId() == game.currentPlayerId) {
                 
                 //Set the selected piece and highlight its tile.
                 game.board.resetColours();
                 
-                selected = Optional.of(game.pieces[x][y]);
+                selected = Optional.of(game.boardPieces[x][y]);
                 game.board.setColour(x, y, HIGHLIGHT_COLOUR1);
                 
             //Move the selected queen.
@@ -445,7 +407,8 @@ public class Amazons extends Game {
             
             super(board, owner, ownerId, x, y);
             
-            pieces[x][y] = this;
+            boardPieces[x][y] = this;
+            playerPieces[ownerId - 1].add(this);
             
             //Select the appropriate texture depending on the owner.
             setTexture(Texture.getTexture(ownerId == 1 ?
@@ -459,8 +422,8 @@ public class Amazons extends Game {
             validateMove(getCol(), getRow(), x_to, y_to);
             
             //Move this piece in the pieces array.
-            pieces[getCol()][getRow()] = null;
-            pieces[x_to][y_to] = this;
+            boardPieces[getCol()][getRow()] = null;
+            boardPieces[x_to][y_to] = this;
             
             //Move this piece graphically.
             board.setPosition(this, x_to, y_to);
@@ -503,7 +466,7 @@ public class Amazons extends Game {
                 throw new IllegalMoveException("Must move somewhere else.");
             
             //Ensure piece doesn't move on top of another piece.
-            if(pieces[x_to][y_to] != null)
+            if(boardPieces[x_to][y_to] != null)
                 throw new IllegalMoveException("Can't move onto another piece.");
             
             //Ensure piece moves in a straight line (incl. diagonally).
@@ -521,7 +484,7 @@ public class Amazons extends Game {
             //Ensure piece doesn't jump over any other pieces.
             while(xx != x_to || yy != y_to) {
                 
-                if(pieces[xx][yy] != null)
+                if(boardPieces[xx][yy] != null)
                     throw new IllegalMoveException("Can't jump over other pieces.");
                 
                 xx += x_sign;
@@ -540,7 +503,7 @@ public class Amazons extends Game {
             
             super(board, owner, ownerId, x, y);
             
-            pieces[x][y] = this;
+            boardPieces[x][y] = this;
             
             //Select the appropriate texture depending on the owner.
             setTexture(Texture.getTexture(ownerId == 1 ?
