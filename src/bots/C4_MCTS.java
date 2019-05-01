@@ -30,7 +30,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 	public void takeTurn(HyperMNK game, int playerId) {
 	
 		// Begin minimax, load the gamestate
-		gs = new GameState(game, iterations, iterations);
+		gs = new GameState(game, playerId, playerId == 1 ? 2 : 1);
 				
 		Vec2 action = new Vec2(0, 0);
 		
@@ -73,10 +73,11 @@ public class C4_MCTS implements HyperMNKPlayer {
 			// check for children, if no chilrden find some
 			if (current.getChildren().size() == 0)
 			{
-				// check fro no visits
+				//System.out.println("Visiting node with " + current.getVisits() + " visits and " + current.getScore());
+				// check fro no visits				
 				if (current.getVisits() == 0)
 				{
-					//System.out.println("Rollout " + ii);
+					//System.out.println("Head has " + getActions(head.getState()).size());
 					rollout(current);
 					
 					// reset
@@ -109,7 +110,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 			ii++;
 		}
 		
-		System.out.println("\n Head has " + head.getScore() + "/" + head.getVisits() + " with maxIdx " + maxNodeIdx(head, 1));
+		System.out.println("\n Head has " + head.getScore() + "/" + head.getVisits() + " with max Id " + maxNodeIdx(head, 1));
 		
 		return getActions(head.getState()).get(maxNodeIdx(head, 1));
 		
@@ -147,13 +148,15 @@ public class C4_MCTS implements HyperMNKPlayer {
 	
 	private float UCB1(GraphNode gn, int iteration)
 	{
-		return (float)(gn.getScore()/(gn.getVisits()+0.00001) + 1.41 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
+		return (float)(gn.getScore()/(gn.getVisits()+0.00001) + 2 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
 	}
 	
 	private void populateChildren(GraphNode gn)
 	{
 		GameState state = gn.getState();
 		ArrayList<Vec2> actions = getActions(state);
+		
+		//System.out.println("list size is " + actions.size());
 		
 		for (Vec2 act : actions)
 		{
@@ -231,6 +234,18 @@ public class C4_MCTS implements HyperMNKPlayer {
 			}
 		}
 		
+		/*if (actions.size() == 1)
+		{
+			for (int yy = state.getHeight() - 1; yy >= 0; yy--)
+			{
+				for (int xx = 0 ; xx < state.getWidth(); xx++)
+				{
+				
+					System.out.print(state.getGameState()[xx][yy]);
+				}
+				System.out.println();
+			}
+		}*/
 		return actions;
 	}
 	
@@ -283,7 +298,6 @@ public class C4_MCTS implements HyperMNKPlayer {
 			}
 			
 			if(win) {
-				//System.out.println(":Winner isa " + player.toString());
 				return player;
 			}
 		}
@@ -445,8 +459,11 @@ public class C4_MCTS implements HyperMNKPlayer {
 			this.me = state.me;
 			this.opponent = state.opponent;
 			
+			width = state.getWidth();
+			height = state.getHeight();
+			
 			this.currentPlayer = state.currentPlayer;
-			this.gameState = state.getGameState().clone();
+			this.gameState = deepCopy(state.getGameState());
 		}
 		
 		// Load the game from the game object into some data structure of state
@@ -456,9 +473,9 @@ public class C4_MCTS implements HyperMNKPlayer {
 			{
 				for (int yy = 0; yy < height; yy++)
 				{
-					gameState[xx][yy] = game.getPiece(xx, yy);
+					gameState[xx][yy] = (int)game.getPiece(xx, yy);
 				}
-			}		
+			}
 		}
 		
 		public int getPlayer()
@@ -501,6 +518,21 @@ public class C4_MCTS implements HyperMNKPlayer {
 		public int getOp()
 		{
 			return opponent;
+		}
+		
+		private int[][] deepCopy(int[][] A)
+		{
+			int[][] copy = new int[A.length][A[0].length];
+			
+			for (int ii = 0 ; ii < A.length ; ii++)
+			{
+				for (int jj = 0; jj < A[0].length; jj++)
+				{
+					copy[ii][jj] = A[ii][jj];
+				}
+			}
+			
+			return copy;
 		}
 		
 		public int getWidth() { return width; }
