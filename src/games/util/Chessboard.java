@@ -1,7 +1,6 @@
 package games.util;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import org.lwjgl.input.Mouse;
@@ -83,32 +82,12 @@ public class Chessboard {
     
     /**
      * Move a piece so that it is centered on the tile at the given position.
-     * @param piece the piece to move.
+     * @param tile the tile to move.
      * @param x the x position to move the tile to.
      * @param y the y position to move the tile to.
      */
-    public void addPiece(Piece<?> piece, int x, int y) {
-        tiles[x][y].piece = Optional.of(piece);
-        tiles[x][y].moveTile(piece);
-    }
-    
-    /**
-     * Move the piece off of the tile at the given position.
-     * @param x the x position to move the tile from.
-     * @param y the y position to move the file from.
-     */
-    public void movePiece(int x, int y) {
-        tiles[x][y].piece = Optional.empty();
-    }
-    
-    /**
-     * Returns the piece on the tile at the given position.
-     * @param x the x position to get the piece at.
-     * @param y the y position to get the piece at.
-     * @return the piece at this position, if there is one.
-     */
-    public Optional<Piece<?>> getPiece(int x, int y) {
-        return tiles[x][y].piece;
+    public void setPosition(Tile tile, int x, int y) {
+        tiles[x][y].moveTile(tile);
     }
     
     /**
@@ -173,9 +152,6 @@ public class Chessboard {
         
         /** Click listeners for this tile. */
         Set<Action> listeners = new HashSet<>();
-        
-        /** The game piece on this tile. */
-        Optional<Piece<?>> piece = Optional.empty();
         
         /**
          * Constructs a new chessboard tile at the given position.

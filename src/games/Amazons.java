@@ -34,7 +34,7 @@ public class Amazons extends Game {
     private Chessboard board;
     
     /** Grid of pieces indexed by position. */
-    private AmazonsPiece[][] pieces;
+    private Piece<Amazons>[][] pieces;
     /** Queen pieces grouped by owner. */
     private Queen[] player1Pieces, player2Pieces;
     
@@ -246,11 +246,12 @@ public class Amazons extends Game {
     /**
      * Create the chessboard and place the initial queens.
      */
+    @SuppressWarnings("unchecked")
     private void createBoard() {
         
         //Create board and window.
         board = new Chessboard(width, height, TITLE);
-        pieces = new AmazonsPiece[width][height];
+        pieces = new Piece[width][height];
         
         //Determine appropriate spacing for pieces given board size.
         int h_indent = (width - 1) / 3;
@@ -286,11 +287,11 @@ public class Amazons extends Game {
         for(Queen piece : friendlyPieces) {
             
             //Look at all the surrounding tiles for each opponent piece.
-            for(int x = Math.max(piece.getBoardX() - 1, 0);
-                    x <= Math.min(piece.getBoardX() + 1, width - 1); x++) {
+            for(int x = Math.max(piece.getCol() - 1, 0);
+                    x <= Math.min(piece.getCol() + 1, width - 1); x++) {
                 
-                for(int y = Math.max(piece.getBoardY() - 1, 0);
-                        y <= Math.min(piece.getBoardY() + 1, height - 1); y++) {
+                for(int y = Math.max(piece.getRow() - 1, 0);
+                        y <= Math.min(piece.getRow() + 1, height - 1); y++) {
                     
                     //The player has not yet won if the opponent has a free position to move to.
                     if(pieces[x][y] == null) return;
@@ -313,11 +314,11 @@ public class Amazons extends Game {
         
         //Set the colour for the winning pieces.
         for(Queen p : winningPieces)
-            board.setColour(p.getBoardX(), p.getBoardY(), HIGHLIGHT_COLOUR1);
+            board.setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR1);
         
         //Set the colour for the losing pieces.
         for(Queen p : losingPieces)
-            board.setColour(p.getBoardX(), p.getBoardY(), HIGHLIGHT_COLOUR2);
+            board.setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR2);
     }
     
     /**
@@ -331,7 +332,7 @@ public class Amazons extends Game {
         private String name = "Controller";
         
         /** The piece currently selected by the mouse, if there is any. */
-        private Optional<AmazonsPiece> selected = Optional.empty();
+        private Optional<Piece<Amazons>> selected = Optional.empty();
         
         /**
          * Constructs a new AmazonsController with the default name of "Controller".
@@ -395,7 +396,7 @@ public class Amazons extends Game {
                 
                 try {
                     //Try to move the selected piece to its new tile.
-                    game.moveQueen(selected.get().getBoardX(), selected.get().getBoardY(), x, y);
+                    game.moveQueen(selected.get().getCol(), selected.get().getRow(), x, y);
                     game.board.resetColours();
                     game.board.setColour(x, y, HIGHLIGHT_COLOUR2);
                     
@@ -435,21 +436,51 @@ public class Amazons extends Game {
     }
     
     /**
-     * Abstract supertype for GotA game pieces (queens and arrows).
+     * Represents a queen instance on the board.
      * @author Alec Dorrington
      */
-    private abstract class AmazonsPiece extends Piece<Amazons> {
+    private class Queen extends Piece<Amazons> {
+        
+        Queen(Player<Amazons> owner, int ownerId, int x, int y) {
+            
+            super(board, owner, ownerId, x, y);
+            
+            pieces[x][y] = this;
+            
+            //Select the appropriate texture depending on the owner.
+            setTexture(Texture.getTexture(ownerId == 1 ?
+                    "res/chess/white_queen.png" : "res/chess/black_queen.png"));
+        }
+        
+        @Override
+        public void movePiece(int x_to, int y_to) {
+            
+            //Ensure a move is valid before making it.
+            validateMove(getCol(), getRow(), x_to, y_to);
+            
+            //Move this piece in the pieces array.
+            pieces[getCol()][getRow()] = null;
+            pieces[x_to][y_to] = this;
+            
+            //Move this piece graphically.
+            board.setPosition(this, x_to, y_to);
+            
+            //Update the position.
+            x = x_to;
+            y = y_to;
+        }
         
         /**
-         * Constructs a new piece of a particular owner at a particular position.
-         * @param owner the owner of this piece.
-         * @param ownerId the ID of the owner of this piece.
-         * @param x the x position of this piece.
-         * @param y the y position of this piece.
+         * Will fire an arrow from this queen to the given position, if such a move is valid.<br>
+         * Otherwise, an exception will be thrown.
+         * @param x_to the x position to shoot at.
+         * @param y_to the y position to shoot at.
+         * @throws IllegalMoveException
          */
-        AmazonsPiece(Player<Amazons> owner, int ownerId, int x, int y) {
-            super(board, owner, ownerId, x, y);
-            pieces[x][y] = this; //temp
+        void shootArrow(int x_to, int y_to) {
+            
+            validateMove(getCol(), getRow(), x_to, y_to);
+            new Arrow(getOwner(), getOwnerId(), x_to, y_to);
         }
         
         /**
@@ -497,72 +528,19 @@ public class Amazons extends Game {
                 yy += y_sign;
             }
         }
-        
-        /**
-         * Called by the game to move a piece to a particular position.<br>
-         * Implementations of this method should provide their own move validation.<br>
-         * An exception may be thrown if a move is invalid.
-         * @param x_to the x position to move to.
-         * @param y_to the y position to move to.
-         * @throws IllegalMoveException
-         */
-        abstract void movePiece(int x_to, int y_to);
-    }
-    
-    /**
-     * Represents a queen instance on the board.
-     * @author Alec Dorrington
-     */
-    private class Queen extends AmazonsPiece {
-        
-        Queen(Player<Amazons> owner, int ownerId, int x, int y) {
-            
-            super(owner, ownerId, x, y);
-            
-            //Select the appropriate texture depending on the owner.
-            setTexture(Texture.getTexture(ownerId == 1 ?
-                    "res/chess/white_queen.png" : "res/chess/black_queen.png"));
-        }
-        
-        @Override
-        void movePiece(int x_to, int y_to) {
-            
-            //Ensure a move is valid before making it.
-            validateMove(getBoardX(), getBoardY(), x_to, y_to);
-            
-            //Move this piece in the pieces array.
-            pieces[getBoardX()][getBoardY()] = null;
-            pieces[x_to][y_to] = this;
-            
-            //Move this piece graphically.
-            board.addPiece(this, x_to, y_to);
-            
-            setPos(x_to, y_to);
-        }
-        
-        /**
-         * Will fire an arrow from this queen to the given position, if such a move is valid.<br>
-         * Otherwise, an exception will be thrown.
-         * @param x_to the x position to shoot at.
-         * @param y_to the y position to shoot at.
-         * @throws IllegalMoveException
-         */
-        void shootArrow(int x_to, int y_to) {
-            
-            validateMove(getBoardX(), getBoardY(), x_to, y_to);
-            new Arrow(getOwner(), getOwnerId(), x_to, y_to);
-        }
     }
     
     /**
      * Represents an arrow instance fired onto the board.
      * @author Alec Dorrington
      */
-    private class Arrow extends AmazonsPiece {
+    private class Arrow extends Piece<Amazons> {
         
         private Arrow(Player<Amazons> owner, int ownerId, int x, int y) {
             
-            super(owner, ownerId, x, y);
+            super(board, owner, ownerId, x, y);
+            
+            pieces[x][y] = this;
             
             //Select the appropriate texture depending on the owner.
             setTexture(Texture.getTexture(ownerId == 1 ?
@@ -570,7 +548,7 @@ public class Amazons extends Game {
         }
         
         @Override
-        void movePiece(int x_to, int y_to) {
+        public void movePiece(int x_to, int y_to) {
             //Arrows can't be moved.
             throw new IllegalMoveException("Arrows can't be moved.");
         }

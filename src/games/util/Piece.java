@@ -3,6 +3,13 @@ package games.util;
 import swagui.api.Colour;
 import swagui.api.Tile;
 
+/**
+ * Supertype for pieces which are used on a chess board.
+ * 
+ * @author Alec Dorrington
+ *
+ * @param <G> the game to which this piece belongs.
+ */
 public abstract class Piece<G extends Game> extends Tile {
     
     /** The chessboard on which this piece resides. */
@@ -14,7 +21,7 @@ public abstract class Piece<G extends Game> extends Tile {
     private int ownerId;
     
     /** The board position of this piece. */
-    private int x, y;
+    protected int x, y;
     
     /**
      * Constructs a new piece of a particular owner at a particular position.
@@ -27,7 +34,6 @@ public abstract class Piece<G extends Game> extends Tile {
     protected Piece(Chessboard board, Player<G> owner, int ownerId, int x, int y) {
         
         super(board.getWindow());
-        
         this.board = board;
         
         //Set the owner of this piece.
@@ -35,7 +41,7 @@ public abstract class Piece<G extends Game> extends Tile {
         this.ownerId = ownerId;
         
         //Add the piece to the board.
-        board.addPiece(this, x, y);
+        board.setPosition(this, x, y);
         
         this.x = x;
         this.y = y;
@@ -45,21 +51,38 @@ public abstract class Piece<G extends Game> extends Tile {
         setColour(Colour.WHITE);
     }
     
+    /**
+     * @return the board on which this piece resides.
+     */
     public Chessboard getBoard() { return board; }
     
+    /**
+     * @return the player to whom this piece belongs.
+     */
     public Player<G> getOwner() { return owner; }
     
+    /**
+     * @return the ID of the player to whom this piece belongs.
+     */
     public int getOwnerId() { return ownerId; }
     
-    public int getBoardX() { return x; }
+    /**
+     * @return the current x position of this piece on the board.
+     */
+    public int getCol() { return x; }
     
-    public int getBoardY() { return y; }
+    /**
+     * @return the current y position of this piece on the board.
+     */
+    public int getRow() { return y; }
     
-    protected void setPos(int x, int y) {
-        
-        board.movePiece(this.x, this.y);
-        board.addPiece(this, x, y);
-        this.x = x;
-        this.y = y;
-    }
+    /**
+     * Called by the game to move a piece to a particular position.<br>
+     * Implementations of this method should provide their own move validation.<br>
+     * An exception may be thrown if a move is invalid.
+     * @param x_to the x position to move to.
+     * @param y_to the y position to move to.
+     * @throws IllegalMoveException
+     */
+    public abstract void movePiece(int x_to, int y_to);
 }

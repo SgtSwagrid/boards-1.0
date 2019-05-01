@@ -283,7 +283,7 @@ public class Reversi {
             //Store this piece in the pieces array.
             pieces[x][y] = this;
             //Set the graphical position of this tile.
-            board.addPiece(this, x, y);
+            board.setPosition(this, x, y);
             this.x = x;
             this.y = y;
             
