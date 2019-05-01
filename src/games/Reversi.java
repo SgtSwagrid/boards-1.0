@@ -2,6 +2,8 @@ package games;
 
 import java.util.Optional;
 
+import games.Amazons.Arrow;
+import games.Amazons.IllegalMoveException;
 import games.util.Chessboard;
 import swagui.api.Colour;
 import swagui.api.Texture;
@@ -21,6 +23,9 @@ public class Reversi {
     
     /** Title of the window. */
     private static final String TITLE = "Reversi";
+    
+    /** Colour used for recently placed piece */
+    public static final Colour HIGHLIGHT_COLOUR1 = Colour.rgb(249, 127, 81);
     
     /** Chessboard instance, manages the window, and piece layout. */
     private Chessboard board;
@@ -89,10 +94,63 @@ public class Reversi {
         }
     }
     
+    /**
+     * Creates the board and lays out the initial 4 Pieces 
+     */
     private void createBoard() {
         
         board = new Chessboard(width, height, TITLE);
         
+        pieces = new Piece[width][height];
+        
+        // Setup the middle initial pieces, player1, then player2
+        pieces[width / 2][height / 2] = new Piece(player1, 1, width / 2, height / 2);
+        pieces[width / 2 - 1][height / 2 - 1] = new Piece(player1, 1, width / 2 - 1, height / 2 - 1);
+        
+        pieces[width / 2 - 1][height / 2] = new Piece(player2, 2, width / 2 - 1, height / 2);
+        pieces[width / 2][height / 2 - 1] = new Piece(player2, 2, width / 2, height / 2 - 1);
+    }
+    
+    /**
+     * Returns the current state of the board.<br>
+     * Each array index represents the piece currently at that position.<br>
+     * <table border="1">
+     * <tr><td>0</td><td>Empty Tile.</td></tr>
+     * <tr><td>1</td><td>Piece owned by player 1.</td></tr>
+     * <tr><td>2</td><td>Piece owned by player 2.</td></tr>
+     * </table>
+     * @return the game state.
+     */
+    public int[][] getState() {
+        
+        int[][] board = new int[width][height];
+        
+        //For each grid cell.
+        for(int x = 0; x < width; x++) {
+            for(int y = 0; y < height; y++) {
+                
+                //Determine index of piece on this tile.
+                board[x][y] = getPiece(x, y);
+            }
+        }
+        return board;
+    }
+    
+    /**
+     * Returns the ID of the piece at a position.<br>
+     * See 'getState()' for details.
+     * @param x the x position of the piece.
+     * @param y the y position of the piece.
+     * @return the ID of the piece at this position.
+     */
+    private int getPiece(int x, int y) {
+        
+        //Empty tile: '-1'.
+        if(pieces[x][y] == null)
+            return 0;
+        
+        //Queen: ID of owner.
+        else return pieces[x][y].ownerId;
     }
     
     /**
@@ -146,6 +204,47 @@ public class Reversi {
         @Override
         public void init(Reversi game, int playerId) {
             
+        	//Add a click listener to each grid cell on the board.
+            for(int i = 0; i < game.width; i++) {
+                for(int j = 0; j < game.height; j++) {
+                    
+                    int x = i, y = j;
+                    game.board.addListener(x, y, () -> {
+                        
+                        //Listeners should only be active on your own turn.
+                        if(playerId != game.currentPlayerId)
+                            return;
+                        
+                        // Place a piece
+                        placePiece(game, playerId, x, y);
+                    });
+                }
+            }
+        }
+        
+        /**
+         * Place a piece once per turn
+         * @param game The Reversi Game
+         * @param playerId The Id of the placing player
+         * @param x X coordinate of the piece to be placed
+         * @param y Y coordinate of the piece to be placed
+         */
+        public void placePiece(Reversi game, int playerId, int x, int y) {
+            
+        	//Select an empty location.
+            if(game.pieces[x][y] == null) {
+                
+            	try {
+            		//Try to place the selected piece to its new tile.
+            		game.placePiece(playerId, x, y);
+            	
+            		//Set the selected piece and highlight its tile.
+            		game.board.resetColours();
+            		game.board.setColour(x, y, HIGHLIGHT_COLOUR1);
+                    
+                //Invalid moves should be ignored.
+                } catch(IllegalMoveException e) {}
+            }
         }
         
         @Override
@@ -196,5 +295,54 @@ public class Reversi {
             setTexture(Texture.getTexture(ownerId == 1 ?
                     "res/draughts/white_piece.png" : "res/draughts/black_piece.png"));
         }
+        
+        /**
+         * Ensures that a move is valid.<br>
+         * Throws an exception otherwise.
+         * @param x the x position to which a piece is being placed.
+         * @param y the y position to which a piece is being placed.
+         * @throws IllegalMoveException
+         */
+        void validateMove(int x, int y) {
+            
+            //Ensure piece is owned by the current player.
+            if(ownerId != currentPlayerId)
+                throw new IllegalMoveException("Can't move an opponents piece.");
+            
+            //Ensure piece doesn't move on top of another piece.
+            if(pieces[x][y] != null)
+                throw new IllegalMoveException("Position is not empty.");
+            
+            //Ensure piece moves in a straight line (incl. diagonally).
+            if(Math.abs(x_to - x_from) != Math.abs(y_to - y_from)
+                    && x_to != x_from && y_to != y_from)
+                throw new IllegalMoveException("Must move in a straight line.");
+            
+            
+            int x_sign = (int) Math.signum(x_to - x_from);
+            int y_sign = (int) Math.signum(y_to - y_from);
+            
+            int xx = x_from + x_sign;
+            int yy = y_from + y_sign;
+            
+            //Ensure piece doesn't jump over any other pieces.
+            while(xx != x_to || yy != y_to) {
+                
+                if(pieces[xx][yy] != null)
+                    throw new IllegalMoveException("Can't jump over other pieces.");
+                
+                xx += x_sign;
+                yy += y_sign;
+            }
+        }
+    }
+    
+    /**
+     * Exception to be thrown when a player makes a move which isn't valid.
+     * @author Alec Dorrington
+     */
+    @SuppressWarnings("serial")
+    private class IllegalMoveException extends RuntimeException {
+        IllegalMoveException(String message) { super(message); }
     }
 }
