@@ -224,7 +224,7 @@ public class Amazons extends Game {
             String colour = currentPlayerId == 2 ? "White" : "Black";
             board.getWindow().setTitle(TITLE + " - " + winner.get().getName()
                     + " (" + colour + ") has won!");
-            highlightWinner(currentPlayerId % 2 + 1);
+            highlightWinner(winner.get() == players[0] ? 1 : 2);
         }
     }
     
