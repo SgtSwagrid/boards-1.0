@@ -2,6 +2,7 @@ package games.util;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -78,6 +79,26 @@ public class ChessBoard {
      */
     public void addListener(int x, int y, Action l) {
         tiles[x][y].listeners.add(l);
+    }
+    
+    /**
+     * Attach a new listener to every board position.<br>
+     * The given action will be triggered once when any tile is clicked,
+     * with the position of the tile passed in as parameters.<br>
+     * Will not replace any existing listeners - a single tile can have multiple listeners.
+     * @param l the action to be triggered on click.
+     */
+    public void addListenerToAll(BiConsumer<Integer, Integer> l) {
+        
+        //For each tile on the board.
+        for(int i = 0; i < width; i++) {
+            for(int j = 0; j < height; j++) {
+                
+                int x = i, y = j;
+                //Add the listener to this tile.
+                addListener(x, y, () -> l.accept(x, y));
+            }
+        }
     }
     
     /**

@@ -209,25 +209,18 @@ public class Chomp extends Game {
         @Override
         public void init(Chomp game, int playerId) {
             
-            //Add a click listener to each grid cell on the board.
-            for(int i = 0; i < game.width; i++) {
-                for(int j = 0; j < game.width; j++) {
-                    
-                    int x = i, y = j;
-                    game.board.addListener(x, y, () -> {
-                        
-                        //Listeners should only be active on your turn.
-                        if(playerId != game.currentPlayerId)
-                            return;
-                        
-                        try {
-                            //Attempt to chomp this tile.
-                            game.chompTile(x, y);
-                        //Invalid moves should be ignored.
-                        } catch(IllegalMoveException e) {}
-                    });
-                }
-            }
+            game.board.addListenerToAll((x, y) -> {
+                
+                //Listeners should only be active on your turn.
+                if(playerId != game.currentPlayerId)
+                    return;
+                
+                try {
+                    //Attempt to chomp this tile.
+                    game.chompTile(x, y);
+                //Invalid moves should be ignored.
+                } catch(IllegalMoveException e) {}
+            });
         }
 
         @Override

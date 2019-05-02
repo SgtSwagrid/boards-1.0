@@ -306,27 +306,21 @@ public class Amazons extends Game {
         public void init(Amazons game, int playerId) {
             
             //Add a click listener to each grid cell on the board.
-            for(int i = 0; i < game.width; i++) {
-                for(int j = 0; j < game.height; j++) {
+            game.board.addListenerToAll((x, y) -> {
+                
+                //Listeners should only be active on your own turn.
+                if(playerId != game.currentPlayerId)
+                    return;
+                
+                //Move a queen.
+                if(game.turnPhase == 0) {
+                    moveQueen(game, x, y);
                     
-                    int x = i, y = j;
-                    game.board.addListener(x, y, () -> {
-                        
-                        //Listeners should only be active on your own turn.
-                        if(playerId != game.currentPlayerId)
-                            return;
-                        
-                        //Move a queen.
-                        if(game.turnPhase == 0) {
-                            moveQueen(game, x, y);
-                            
-                        //Shoot an arrow.
-                        } else if(game.turnPhase == 1) {
-                            shootArrow(game, x, y);
-                        }
-                    });
+                //Shoot an arrow.
+                } else if(game.turnPhase == 1) {
+                    shootArrow(game, x, y);
                 }
-            }
+            });
         }
         
         /**
