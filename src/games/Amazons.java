@@ -85,6 +85,10 @@ public class Amazons extends Game {
         if(turnPhase != 0)
             throw new IllegalMoveException("Can't move pieces twice.");
         
+        //Ensure source location is in bounds.
+        if(x_from < 0 || x_from >= width || y_from < 0 || y_from >= height)
+            throw new IllegalMoveException("Source location out of bounds.");
+        
         //Ensure a piece exists at the given 'from' position.
         if(boardPieces[x_from][y_from] == null)
             throw new IllegalMoveException("No such piece exists.");
@@ -213,18 +217,18 @@ public class Amazons extends Game {
     
     @Override
     protected boolean isRunning() {
-        return !winner.isPresent() && board.getWindow().isOpen();
+        return winnerId == -1 && board.getWindow().isOpen();
     }
     
     @Override
     protected void onFinish() {
         
         //Display the winner of the game.
-        if(winner.isPresent()) {
+        if(winnerId != -1) {
             String colour = currentPlayerId == 2 ? "White" : "Black";
-            board.getWindow().setTitle(TITLE + " - " + winner.get().getName()
+            board.getWindow().setTitle(TITLE + " - " + players[winnerId - 1].getName()
                     + " (" + colour + ") has won!");
-            highlightWinner(winner.get() == players[0] ? 1 : 2);
+            highlightWinner();
         }
     }
     
@@ -236,7 +240,7 @@ public class Amazons extends Game {
     private void checkWin() {
         
         //For each player.
-        outer: for(int i = 0; i < 2; i++) {
+        outer: for(int i = 0; i < players.length; i++) {
             
             //Check if any of this players pieces are free to move.
             for(Queen piece : playerPieces[i]) {
@@ -255,7 +259,7 @@ public class Amazons extends Game {
                 }
             }
             //This player has nowhere to move, the other player wins.
-            winner = Optional.of(players[(i + 1) % 2]);
+            winnerId = (i + 1) % players.length + 1;
         }
     }
     
@@ -263,7 +267,7 @@ public class Amazons extends Game {
      * Highlight the tiles of the queens of each player.
      * @param winnerId the player whose queens should receive the winning colour.
      */
-    private void highlightWinner(int winnerId) {
+    private void highlightWinner() {
         
         //Set the colour for the winning pieces.
         for(Queen p : playerPieces[winnerId - 1])
@@ -451,6 +455,10 @@ public class Amazons extends Game {
             //Ensure piece is owned by the current player.
             if(getOwnerId() != currentPlayerId)
                 throw new IllegalMoveException("Can't move an opponents piece.");
+            
+            //Ensure target location is in bounds.
+            if(x_to < 0 || x_to >= width || y_to < 0 || y_to >= height)
+                throw new IllegalMoveException("Target location out of bounds.");
             
             //Ensure piece doesn't move on top of itself.
             if(x_to == x_from && y_to == y_from)

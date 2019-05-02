@@ -2,6 +2,8 @@ package games.util;
 
 import java.util.Optional;
 
+import swagui.api.Colour;
+
 /**
  * Abstract supertype for many abstract board games.<br>
  * Takes care of turn order progression.
@@ -14,7 +16,7 @@ public abstract class Game {
     /** Array of all players participating in this game. */
     protected Player[] players;
     /** The winner of the game. Will be present at game completion. */
-    protected Optional<Player> winner = Optional.empty();
+    protected int winnerId = -1;
     
     /** The player whose turn it currently is. */
     protected Player currentPlayer;
@@ -22,12 +24,32 @@ public abstract class Game {
      *  Starts at 1 for the first player and increases with turn order. */
     protected volatile int currentPlayerId = 1;
     
+    /** List of player colours. */
+    protected static final Colour[] COLOURS = new Colour[] {
+             Colour.rgb(87, 95, 207),
+             Colour.rgb(255, 94, 87),
+             Colour.rgb(5, 196, 107),
+             Colour.rgb(255, 211, 42)
+    };
+    
+    /** List of colour names. */
+    protected static final String[] COLOUR_NAMES = new String[] {
+            "Blue", "Red", "Green", "Yellow"
+    };
+    
     /**
      * Constructs a new game with the given players, given in turn order.<br>
      * Must subsequently call 'start()' to begin the game.
      * @param players the players (in turn order) participating in this game.
      */
-    protected Game(Player[] players) { this.players = players; }
+    protected Game(Player[] players) {
+        
+        //There can't be more players than there are colours.
+        if(players.length > COLOURS.length)
+            throw new IllegalArgumentException("Max players: " + COLOURS.length);
+        
+        this.players = players;
+    }
     
     /**
      * @return the number of players participating in this game.
@@ -42,7 +64,9 @@ public abstract class Game {
     /**
      * @return the player who won, if such a player exists.
      */
-    public Optional<Player> getWinner() { return winner; }
+    public Optional<Player> getWinner() {
+        return Optional.ofNullable(winnerId == -1 ? null : players[winnerId - 1]);
+    }
     
     /**
      * Starts the game in a new thread.
@@ -101,7 +125,7 @@ public abstract class Game {
      * To be called by the game before each turn to check if the game should be continued.
      * @return whether the game should continue.
      */
-    protected boolean isRunning() { return !winner.isPresent(); }
+    protected boolean isRunning() { return winnerId == -1; }
     
     /**
      * To be called by the game after the game has finished.<br>
