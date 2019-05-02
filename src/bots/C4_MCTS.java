@@ -17,6 +17,7 @@ import games.HyperMNK.HyperMNKPlayer;
 public class C4_MCTS implements HyperMNKPlayer {
 	
 	private GameState gs;
+	private GraphNode head = null;
 	public static final int DEPTH = 7;
 	
 	public int turnNo = 0;
@@ -40,7 +41,19 @@ public class C4_MCTS implements HyperMNKPlayer {
 		}
 		else
 		{
-			action = mcts(gs);
+			// OLD MCTS action = mcts(gs);
+			TreeNode tn = new TreeNode(gs);
+	        
+			long startTime = System.currentTimeMillis();
+			
+			// do iterations
+			while (System.currentTimeMillis() - startTime < 2500)
+			{
+				tn.selectAction();
+			}
+	     
+			action = getActions(gs).get(tn.bestChild(tn));
+			
 		}
 		
 		//game.loadState(gs.getGameState());
@@ -58,9 +71,13 @@ public class C4_MCTS implements HyperMNKPlayer {
 	private Vec2 mcts(GameState state)
 	{
 		// set the head of the tree
-		GraphNode head = new GraphNode(state);
+		head = find(state, head, 3);
 		
-		populateChildren(head);
+		if (head == null)
+		{
+			head = new GraphNode(state);
+			populateChildren(head);
+		}
 		
 		GraphNode current = head;
 		
@@ -68,7 +85,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		int ii = 0;
 		
 		// do iterations
-		while (System.currentTimeMillis() - startTime < 5000)
+		while (System.currentTimeMillis() - startTime < 2500)
 		{
 			// check for children, if no chilrden find some
 			if (current.getChildren().size() == 0)
@@ -104,6 +121,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 			}
 			else
 			{
+				//current = maxNodeChild(current, ii);
 				current = maxNodeChild(current, ii);
 			}
 			
@@ -114,6 +132,48 @@ public class C4_MCTS implements HyperMNKPlayer {
 		
 		return getActions(head.getState()).get(maxNodeIdx(head, 1));
 		
+	}
+	
+	public GraphNode find(GameState s, GraphNode head, int maxDepth) {
+		// Try to find the position in the tree (until a certain depth)
+		if (head == null)
+		{
+			return null;
+		}
+		else
+		{
+			maxDepth += head.getDepth();
+		}
+		
+		GraphNode curr = head;
+		
+		if (curr.getDepth() == maxDepth)
+			return null; // could not find position
+		for (GraphNode chil : curr.getChildren()) {
+			if (chil != null) {
+				if (stateEqual(chil.getState().getGameState(), s.getGameState()))
+					return chil;
+				GraphNode nod = find(s, chil, maxDepth);
+				if (nod != null)
+					return nod;
+			}
+		}
+		return null;
+	}
+	
+	private boolean stateEqual(int[][] s1, int[][] s2)
+	{
+		boolean equal = true;
+		
+		for (int ii = 0 ; ii < s1.length; ii++)
+		{
+			for (int jj = 0 ; jj < s1[0].length; jj++)
+			{
+				equal = (equal && s1[ii][jj] == s2[ii][jj]);
+			}
+		}
+		
+		return equal;
 	}
 	
 	private int maxNodeIdx(GraphNode gn, int iteration)
@@ -145,10 +205,12 @@ public class C4_MCTS implements HyperMNKPlayer {
 	{
 		return gn.getChildren().get(maxNodeIdx(gn, iteration));
 	}
-	
+
 	private float UCB1(GraphNode gn, int iteration)
 	{
-		return (float)(gn.getScore()/(gn.getVisits()+0.00001) + 2 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
+		float multiplier = 1;//gn.getDepth() % 2 == 0 ? 1.0f : -1.0f ;
+		//System.out.println("Dep[th " + multiplier);
+		return (float)(multiplier * gn.getScore()/(gn.getVisits()+0.00001) + 2.5 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
 	}
 	
 	private void populateChildren(GraphNode gn)
@@ -179,24 +241,13 @@ public class C4_MCTS implements HyperMNKPlayer {
 		int winner = checkWin(currentState);
 		int score = 0;
 		
-		/*
-		if (winner == gn.getState().getPlayer())
-		{
-			score = -1;
-		}
-		else if (winner != gn.getState().getPlayer() && winner != null)
-		{
-			score = 1;
-		}*/
-		
-		
 		if (winner == gn.getState().getMe())
 		{
 			score = 1;
 		}
 		else if (winner == gn.getState().getOp())
 		{
-			score = -1;
+			score = 0;
 		}
 		
 		// backpropogate 
@@ -204,6 +255,8 @@ public class C4_MCTS implements HyperMNKPlayer {
 		{
 			gn.addScore(score);
 			gn.addVisit();
+			
+			//score = -score; // NEGAMAX
 			
 			gn = gn.getParent();
 			
@@ -425,6 +478,19 @@ public class C4_MCTS implements HyperMNKPlayer {
 		{
 			visits++;
 		}
+		
+		public int getDepth()
+		{
+			int depth = 0;
+			GraphNode cur = parent;
+			while (cur != null)
+			{
+				depth++;
+				cur = cur.parent;
+			}
+			
+			return depth;
+		}
 	}
 	
 	private class GameState {
@@ -537,5 +603,140 @@ public class C4_MCTS implements HyperMNKPlayer {
 		
 		public int getWidth() { return width; }
 		public int getHeight() { return height; }
+	}
+	
+	private class TreeNode {
+	    final Random r = new Random();
+	    static final double epsilon = 1e-6;
+
+	    TreeNode[] children;
+	    double nVisits, totValue;
+	    GameState state;
+	    
+	    public TreeNode(GameState st)
+	    {
+	    	state = st;
+	    }
+	    
+	    public void selectAction() {
+	        List<TreeNode> visited = new LinkedList<TreeNode>();
+	        TreeNode cur = this;
+	        visited.add(this);
+	        while (!cur.isLeaf() && cur.arity() != 0) {
+	            cur = cur.select();
+	            // System.out.println("Adding: " + cur);
+	            visited.add(cur);
+	        }
+	        
+	        cur.expand();
+	        
+	        TreeNode newNode = cur.select();
+	        visited.add(newNode);
+	        double value = rollOut(newNode);
+	        
+	        for (TreeNode node : visited) {
+	            // would need extra logic for n-player game
+	            // System.out.println(node);
+	            node.updateStats(value);
+	        }
+	    }
+
+	    public void expand() {
+			
+	    	ArrayList<Vec2> actions = getActions(state);
+			children = new TreeNode[actions.size()];
+			
+	        for (int i=0; i < actions.size(); i++) {
+				TreeNode child = new TreeNode(getResult(state, actions.get(i)));
+				children[i] = child;
+			}
+
+	    }
+
+	    private TreeNode select() {
+	        TreeNode selected = null;
+	        double bestValue = Double.MIN_VALUE;
+	        for (TreeNode c : children) {
+	            double uctValue =
+	                    c.totValue / (c.nVisits + epsilon) +
+	                            Math.sqrt(Math.log(nVisits+1) / (c.nVisits + epsilon)) +
+	                            r.nextDouble() * epsilon;
+	            // small random number to break ties randomly in unexpanded nodes
+	            // System.out.println("UCT value = " + uctValue);
+	            if (uctValue > bestValue) {
+	                selected = c;
+	                bestValue = uctValue;
+	            }
+	        }
+	        // System.out.println("Returning: " + selected);
+	        return selected;
+	    }
+
+	    public int bestChild(TreeNode head)
+	    {
+	    	TreeNode selected = null;
+	    	int selectedId = 0, counter = 0;
+	    	
+	        double bestValue = Double.MIN_VALUE;
+	        for (TreeNode c : head.children) {
+	            
+	        	double uctValue = c.totValue / (c.nVisits + epsilon) +
+	                            Math.sqrt(Math.log(nVisits+1) / (c.nVisits + epsilon)) + r.nextDouble() * epsilon;
+	            // small random number to break ties randomly in unexpanded nodes
+	            // System.out.println("UCT value = " + uctValue);
+	            if (uctValue > bestValue) {
+	                selected = c;
+	                selectedId = counter;
+	                bestValue = uctValue;
+	            }
+	            counter++;
+	        }
+	        // System.out.println("Returning: " + selected);
+	        return selectedId;
+	    }
+	    
+	    public boolean isLeaf() {
+	        return children == null;
+	    }
+
+	    public double rollOut(TreeNode tn) {
+	        
+			GameState currentState = new GameState(tn.getState());
+			
+			while (!isTerminal(currentState))
+			{
+				Random rand = new Random();
+				ArrayList<Vec2> actions = getActions(currentState);
+				currentState = getResult(currentState, actions.get(rand.nextInt(actions.size())));
+			}
+			
+			int winner = checkWin(currentState);
+			int score = 0;
+			
+			if (winner == tn.getState().getMe())
+			{
+				score = 1;
+			}
+			else if (winner == tn.getState().getOp())
+			{
+				score = -1;
+			}
+
+	        return score;
+	    }
+
+	    public void updateStats(double value) {
+	        nVisits++;
+	        totValue += value;
+	    }
+
+	    public int arity() {
+	        return children == null ? 0 : children.length;
+	    }
+	    
+	    public GameState getState()
+	    {
+	    	return state;
+	    }
 	}
 }
