@@ -65,15 +65,8 @@ public class Amazons extends Game {
         this.width = width;
         this.height = height;
         
-        //Create a new game board, opening a window and placing initial pieces.
-        createBoard();
-        
-        //Run the game simulation in a new thread.
-        new Thread("Game of the Amazons") {
-            @Override public void run() {
-                Amazons.this.start();
-            }
-        }.start();
+        //Start the game.
+        start();
     }
     
     /**
@@ -175,11 +168,9 @@ public class Amazons extends Game {
      */
     public int getHeight() { return height; }
     
-    /**
-     * Create the chess board and place the initial queens.
-     */
+    @Override
     @SuppressWarnings("unchecked")
-    private void createBoard() {
+    protected void init() {
         
         //Create board and window.
         board = new ChessBoard(width, height, TITLE);
