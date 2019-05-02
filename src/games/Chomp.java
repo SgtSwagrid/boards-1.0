@@ -209,6 +209,7 @@ public class Chomp extends Game {
         @Override
         public void init(Chomp game, int playerId) {
             
+            //Add a click listener to each grid cell on the board.
             game.board.addListenerToAll((x, y) -> {
                 
                 //Listeners should only be active on your turn.
