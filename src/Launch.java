@@ -1,5 +1,3 @@
-package launch;
-
 import bots.C4_MCTS;
 import games.Amazons;
 import games.Amazons.AmazonsController;
