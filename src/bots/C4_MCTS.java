@@ -5,6 +5,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import bots.mcts.montecarlo.IState;
+import bots.mcts.montecarlo.State;
+import bots.mcts.montecarlo.UCT;
+import bots.mcts.tree.Node;
+import bots.mcts.tree.Tree;
 import games.HyperMNK;
 import games.HyperMNK.HyperMNKPlayer;
 
@@ -41,18 +46,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		}
 		else
 		{
-			// OLD MCTS action = mcts(gs);
-			TreeNode tn = new TreeNode(gs);
-	        
-			long startTime = System.currentTimeMillis();
-			
-			// do iterations
-			while (System.currentTimeMillis() - startTime < 2500)
-			{
-				tn.selectAction();
-			}
-	     
-			action = getActions(gs).get(tn.bestChild(tn));
+			action = mcts(gs);
 			
 		}
 		
@@ -67,6 +61,8 @@ public class C4_MCTS implements HyperMNKPlayer {
 		turnNo++;
 		game.placePiece(action.x, action.y);
 	}
+
+	
 	
 	private Vec2 mcts(GameState state)
 	{
@@ -85,7 +81,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		int ii = 0;
 		
 		// do iterations
-		while (System.currentTimeMillis() - startTime < 2500)
+		while (System.currentTimeMillis() - startTime < 1000)
 		{
 			// check for children, if no chilrden find some
 			if (current.getChildren().size() == 0)
@@ -210,7 +206,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 	{
 		float multiplier = 1;//gn.getDepth() % 2 == 0 ? 1.0f : -1.0f ;
 		//System.out.println("Dep[th " + multiplier);
-		return (float)(multiplier * gn.getScore()/(gn.getVisits()+0.00001) + 2.5 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
+		return (float)(multiplier * gn.getScore()/(gn.getVisits()+0.00001) + 1.0 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
 	}
 	
 	private void populateChildren(GraphNode gn)
@@ -253,7 +249,9 @@ public class C4_MCTS implements HyperMNKPlayer {
 		// backpropogate 
 		do
 		{
-			gn.addScore(score);
+			if (gn.getParent() != null && gn.getParent().getState().getPlayer() == winner)
+			
+			{ gn.addScore(score); }
 			gn.addVisit();
 			
 			//score = -score; // NEGAMAX
@@ -287,18 +285,6 @@ public class C4_MCTS implements HyperMNKPlayer {
 			}
 		}
 		
-		/*if (actions.size() == 1)
-		{
-			for (int yy = state.getHeight() - 1; yy >= 0; yy--)
-			{
-				for (int xx = 0 ; xx < state.getWidth(); xx++)
-				{
-				
-					System.out.print(state.getGameState()[xx][yy]);
-				}
-				System.out.println();
-			}
-		}*/
 		return actions;
 	}
 	
@@ -493,7 +479,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		}
 	}
 	
-	private class GameState {
+	public class GameState implements IState {
 
 		private int currentPlayer = 0;
 		private int me, opponent;
@@ -519,6 +505,10 @@ public class C4_MCTS implements HyperMNKPlayer {
 			populateBoard(game);
 		}
 		
+		public HyperMNK getBoard() {
+			return game;
+		}
+
 		public GameState(GameState state)
 		{
 			this.game = state.getGame();
@@ -603,140 +593,10 @@ public class C4_MCTS implements HyperMNKPlayer {
 		
 		public int getWidth() { return width; }
 		public int getHeight() { return height; }
-	}
-	
-	private class TreeNode {
-	    final Random r = new Random();
-	    static final double epsilon = 1e-6;
 
-	    TreeNode[] children;
-	    double nVisits, totValue;
-	    GameState state;
-	    
-	    public TreeNode(GameState st)
-	    {
-	    	state = st;
-	    }
-	    
-	    public void selectAction() {
-	        List<TreeNode> visited = new LinkedList<TreeNode>();
-	        TreeNode cur = this;
-	        visited.add(this);
-	        while (!cur.isLeaf() && cur.arity() != 0) {
-	            cur = cur.select();
-	            // System.out.println("Adding: " + cur);
-	            visited.add(cur);
-	        }
-	        
-	        cur.expand();
-	        
-	        TreeNode newNode = cur.select();
-	        visited.add(newNode);
-	        double value = rollOut(newNode);
-	        
-	        for (TreeNode node : visited) {
-	            // would need extra logic for n-player game
-	            // System.out.println(node);
-	            node.updateStats(value);
-	        }
-	    }
-
-	    public void expand() {
-			
-	    	ArrayList<Vec2> actions = getActions(state);
-			children = new TreeNode[actions.size()];
-			
-	        for (int i=0; i < actions.size(); i++) {
-				TreeNode child = new TreeNode(getResult(state, actions.get(i)));
-				children[i] = child;
-			}
-
-	    }
-
-	    private TreeNode select() {
-	        TreeNode selected = null;
-	        double bestValue = Double.MIN_VALUE;
-	        for (TreeNode c : children) {
-	            double uctValue =
-	                    c.totValue / (c.nVisits + epsilon) +
-	                            Math.sqrt(Math.log(nVisits+1) / (c.nVisits + epsilon)) +
-	                            r.nextDouble() * epsilon;
-	            // small random number to break ties randomly in unexpanded nodes
-	            // System.out.println("UCT value = " + uctValue);
-	            if (uctValue > bestValue) {
-	                selected = c;
-	                bestValue = uctValue;
-	            }
-	        }
-	        // System.out.println("Returning: " + selected);
-	        return selected;
-	    }
-
-	    public int bestChild(TreeNode head)
-	    {
-	    	TreeNode selected = null;
-	    	int selectedId = 0, counter = 0;
-	    	
-	        double bestValue = Double.MIN_VALUE;
-	        for (TreeNode c : head.children) {
-	            
-	        	double uctValue = c.totValue / (c.nVisits + epsilon) +
-	                            Math.sqrt(Math.log(nVisits+1) / (c.nVisits + epsilon)) + r.nextDouble() * epsilon;
-	            // small random number to break ties randomly in unexpanded nodes
-	            // System.out.println("UCT value = " + uctValue);
-	            if (uctValue > bestValue) {
-	                selected = c;
-	                selectedId = counter;
-	                bestValue = uctValue;
-	            }
-	            counter++;
-	        }
-	        // System.out.println("Returning: " + selected);
-	        return selectedId;
-	    }
-	    
-	    public boolean isLeaf() {
-	        return children == null;
-	    }
-
-	    public double rollOut(TreeNode tn) {
-	        
-			GameState currentState = new GameState(tn.getState());
-			
-			while (!isTerminal(currentState))
-			{
-				Random rand = new Random();
-				ArrayList<Vec2> actions = getActions(currentState);
-				currentState = getResult(currentState, actions.get(rand.nextInt(actions.size())));
-			}
-			
-			int winner = checkWin(currentState);
-			int score = 0;
-			
-			if (winner == tn.getState().getMe())
-			{
-				score = 1;
-			}
-			else if (winner == tn.getState().getOp())
-			{
-				score = -1;
-			}
-
-	        return score;
-	    }
-
-	    public void updateStats(double value) {
-	        nVisits++;
-	        totValue += value;
-	    }
-
-	    public int arity() {
-	        return children == null ? 0 : children.length;
-	    }
-	    
-	    public GameState getState()
-	    {
-	    	return state;
-	    }
+		@Override
+		public int getVisitCount() {
+			return 0;
+		}
 	}
 }
