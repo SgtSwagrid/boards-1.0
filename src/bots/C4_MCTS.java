@@ -5,11 +5,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import bots.mcts.montecarlo.IState;
-import bots.mcts.montecarlo.State;
-import bots.mcts.montecarlo.UCT;
-import bots.mcts.tree.Node;
-import bots.mcts.tree.Tree;
 import games.HyperMNK;
 import games.HyperMNK.HyperMNKPlayer;
 
@@ -479,7 +474,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		}
 	}
 	
-	public class GameState implements IState {
+	public class GameState {
 
 		private int currentPlayer = 0;
 		private int me, opponent;
@@ -593,10 +588,5 @@ public class C4_MCTS implements HyperMNKPlayer {
 		
 		public int getWidth() { return width; }
 		public int getHeight() { return height; }
-
-		@Override
-		public int getVisitCount() {
-			return 0;
-		}
 	}
 }
