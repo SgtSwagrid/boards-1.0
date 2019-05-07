@@ -2,7 +2,7 @@
 This repository is for an ongoing project featuring:
 1. Java implementations for various strategy board games, predominantly of the abstract variety.
 2. Bots and algorithms created for the purpose of employing optimal strategy to play and win these games.
-<br />
+
 Game implementations can be found in 'src/games/'.<br />
 Bot implementations can be found in 'src/bots'.<br />
 
@@ -13,7 +13,7 @@ http://legacy.lwjgl.org/
 http://www.choco-solver.org/
 ### SwagUI
 https://github.com/SgtSwagrid/swag-ui
-<br />
+<br /><br />
 ## Featured games:
 ### Game of the Amazons
 https://en.wikipedia.org/wiki/Game_of_the_Amazons
