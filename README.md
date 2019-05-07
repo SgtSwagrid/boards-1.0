@@ -13,7 +13,9 @@ http://legacy.lwjgl.org/
 http://www.choco-solver.org/
 ### SwagUI
 https://github.com/SgtSwagrid/swag-ui
+
 <br /><br />
+
 ## Featured games:
 ### Game of the Amazons
 https://en.wikipedia.org/wiki/Game_of_the_Amazons
