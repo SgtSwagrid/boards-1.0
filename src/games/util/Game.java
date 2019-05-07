@@ -68,7 +68,7 @@ public abstract class Game {
     /**
      * @return the ID of the player whose turn it currently is.
      */
-    public int getCurrentPlayerId() { return currentPlayerId; }
+    public int getCurrentPlayerId() { return  currentPlayerId; }
     
     /**
      * @return the player who won, if such a player exists.
