@@ -1,10 +1,12 @@
 # strategy-bots
-This repository is for an ongoing project featuring:
+This repository is an ongoing project featuring:
 1. Java implementations for various strategy board games, predominantly of the abstract variety.
 2. Bots and algorithms created for the purpose of employing optimal strategy to play and win these games.
 
 Game implementations can be found in 'src/games/'.<br />
 Bot implementations can be found in 'src/bots'.<br />
+
+<br />
 
 ## Required libraries:
 ### LWJGL 2.X
