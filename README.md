@@ -14,7 +14,7 @@ http://www.choco-solver.org/
 ### SwagUI
 https://github.com/SgtSwagrid/swag-ui
 
-<br /><br />
+<br />
 
 ## Featured games:
 ### Game of the Amazons
