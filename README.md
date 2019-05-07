@@ -5,7 +5,7 @@ This repository is for an ongoing project featuring:
 <br />
 Game implementations can be found in 'src/games/'.<br />
 Bot implementations can be found in 'src/bots'.<br />
-<br />
+
 ## Required libraries:
 ### LWJGL 2.X
 http://legacy.lwjgl.org/
