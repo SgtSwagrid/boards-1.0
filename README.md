@@ -1,7 +1,10 @@
 # strategy-bots
-Repository for abstract strategy games and bots which seek to play them well.
+This repository is for an ongoing project featuring:
+    (a) Java implementations for various strategy board games, predominantly of the abstract variety.
+    (b) Bots and algorithms created for the purpose of employing optimal strategy to play and win these games.
 
----
+Game implementations can be found in 'src/games/'.
+Bot implementations can be found in 'src/bots'.
 
 ## Required libraries:
 ### LWJGL 2.X
@@ -11,24 +14,22 @@ http://www.choco-solver.org/
 ### SwagUI
 https://github.com/SgtSwagrid/swag-ui
 
----
-
 ## Featured games:
 ### Game of the Amazons
 https://en.wikipedia.org/wiki/Game_of_the_Amazons
-### Checkers
+### Checkers (TODO)
 https://en.wikipedia.org/wiki/Checkers
-### Chess
+### Chess (In Progress)
 https://en.wikipedia.org/wiki/Chess
 ### Chomp
 https://en.wikipedia.org/wiki/Chomp
-### Clobber
+### Clobber (In Progress)
 https://en.wikipedia.org/wiki/Clobber
-### Dots and Boxes
+### Dots and Boxes (In Progress)
 https://en.wikipedia.org/wiki/Dots_and_Boxes
-### Go
+### Go (TODO)
 https://en.wikipedia.org/wiki/Go_(game)
 ### m,n,k-game
 https://en.wikipedia.org/wiki/M,n,k-game
-### Reversi/Othello
+### Reversi/Othello (In Progress)
 https://en.wikipedia.org/wiki/Reversi
