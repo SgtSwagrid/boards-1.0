@@ -1,10 +1,20 @@
 package bots;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import bots.zobrist.Zobrist;
 import games.HyperMNK;
 import games.HyperMNK.HyperMNKPlayer;
 
@@ -14,7 +24,7 @@ import games.HyperMNK.HyperMNKPlayer;
  *
  */
 
-public class C4_MCTS implements HyperMNKPlayer {
+public class C4_MCTS implements HyperMNKPlayer, Serializable {
 	
 	private GameState gs;
 	private GraphNode head = null;
@@ -23,9 +33,32 @@ public class C4_MCTS implements HyperMNKPlayer {
 	public int turnNo = 0;
 	public int iterations = 0;
 	
+	private static HashMap<Long, MCTSData> zMap;
+	private Zobrist zb = new Zobrist(1111222223333344444l);
+	private Long[][][] zbArr;
+	
+	private static final String zMapPath = "res/C4_Zobrist.dat";
+	
 	private class Vec2 {
 		public int x, y;
 		public Vec2(int x, int y) { this.x = x; this.y = y; }
+	}
+	
+	@Override
+	public void endGame(HyperMNK game, int winner)
+	{
+        try {
+            FileOutputStream fileOut = new FileOutputStream(zMapPath);
+            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+
+            //objectOut.writeObject(zMap);
+            
+            objectOut.close();
+            System.out.println("The Object  was succesfully written to a file");
+ 
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 	}
 	
 	public void takeTurn(HyperMNK game, int playerId) {
@@ -41,18 +74,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		}
 		else
 		{
-			// OLD MCTS action = mcts(gs);
-			TreeNode tn = new TreeNode(gs);
-	        
-			long startTime = System.currentTimeMillis();
-			
-			// do iterations
-			while (System.currentTimeMillis() - startTime < 2500)
-			{
-				tn.selectAction();
-			}
-	     
-			action = getActions(gs).get(tn.bestChild(tn));
+			action = mcts(gs);
 			
 		}
 		
@@ -71,13 +93,21 @@ public class C4_MCTS implements HyperMNKPlayer {
 	private Vec2 mcts(GameState state)
 	{
 		// set the head of the tree
-		head = find(state, head, 3);
+		head = find(state, head, 4);
 		
 		if (head == null)
 		{
 			head = new GraphNode(state);
 			populateChildren(head);
 		}
+		else
+		{
+			System.out.println("head found and loaded " + head.getVisits());
+		}
+
+		//head.setData(getMCTSData(getHash(state)));
+		
+		//System.out.println("head has " + head.getVisits());
 		
 		GraphNode current = head;
 		
@@ -85,7 +115,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		int ii = 0;
 		
 		// do iterations
-		while (System.currentTimeMillis() - startTime < 2500)
+		while (System.currentTimeMillis() - startTime < 2000)
 		{
 			// check for children, if no chilrden find some
 			if (current.getChildren().size() == 0)
@@ -210,7 +240,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 	{
 		float multiplier = 1;//gn.getDepth() % 2 == 0 ? 1.0f : -1.0f ;
 		//System.out.println("Dep[th " + multiplier);
-		return (float)(multiplier * gn.getScore()/(gn.getVisits()+0.00001) + 2.5 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
+		return (float)(multiplier * gn.getScore()/(gn.getVisits()+0.00001) + 1.21 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
 	}
 	
 	private void populateChildren(GraphNode gn)
@@ -223,6 +253,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		for (Vec2 act : actions)
 		{
 			GraphNode child = new GraphNode(getResult(state, act), gn);
+			//child.setData(getMCTSData(getHash(child.getState())));
 			gn.addChild(child);
 		}
 	}
@@ -239,21 +270,23 @@ public class C4_MCTS implements HyperMNKPlayer {
 		}
 		
 		int winner = checkWin(currentState);
-		int score = 0;
+		Long score = 0l;
 		
 		if (winner == gn.getState().getMe())
 		{
-			score = 1;
+			score = 1l;
 		}
 		else if (winner == gn.getState().getOp())
 		{
-			score = 0;
+			score = 0l;
 		}
 		
 		// backpropogate 
 		do
 		{
-			gn.addScore(score);
+			if (gn.getParent() != null && gn.getParent().getState().getPlayer() == winner)
+			
+			{ gn.addScore(score); }
 			gn.addVisit();
 			
 			//score = -score; // NEGAMAX
@@ -287,18 +320,6 @@ public class C4_MCTS implements HyperMNKPlayer {
 			}
 		}
 		
-		/*if (actions.size() == 1)
-		{
-			for (int yy = state.getHeight() - 1; yy >= 0; yy--)
-			{
-				for (int xx = 0 ; xx < state.getWidth(); xx++)
-				{
-				
-					System.out.print(state.getGameState()[xx][yy]);
-				}
-				System.out.println();
-			}
-		}*/
 		return actions;
 	}
 	
@@ -415,14 +436,95 @@ public class C4_MCTS implements HyperMNKPlayer {
 	public void init(HyperMNK game, int playerId)
 	{
 		gs = new GameState(game, playerId, playerId == 1 ? 2 : 1);
+		
+		zMap = loadZMap(zMapPath);
+		
+		if (zMap == null)
+		{
+			zMap = new HashMap<Long, MCTSData>();
+		}
+		else
+		{
+			System.out.println("zMap laoded with " + zMap.size() + " entries.");
+		}
+		
+		zbArr = new Long[gs.getWidth()][gs.getHeight()][2];
+		
+		for (int ii = 0 ; ii < gs.getWidth(); ii++)
+		{
+			for (int jj = 0 ; jj < gs.getHeight(); jj++)
+			{
+				for (int kk = 0 ; kk < 2; kk++)
+				{
+					zbArr[ii][jj][kk] = zb.getRandomKey();
+					//zMap.put(zbArr[ii][jj][kk], new MCTSData(0l, 0l));
+				}
+			}
+		}
 	}
 	
+	public HashMap<Long, MCTSData> loadZMap(String path)
+	{
+		HashMap<Long, MCTSData> hmap = null;
+		
+		try {
+			FileInputStream fi = new FileInputStream(new File(path));
+			ObjectInputStream oi = new ObjectInputStream(fi);
+
+			// Read objects
+			//hmap = (HashMap<Long, MCTSData>) oi.readObject();
+
+			oi.close();
+			fi.close();
+
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found");
+		} catch (IOException e) {
+			System.out.println("Error initializing stream");
+		} /*catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		
+		return hmap;
+	}
 	
-	private class GraphNode
+	public Long getHash(GameState state)
+	{
+		Long hash = 0l;
+		
+		for (int ii = 0 ; ii < state.getWidth(); ii++)
+		{
+			for (int jj = 0 ; jj < state.getHeight(); jj++)
+			{
+				int player = state.getGameState()[ii][jj];
+				if (player != 0)
+				{
+					hash = zb.hash(hash, zbArr[ii][jj][player-1]);
+				}
+			}
+		}
+		
+		return hash;
+	}
+	
+	public MCTSData getMCTSData(Long hash)
+	{
+		MCTSData d =  zMap.get(hash);
+		
+		if (d == null)
+		{
+			d = new MCTSData(0l, 0l);
+			zMap.put(hash, d);
+		}
+		
+		return d;
+	}
+	
+	private class GraphNode implements Serializable
 	{
 		private GameState gs;
-		private int visits = 0;
-		private int score = 0;
+		private MCTSData data;
 		
 		private GraphNode parent = null;
 		private ArrayList<GraphNode> children;
@@ -431,6 +533,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		{
 			gs = state;
 			children = new ArrayList<GraphNode>();
+			data = new MCTSData(0l, 0l);
 		}
 		
 		public GraphNode(GameState state, GraphNode parent)
@@ -459,24 +562,34 @@ public class C4_MCTS implements HyperMNKPlayer {
 			return gs;
 		}
 		
-		public int getScore()
+		public Long getScore()
 		{
-			return score;
+			return data.score;
 		}
 		
-		public void addScore(int score)
+		public void addScore(Long score)
 		{
-			this.score += score;
+			this.data.score += score;
 		}
 		
-		public int getVisits()
+		public Long getVisits()
 		{
-			return visits;
+			return data.visits;
 		}
 		
 		public void addVisit()
 		{
-			visits++;
+			data.visits++;
+		}
+		
+		public MCTSData getData()
+		{
+			return data;
+		}
+		
+		public void setData(MCTSData data)
+		{
+			this.data = data;
 		}
 		
 		public int getDepth()
@@ -493,7 +606,7 @@ public class C4_MCTS implements HyperMNKPlayer {
 		}
 	}
 	
-	private class GameState {
+	public class GameState implements Serializable {
 
 		private int currentPlayer = 0;
 		private int me, opponent;
@@ -519,6 +632,10 @@ public class C4_MCTS implements HyperMNKPlayer {
 			populateBoard(game);
 		}
 		
+		public HyperMNK getBoard() {
+			return game;
+		}
+
 		public GameState(GameState state)
 		{
 			this.game = state.getGame();
@@ -604,139 +721,14 @@ public class C4_MCTS implements HyperMNKPlayer {
 		public int getWidth() { return width; }
 		public int getHeight() { return height; }
 	}
+}
+
+class MCTSData implements Serializable {
 	
-	private class TreeNode {
-	    final Random r = new Random();
-	    static final double epsilon = 1e-6;
-
-	    TreeNode[] children;
-	    double nVisits, totValue;
-	    GameState state;
-	    
-	    public TreeNode(GameState st)
-	    {
-	    	state = st;
-	    }
-	    
-	    public void selectAction() {
-	        List<TreeNode> visited = new LinkedList<TreeNode>();
-	        TreeNode cur = this;
-	        visited.add(this);
-	        while (!cur.isLeaf() && cur.arity() != 0) {
-	            cur = cur.select();
-	            // System.out.println("Adding: " + cur);
-	            visited.add(cur);
-	        }
-	        
-	        cur.expand();
-	        
-	        TreeNode newNode = cur.select();
-	        visited.add(newNode);
-	        double value = rollOut(newNode);
-	        
-	        for (TreeNode node : visited) {
-	            // would need extra logic for n-player game
-	            // System.out.println(node);
-	            node.updateStats(value);
-	        }
-	    }
-
-	    public void expand() {
-			
-	    	ArrayList<Vec2> actions = getActions(state);
-			children = new TreeNode[actions.size()];
-			
-	        for (int i=0; i < actions.size(); i++) {
-				TreeNode child = new TreeNode(getResult(state, actions.get(i)));
-				children[i] = child;
-			}
-
-	    }
-
-	    private TreeNode select() {
-	        TreeNode selected = null;
-	        double bestValue = Double.MIN_VALUE;
-	        for (TreeNode c : children) {
-	            double uctValue =
-	                    c.totValue / (c.nVisits + epsilon) +
-	                            Math.sqrt(Math.log(nVisits+1) / (c.nVisits + epsilon)) +
-	                            r.nextDouble() * epsilon;
-	            // small random number to break ties randomly in unexpanded nodes
-	            // System.out.println("UCT value = " + uctValue);
-	            if (uctValue > bestValue) {
-	                selected = c;
-	                bestValue = uctValue;
-	            }
-	        }
-	        // System.out.println("Returning: " + selected);
-	        return selected;
-	    }
-
-	    public int bestChild(TreeNode head)
-	    {
-	    	TreeNode selected = null;
-	    	int selectedId = 0, counter = 0;
-	    	
-	        double bestValue = Double.MIN_VALUE;
-	        for (TreeNode c : head.children) {
-	            
-	        	double uctValue = c.totValue / (c.nVisits + epsilon) +
-	                            Math.sqrt(Math.log(nVisits+1) / (c.nVisits + epsilon)) + r.nextDouble() * epsilon;
-	            // small random number to break ties randomly in unexpanded nodes
-	            // System.out.println("UCT value = " + uctValue);
-	            if (uctValue > bestValue) {
-	                selected = c;
-	                selectedId = counter;
-	                bestValue = uctValue;
-	            }
-	            counter++;
-	        }
-	        // System.out.println("Returning: " + selected);
-	        return selectedId;
-	    }
-	    
-	    public boolean isLeaf() {
-	        return children == null;
-	    }
-
-	    public double rollOut(TreeNode tn) {
-	        
-			GameState currentState = new GameState(tn.getState());
-			
-			while (!isTerminal(currentState))
-			{
-				Random rand = new Random();
-				ArrayList<Vec2> actions = getActions(currentState);
-				currentState = getResult(currentState, actions.get(rand.nextInt(actions.size())));
-			}
-			
-			int winner = checkWin(currentState);
-			int score = 0;
-			
-			if (winner == tn.getState().getMe())
-			{
-				score = 1;
-			}
-			else if (winner == tn.getState().getOp())
-			{
-				score = -1;
-			}
-
-	        return score;
-	    }
-
-	    public void updateStats(double value) {
-	        nVisits++;
-	        totValue += value;
-	    }
-
-	    public int arity() {
-	        return children == null ? 0 : children.length;
-	    }
-	    
-	    public GameState getState()
-	    {
-	    	return state;
-	    }
+	public Long visits, score;
+	
+	public MCTSData(Long s, Long v) { 
+		this.visits = v; 
+		this.score = s; 
 	}
 }

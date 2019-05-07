@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +18,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 
-public class HyperMNK {
+public class HyperMNK implements Serializable {
     
     public enum Gravity { NONE, POSITIVE, NEGATIVE }
     
@@ -179,6 +180,11 @@ public class HyperMNK {
             
             System.out.println(currentPlayer.getName() + " has won!");
             window.setTitle(TITLE + " - " + currentPlayer.getName() + " Wins!");
+            
+            for (HyperMNKPlayer p : players)
+            {
+            	p.endGame(this, currentPlayerId);
+            }
             
             for(int index : winningStreak.get()) {
                 buttons[index].setBackground(HIGHLIGHT_COLOR);
@@ -427,10 +433,12 @@ public class HyperMNK {
         
         void takeTurn(HyperMNK game, int playerId);
         
+        default void endGame(HyperMNK game, int winner) {}
+        
         default String getName() { return "Bot"; }
     }
     
-    public static final class HyperMNKController implements HyperMNKPlayer {
+    public static final class HyperMNKController implements HyperMNKPlayer, Serializable {
         
         private String name = "Controller";
         
