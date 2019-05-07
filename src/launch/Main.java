@@ -21,8 +21,8 @@ public class Main {
     	    .player(new C4_MCTS())
     	    .start();//*/
 	    
-	    //new Amazons(10, 10, new AmazonsController(), new AmazonsController());
+	    //new Amazons(8, 8, new AmazonsController(), new AmazonsController());
 	    
-	    new Chomp(10, 10, new ChompController("Alice"), new ChompController("Bob"), new ChompController("Charlie"), new ChompController("Dante"));
+	    new Chomp(8, 8, new ChompController(), new ChompController());
 	}
 }

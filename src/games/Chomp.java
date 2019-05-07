@@ -1,9 +1,7 @@
 package games;
 
 import games.util.ChessBoard;
-import games.util.Game;
-import games.util.IllegalMoveException;
-import games.util.Player;
+import games.util.GridGame;
 import swagui.api.Colour;
 import swagui.api.Texture;
 import swagui.api.Tile;
@@ -18,24 +16,15 @@ import swagui.api.Tile;
  * 
  * @author Alec Dorrington
  */
-public class Chomp extends Game {
+public class Chomp extends GridGame {
     
     /** Title of the window. */
     private static final String TITLE = "Chomp";
-    
-    /** Chessboard instance, manages the window, and tile layout. */
-    private ChessBoard board;
     
     /** Stores whether the tile at each position has been chomped. */
     private boolean[][] chomped;
     /** The running total number of tiles which have been chomped. */
     private int numChomped = 0;
-    
-    /** The dimensions of the game board. */
-    private int width, height;
-    
-    /** Whether the current turn has been completed yet. */
-    private volatile boolean turnTaken = false;
     
     /**
      * Asynchronously runs a new Chomp instance.
@@ -45,15 +34,7 @@ public class Chomp extends Game {
      */
     @SafeVarargs
     public Chomp(int width, int height, Player<Chomp>... players) {
-        
-        super(players);
-        
-        //Set the board dimensions.
-        this.width = width;
-        this.height = height;
-        
-        //Start the game.
-        start();
+        super(width, height, TITLE, players);
     }
     
     /**
@@ -68,8 +49,8 @@ public class Chomp extends Game {
         verifyMove(x, y);
         
         //Perform a chomp on all tiles above and to the right of the given location.
-        for(int xx = x; xx < width; xx++) {
-            for(int yy = y; yy < height; yy++) {
+        for(int xx = x; xx < getWidth(); xx++) {
+            for(int yy = y; yy < getHeight(); yy++) {
                 
                 //For each tile which isn't already chomped.
                 if(!chomped[xx][yy]) {
@@ -79,14 +60,14 @@ public class Chomp extends Game {
                     numChomped++;
                     
                     //Recolour the tile to indicate that it was chomped by the current player.
-                    board.setColour(xx, yy, (xx + yy) % 2 == 0 ?
-                            COLOURS[currentPlayerId - 1].lighten(0.1F) :
-                            COLOURS[currentPlayerId - 1]);
+                    getBoard().setColour(xx, yy, (xx + yy) % 2 == 0 ?
+                            getColour(getCurrentPlayerId()).lighten(0.1F) :
+                            getColour(getCurrentPlayerId()));
                 }
             }
         }
         checkLose();
-        turnTaken = true;
+        setTurnTaken();
     }
     
     /**
@@ -100,39 +81,14 @@ public class Chomp extends Game {
     @Override
     protected void init() {
         
-        //Create board and window.
-        board = new ChessBoard(width, height, TITLE);
-        chomped = new boolean[width][height];
+        chomped = new boolean[getWidth()][getHeight()];
         
         //Create a poison marker on the bottom-left tile.
-        Tile poison = new Tile(board.getWindow());
+        Tile poison = new Tile(getWindow());
         poison.setSize(ChessBoard.TILE_SIZE, ChessBoard.TILE_SIZE);
         poison.setTexture(Texture.getTexture("res/misc/poison.png"));
         poison.setColour(Colour.WHITE);
-        board.setPosition(poison, 0, 0);
-    }
-    
-    @Override
-    protected void setupTurn() {
-        
-        turnTaken = false;
-        
-        //Set the title to indicate the players turn.
-        board.getWindow().setTitle(TITLE + " - " + currentPlayer.getName()
-                + "'s Turn (" + COLOUR_NAMES[currentPlayerId - 1] + ")");
-    }
-    
-    @Override
-    protected void verifyTurn() {
-        
-        //Ensure the player completed their turn.
-        if(!turnTaken && board.getWindow().isOpen())
-            throw new IllegalMoveException("Player did not complete turn.");
-    }
-    
-    @Override
-    protected boolean isRunning() {
-        return winnerId == -1 && board.getWindow().isOpen();
+        getBoard().setPosition(poison, 0, 0);
     }
     
     @Override
@@ -140,9 +96,9 @@ public class Chomp extends Game {
         
         //Display the loser of the game.
         //Note: The player marked as the winner is actually the loser in this implementation.
-        if(winnerId != -1) {
-            board.getWindow().setTitle(TITLE + " - " + players[winnerId - 1].getName()
-                    + " (" + COLOUR_NAMES[winnerId - 1] + ") has lost!");
+        if(getWinner().isPresent()) {
+            getWindow().setTitle(TITLE + " - " + getWinner().get().getName()
+                    + " (" + getColourName(getWinnerId()) + ") has lost!");
         }
     }
     
@@ -154,12 +110,16 @@ public class Chomp extends Game {
      */
     private void verifyMove(int x, int y) {
         
+        //Ensure game is running.
+        if(!isRunning())
+            throw new IllegalMoveException("Can't take moves while the game isn't running.");
+        
         //Ensure only one chomp is performed per turn.
-        if(turnTaken)
+        if(turnTaken())
             throw new IllegalMoveException("Can't chomp multiple pieces.");
         
         //Ensure chomp location is in bounds.
-        if(x < 0 || x >= width || y < 0 || y >= width)
+        if(x < 0 || x >= getWidth() || y < 0 || y >= getHeight())
             throw new IllegalMoveException("Location out of bounds.");
         
         //Ensure chomp location isn't already chomped.
@@ -177,11 +137,11 @@ public class Chomp extends Game {
         
         //The player loses if they chomp the poison tile.
         if(chomped[0][0]) {
-            winnerId = currentPlayerId;
+            endGame(getCurrentPlayerId());
             
         //The player loses if there are no available tiles to chomp.
-        } else if(numChomped == width * height - 1) {
-            winnerId = currentPlayerId % players.length + 1;
+        } else if(numChomped == getWidth() * getHeight() - 1) {
+            endGame(getCurrentPlayerId() % getNumPlayers() + 1);
         }
     }
     
@@ -210,10 +170,10 @@ public class Chomp extends Game {
         public void init(Chomp game, int playerId) {
             
             //Add a click listener to each grid cell on the board.
-            game.board.addListenerToAll((x, y) -> {
+            game.getBoard().addListenerToAll((x, y) -> {
                 
                 //Listeners should only be active on your turn.
-                if(playerId != game.currentPlayerId)
+                if(playerId != game.getCurrentPlayerId())
                     return;
                 
                 try {
@@ -228,7 +188,7 @@ public class Chomp extends Game {
         public void takeTurn(Chomp game, int playerId) {
             //Wait until the turn is complete before returning control to the game.
             //Actual logic is handled asynchronously by the above button listeners.
-            while(!game.turnTaken && game.board.getWindow().isOpen()) {}
+            while(!game.turnTaken() && game.getWindow().isOpen()) {}
         }
         
         @Override
