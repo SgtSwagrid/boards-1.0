@@ -33,15 +33,18 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 	public int turnNo = 0;
 	public int iterations = 0;
 	
-	private static HashMap<Long, MCTSData> zMap;
-	private Zobrist zb = new Zobrist(1111222223333344444l);
-	private Long[][][] zbArr;
+	private Zobrist zobrist;
 	
-	private static final String zMapPath = "res/C4_Zobrist.dat";
+	private String zMapPath = "res/C4_Zobrist.dat";
 	
 	private class Vec2 {
 		public int x, y;
 		public Vec2(int x, int y) { this.x = x; this.y = y; }
+	}
+	
+	public C4_MCTS(String path)
+	{
+		zMapPath += path;
 	}
 	
 	@Override
@@ -51,7 +54,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
             FileOutputStream fileOut = new FileOutputStream(zMapPath);
             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
 
-            //objectOut.writeObject(zMap);
+            objectOut.writeObject(zobrist);
             
             objectOut.close();
             System.out.println("The Object  was succesfully written to a file");
@@ -80,12 +83,6 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		
 		//game.loadState(gs.getGameState());
 		
-		try {
-			Thread.sleep(200);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		
 		turnNo++;
 		game.placePiece(action.x, action.y);
 	}
@@ -93,7 +90,9 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 	private Vec2 mcts(GameState state)
 	{
 		// set the head of the tree
-		head = find(state, head, 4);
+		//head = find(state, head, 4);
+		
+		head = null;
 		
 		if (head == null)
 		{
@@ -105,9 +104,12 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 			System.out.println("head found and loaded " + head.getVisits());
 		}
 
-		//head.setData(getMCTSData(getHash(state)));
+		head.setData(getMCTSDataSafe(head.getState()));
 		
-		//System.out.println("head has " + head.getVisits());
+		System.out.println("head has " + head.getVisits());
+		System.out.println("Visits were " + zobrist.getVisits(head.getState().getGameState()));
+		System.out.println("Score was " + zobrist.getScore(head.getState().getGameState()));
+
 		
 		GraphNode current = head;
 		
@@ -115,7 +117,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		int ii = 0;
 		
 		// do iterations
-		while (System.currentTimeMillis() - startTime < 2000)
+		while (System.currentTimeMillis() - startTime < 1000)
 		{
 			// check for children, if no chilrden find some
 			if (current.getChildren().size() == 0)
@@ -253,7 +255,9 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		for (Vec2 act : actions)
 		{
 			GraphNode child = new GraphNode(getResult(state, act), gn);
-			//child.setData(getMCTSData(getHash(child.getState())));
+			
+			child.setData(getMCTSDataSafe(child.getState()));
+			
 			gn.addChild(child);
 		}
 	}
@@ -270,24 +274,30 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		}
 		
 		int winner = checkWin(currentState);
-		Long score = 0l;
+		int score = 0;
 		
 		if (winner == gn.getState().getMe())
 		{
-			score = 1l;
+			score = 1;
 		}
 		else if (winner == gn.getState().getOp())
 		{
-			score = 0l;
+			score = 0;
 		}
 		
 		// backpropogate 
 		do
 		{
+			int scoreB = 0;
 			if (gn.getParent() != null && gn.getParent().getState().getPlayer() == winner)
-			
-			{ gn.addScore(score); }
+			{ 
+				gn.addScore(score); 
+				scoreB = score;
+			}
 			gn.addVisit();
+			
+			//System.out.println(gn.getVisits());
+			zobrist.put(gn.getState().getGameState(), 1, scoreB);
 			
 			//score = -score; // NEGAMAX
 			
@@ -437,42 +447,28 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 	{
 		gs = new GameState(game, playerId, playerId == 1 ? 2 : 1);
 		
-		zMap = loadZMap(zMapPath);
+		zobrist = loadZobrist(zMapPath);
 		
-		if (zMap == null)
+		if (zobrist == null)
 		{
-			zMap = new HashMap<Long, MCTSData>();
+			zobrist = new Zobrist(15485867, gs.getGameState(), 2, 1112223334);
 		}
 		else
 		{
-			System.out.println("zMap laoded with " + zMap.size() + " entries.");
-		}
-		
-		zbArr = new Long[gs.getWidth()][gs.getHeight()][2];
-		
-		for (int ii = 0 ; ii < gs.getWidth(); ii++)
-		{
-			for (int jj = 0 ; jj < gs.getHeight(); jj++)
-			{
-				for (int kk = 0 ; kk < 2; kk++)
-				{
-					zbArr[ii][jj][kk] = zb.getRandomKey();
-					//zMap.put(zbArr[ii][jj][kk], new MCTSData(0l, 0l));
-				}
-			}
+			System.out.println("zorbist laoded with " + zobrist.size() + " entries.");
 		}
 	}
 	
-	public HashMap<Long, MCTSData> loadZMap(String path)
+	public Zobrist loadZobrist(String path)
 	{
-		HashMap<Long, MCTSData> hmap = null;
+		Zobrist zob = null;
 		
 		try {
 			FileInputStream fi = new FileInputStream(new File(path));
 			ObjectInputStream oi = new ObjectInputStream(fi);
 
 			// Read objects
-			//hmap = (HashMap<Long, MCTSData>) oi.readObject();
+			zob = (Zobrist) oi.readObject();
 
 			oi.close();
 			fi.close();
@@ -481,44 +477,39 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 			System.out.println("File not found");
 		} catch (IOException e) {
 			System.out.println("Error initializing stream");
-		} /*catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}*/
-		
-		return hmap;
-	}
-	
-	public Long getHash(GameState state)
-	{
-		Long hash = 0l;
-		
-		for (int ii = 0 ; ii < state.getWidth(); ii++)
-		{
-			for (int jj = 0 ; jj < state.getHeight(); jj++)
-			{
-				int player = state.getGameState()[ii][jj];
-				if (player != 0)
-				{
-					hash = zb.hash(hash, zbArr[ii][jj][player-1]);
-				}
-			}
 		}
 		
-		return hash;
+		return zob;
 	}
 	
-	public MCTSData getMCTSData(Long hash)
+	public MCTSData getMCTSData(GameState state)
 	{
-		MCTSData d =  zMap.get(hash);
+		MCTSData d = null;
 		
-		if (d == null)
+		if (zobrist.isEntry(state.getGameState()))
 		{
-			d = new MCTSData(0l, 0l);
-			zMap.put(hash, d);
+			int visits = zobrist.getVisits(state.getGameState());
+			int score = zobrist.getScore(state.getGameState());
+			
+			d = new MCTSData(score, visits);
 		}
 		
 		return d;
+	}
+	
+	public MCTSData getMCTSDataSafe(GameState state)
+	{
+		MCTSData data = getMCTSData(state);
+		
+		if (data == null)
+		{
+			data = new MCTSData(0, 0);
+		}
+		
+		return data;
 	}
 	
 	private class GraphNode implements Serializable
@@ -533,7 +524,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		{
 			gs = state;
 			children = new ArrayList<GraphNode>();
-			data = new MCTSData(0l, 0l);
+			data = new MCTSData(0, 0);
 		}
 		
 		public GraphNode(GameState state, GraphNode parent)
@@ -562,17 +553,17 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 			return gs;
 		}
 		
-		public Long getScore()
+		public int getScore()
 		{
 			return data.score;
 		}
 		
-		public void addScore(Long score)
+		public void addScore(int score)
 		{
 			this.data.score += score;
 		}
 		
-		public Long getVisits()
+		public int getVisits()
 		{
 			return data.visits;
 		}
@@ -580,6 +571,11 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		public void addVisit()
 		{
 			data.visits++;
+		}
+		
+		public void setVisits(int visits)
+		{
+			data.visits = visits;
 		}
 		
 		public MCTSData getData()
@@ -725,9 +721,9 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 
 class MCTSData implements Serializable {
 	
-	public Long visits, score;
+	public int visits, score;
 	
-	public MCTSData(Long s, Long v) { 
+	public MCTSData(int s, int v) { 
 		this.visits = v; 
 		this.score = s; 
 	}
