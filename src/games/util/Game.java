@@ -14,16 +14,11 @@ import swagui.api.Colour;
 public abstract class Game {
     
     /** List of player colours. */
-    private static final Colour[] COLOURS = new Colour[] {
+    protected static final Colour[] COLOURS = new Colour[] {
              Colour.rgb(87, 95, 207),
              Colour.rgb(255, 94, 87),
              Colour.rgb(5, 196, 107),
              Colour.rgb(255, 211, 42)
-    };
-    
-    /** List of colour names. */
-    private static final String[] COLOUR_NAMES = new String[] {
-            "Blue", "Red", "Green", "Yellow"
     };
     
     /** Array of all players participating in this game. */
@@ -51,14 +46,7 @@ public abstract class Game {
      * Must subsequently call 'start()' to begin the game.
      * @param players the players (in turn order) participating in this game.
      */
-    protected Game(Player... players) {
-        
-        //There can't be more players than there are colours.
-        if(players.length > COLOURS.length)
-            throw new IllegalArgumentException("Max players: " + COLOURS.length);
-        
-        this.players = players;
-    }
+    protected Game(Player... players) { this.players = players; }
     
     /**
      * @return the number of players participating in this game.
@@ -107,25 +95,13 @@ public abstract class Game {
     }
     
     /**
-     * Get the colour associated with the given player ID.
-     * @param playerId the ID of the player to get the colour of.
-     * @return the colour of the player.
+     * @return whether the current turn has yet been completed.
      */
-    protected Colour getColour(int playerId) {
-        return COLOURS[playerId - 1];
-    }
-    
-    /**
-     * Get the name of the colour associated with the given player ID.
-     * @param playerId the ID of the player to get the colour of.
-     * @return the human-readable name of the colour of the player.
-     */
-    protected String getColourName(int playerId) {
-        return COLOUR_NAMES[playerId - 1];
-    }
-    
     protected boolean turnTaken() { return turnTaken; }
     
+    /**
+     * Declare the current turn as having been completed.
+     */
     protected void setTurnTaken() { turnTaken = true; }
     
     /**
@@ -154,14 +130,18 @@ public abstract class Game {
                     
                     //Have the current player take their turn.
                     turnTaken = false;
-                    setupTurn();
+                    preTurn();
                     currentPlayer.takeTurn(Game.this, currentPlayerId);
-                    verifyTurn();
+                    postTurn();
+                    checkWin();
                     
                     //Increment the current player.
                     currentPlayerId = currentPlayerId % players.length + 1;
                 }
                 onFinish();
+                for(int i = 0; i < players.length; i++) {
+                    players[i].gameEnd(Game.this, i, winnerId);
+                }
             }
         }.start();
     }
@@ -175,17 +155,22 @@ public abstract class Game {
     /**
      * To be called by the game before each turn is taken.<br>
      */
-    protected void setupTurn() {}
+    protected void preTurn() {}
     
     /**
      * To be called by the game after each turn is taken.<br>
      * Implementations of this may wish to verify the turn taken.
      */
-    protected void verifyTurn() {
+    protected void postTurn() {
         //Ensure the player completed their turn.
         if(!turnTaken())
             throw new IllegalMoveException("Player did not complete turn.");
     }
+    
+    /**
+     * To be called upon the completion of each turn to check if any player has won.
+     */
+    protected void checkWin() {}
     
     /**
      * To be called by the game after the game has finished.<br>
@@ -213,6 +198,14 @@ public abstract class Game {
          * @param playerId the ID of this player.
          */
         void takeTurn(G game, int playerId);
+        
+        /**
+         * Called once at the completion of the game.
+         * @param game the game being played.
+         * @param playerId the ID of this player.
+         * @param winnerId the ID of the winning player.
+         */
+        default void gameEnd(G game, int playerId, int winnerId) {}
         
         /**
          * Called to determine the name of this player.<br>

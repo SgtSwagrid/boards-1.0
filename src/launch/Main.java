@@ -5,6 +5,8 @@ import games.Amazons;
 import games.Amazons.AmazonsController;
 import games.Chomp;
 import games.Chomp.ChompController;
+import games.Clobber;
+import games.Clobber.ClobberController;
 import games.HyperMNK;
 import games.HyperMNK.HyperMNKController;
 import games.legacy.ConnectFour;
@@ -16,8 +18,9 @@ public class Main {
     private static final int HYPER_MNK = 0;
     private static final int AMAZONS = 1;
     private static final int CHOMP = 2;
+    private static final int CLOBBER = 3;
 	
-    private static int game = 3;
+    private static int game = CLOBBER;
     
 	public static void main(String[] args) {
 	    
@@ -41,8 +44,13 @@ public class Main {
 	            new Chomp(8, 8, new ChompController(), new ChompController());
 	            break;
 	            
-	        case 3:
+	        case CLOBBER:
+	            new Clobber(5, 6, new ClobberController(), new ClobberController());
+	            break;
+	            
+	        case 69:
 	            new ConnectFour(new SwagConnectBot(3000), new ConnectFourController());
+	            break;
 	    }
 	}
 }

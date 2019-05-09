@@ -32,9 +32,8 @@ public class Chomp extends GridGame {
      * @param height the height of the board.
      * @param players the players who are to participate.
      */
-    @SafeVarargs
-    public Chomp(int width, int height, Player<Chomp>... players) {
-        super(width, height, TITLE, players);
+    public Chomp(int width, int height, Player<Chomp> player1, Player<Chomp> player2) {
+        super(width, height, TITLE, player1, player2);
     }
     
     /**
@@ -46,7 +45,7 @@ public class Chomp extends GridGame {
      */
     public void chompTile(int x, int y) {
         
-        verifyMove(x, y);
+        validateMove(x, y);
         
         //Perform a chomp on all tiles above and to the right of the given location.
         for(int xx = x; xx < getWidth(); xx++) {
@@ -61,13 +60,28 @@ public class Chomp extends GridGame {
                     
                     //Recolour the tile to indicate that it was chomped by the current player.
                     getBoard().setColour(xx, yy, (xx + yy) % 2 == 0 ?
-                            getColour(getCurrentPlayerId()).lighten(0.1F) :
-                            getColour(getCurrentPlayerId()));
+                            COLOURS[getCurrentPlayerId() - 1].lighten(0.1F) :
+                            COLOURS[getCurrentPlayerId() - 1]);
                 }
             }
         }
-        checkLose();
         setTurnTaken();
+    }
+    
+    /**
+     * Verifies that a move is legitimate, throwing an exception if it isn't.
+     * @param x the x coordinate of the chomp.
+     * @param y the y coordinate of the chomp.
+     * @throws IllegalMoveException
+     */
+    @Override
+    protected void validateMove(int x, int y) {
+        
+        validateMove(x, y);
+        
+        //Ensure chomp location isn't already chomped.
+        if(chomped[x][y])
+            throw new IllegalMoveException("Tile has already been chomped.");
     }
     
     /**
@@ -92,56 +106,15 @@ public class Chomp extends GridGame {
     }
     
     @Override
-    protected void onFinish() {
-        
-        //Display the loser of the game.
-        //Note: The player marked as the winner is actually the loser in this implementation.
-        if(getWinner().isPresent()) {
-            getWindow().setTitle(TITLE + " - " + getWinner().get().getName()
-                    + " (" + getColourName(getWinnerId()) + ") has lost!");
-        }
-    }
-    
-    /**
-     * Verifies that a move is legitimate, throwing an exception if it isn't.
-     * @param x the x coordinate of the chomp.
-     * @param y the y coordinate of the chomp.
-     * @throws IllegalMoveException
-     */
-    private void verifyMove(int x, int y) {
-        
-        //Ensure game is running.
-        if(!isRunning())
-            throw new IllegalMoveException("Can't take moves while the game isn't running.");
-        
-        //Ensure only one chomp is performed per turn.
-        if(turnTaken())
-            throw new IllegalMoveException("Can't chomp multiple pieces.");
-        
-        //Ensure chomp location is in bounds.
-        if(x < 0 || x >= getWidth() || y < 0 || y >= getHeight())
-            throw new IllegalMoveException("Location out of bounds.");
-        
-        //Ensure chomp location isn't already chomped.
-        if(chomped[x][y])
-            throw new IllegalMoveException("Tile has already been chomped.");
-    }
-    
-    /**
-     * Checks if a player has lost (there are no more available tiles).<br>
-     * Will set the loser and end the game if this is so.
-     */
-    private void checkLose() {
-        
-        //Note: The player marked as the winner is actually the loser in this implementation.
+    protected void checkWin() {
         
         //The player loses if they chomp the poison tile.
         if(chomped[0][0]) {
-            endGame(getCurrentPlayerId());
+            endGame(getCurrentPlayerId() % 2 + 1);
             
-        //The player loses if there are no available tiles to chomp.
+        //The player wins if there are no available tiles to chomp.
         } else if(numChomped == getWidth() * getHeight() - 1) {
-            endGame(getCurrentPlayerId() % getNumPlayers() + 1);
+            endGame(getCurrentPlayerId());
         }
     }
     
@@ -173,7 +146,7 @@ public class Chomp extends GridGame {
             game.getBoard().addListenerToAll((x, y) -> {
                 
                 //Listeners should only be active on your turn.
-                if(playerId != game.getCurrentPlayerId())
+                if(playerId != game.getCurrentPlayerId() || !game.isRunning())
                     return;
                 
                 try {

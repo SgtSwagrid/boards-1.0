@@ -28,7 +28,7 @@ public class ChessBoard {
     public static final Colour TILE_COLOUR2 = Colour.rgb(234, 181, 67);
     
     /** Size of each tile in pixels. */
-    public static final int TILE_SIZE = 64;
+    public static final int TILE_SIZE = 96;
     
     /** Dimensions of the board in number of tiles. */
     private int width, height;

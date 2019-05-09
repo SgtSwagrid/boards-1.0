@@ -55,21 +55,16 @@ public class Amazons extends GridGame {
      */
     public void moveQueen(int x_from, int y_from, int x_to, int y_to) {
         
-        //Ensure game is running.
-        if(!isRunning())
-            throw new IllegalMoveException("Can't take moves while the game isn't running.");
+        validateMove(x_from, y_from);
+        validateMove(x_to, y_to);
         
-        //Ensure queen hasn't already been moved.
-        if(queenMoved || turnTaken())
-            throw new IllegalMoveException("Can't move pieces twice.");
-        
-        //Ensure source location is in bounds.
-        if(x_from < 0 || x_from >= getWidth() || y_from < 0 || y_from >= getHeight())
-            throw new IllegalMoveException("Source location out of bounds.");
-        
-        //Ensure a piece exists at the given 'from' position.
+        //Ensure there is a piece at the from location.
         if(!getPiece(x_from, y_from).isPresent())
             throw new IllegalMoveException("No such piece exists.");
+        
+        //Ensure queen hasn't already been moved.
+        if(queenMoved)
+            throw new IllegalMoveException("Can't move pieces twice.");
         
         //Move the piece, subject to game constraints.
         getPiece(x_from, y_from).get().movePiece(x_to, y_to);
@@ -90,23 +85,15 @@ public class Amazons extends GridGame {
      */
     public void shootArrow(int x, int y) {
         
-        //Ensure game is running.
-        if(!isRunning())
-            throw new IllegalMoveException("Can't take moves while the game isn't running.");
+        validateMove(x, y);
         
         //Ensure actions are taken in the correct order.
         if(!queenMoved)
             throw new IllegalMoveException("Must move a queen before shooting.");
         
-        //Ensure arrow hasn't already been fired.
-        if(turnTaken())
-            throw new IllegalMoveException("Can't shoot multiple arrows.");
-        
         //Fire the arrow, subject to game constraints.
         movedPiece.get().shootArrow(x, y);
         
-        //Check if this move allowed the a player to win the game. If so, end the game.
-        checkWin();
         setTurnTaken(); queenMoved = false;
     }
     
@@ -165,63 +152,52 @@ public class Amazons extends GridGame {
     }
     
     @Override
-    protected void onFinish() {
-        //Set the window title to reflect the game completion.
-        super.onFinish();
-        //Highlight the queen pieces of the winner and loser in different colours.
-        if(getWinner().isPresent()) highlightWinner();
-    }
-    
-    /**
-     * Check if the player of the given ID has won.<br>
-     * Will declare them as the winner if this is so.
-     * @param playerId the ID of the player for whom to check for victory.
-     */
-    private void checkWin() {
+    protected void checkWin() {
         
-        //For each player.
-        outer: for(int i = 1; i <= getNumPlayers(); i++) {
+        //Check if any of the opponents pieces are free to move.
+        for(Piece piece : getPieces(getCurrentPlayerId() % 2 + 1)) {
             
-            //Check if any of this players pieces are free to move.
-            for(Piece piece : getPieces(i)) {
+            //Only consider queens.
+            if(!(piece instanceof Queen)) continue;
+            
+            //Look at all the surrounding tiles for each opponent piece.
+            for(int x = Math.max(piece.getCol() - 1, 0);
+                    x <= Math.min(piece.getCol() + 1, getWidth() - 1); x++) {
                 
-                //Only consider queens.
-                if(!(piece instanceof Queen)) continue;
-                
-                //Look at all the surrounding tiles for each opponent piece.
-                for(int x = Math.max(piece.getCol() - 1, 0);
-                        x <= Math.min(piece.getCol() + 1, getWidth() - 1); x++) {
+                for(int y = Math.max(piece.getRow() - 1, 0);
+                        y <= Math.min(piece.getRow() + 1, getHeight() - 1); y++) {
                     
-                    for(int y = Math.max(piece.getRow() - 1, 0);
-                            y <= Math.min(piece.getRow() + 1, getHeight() - 1); y++) {
-                        
-                        //Player hasn't won if the opponent has somewhere to move.
-                        if(getPiece(x, y).isPresent())
-                            continue outer;
+                    //Player hasn't won if the opponent has somewhere to move.
+                    if(!getPiece(x, y).isPresent()) {
+                        return;
                     }
                 }
             }
-            //This player has nowhere to move, the other player wins.
-            endGame((i + 1) % getNumPlayers() + 1);
         }
+        //The opponent has nowhere to move, this player wins.
+        endGame(getCurrentPlayerId());
     }
     
-    /**
-     * Highlight the tiles of the queens of each player.
-     * @param winnerId the player whose queens should receive the winning colour.
-     */
-    private void highlightWinner() {
+    @Override
+    protected void onFinish() {
         
-        //Set the colour for the winning pieces.
-        for(Piece p : getPieces(getWinnerId())) {
-            if(p instanceof Queen)
-                getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR1);
-        }
+        //Set the window title to reflect the game completion.
+        super.onFinish();
         
-        //Set the colour for the losing pieces.
-        for(Piece p : getPieces(getWinnerId())) {
-            if(p instanceof Queen)
-                getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR2);
+        //Highlight the queen pieces of the winner and loser in different colours.
+        if(getWinner().isPresent()) {
+            
+            //Set the colour for the winning pieces.
+            for(Piece p : getPieces(getWinnerId())) {
+                if(p instanceof Queen)
+                    getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR1);
+            }
+            
+            //Set the colour for the losing pieces.
+            for(Piece p : getPieces(getWinnerId() % 2 + 1)) {
+                if(p instanceof Queen)
+                    getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR2);
+            }
         }
     }
     
@@ -256,7 +232,7 @@ public class Amazons extends GridGame {
             game.getBoard().addListenerToAll((x, y) -> {
                 
                 //Listeners should only be active on your own turn.
-                if(playerId != game.getCurrentPlayerId())
+                if(playerId != game.getCurrentPlayerId() || !game.isRunning())
                     return;
                 
                 //Move a queen.
@@ -356,7 +332,7 @@ public class Amazons extends GridGame {
             validateMove(getCol(), getRow(), x_to, y_to);
             
             //Update the position of the piece.
-            Amazons.this.setPosition(this, x_to, y_to);
+            setBoardPos(x_to, y_to);
         }
         
         /**
@@ -386,10 +362,6 @@ public class Amazons extends GridGame {
             //Ensure piece is owned by the current player.
             if(getOwnerId() != getCurrentPlayerId())
                 throw new IllegalMoveException("Can't move an opponents piece.");
-            
-            //Ensure target location is in bounds.
-            if(x_to < 0 || x_to >= getWidth() || y_to < 0 || y_to >= getHeight())
-                throw new IllegalMoveException("Target location out of bounds.");
             
             //Ensure piece doesn't move on top of itself.
             if(x_to == x_from && y_to == y_from)

@@ -57,7 +57,7 @@ public class Chess extends Game {
     }
     
     @Override
-    protected void verifyTurn() {
+    protected void postTurn() {
         
     }
     

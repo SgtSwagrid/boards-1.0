@@ -85,29 +85,6 @@ public abstract class GridGame extends Game {
     protected ChessBoard getBoard() { return board; }
     
     /**
-     * Sets the position of a piece.
-     * @param piece the piece for which to set the position.
-     * @param x the new x position.
-     * @param y the new y position.
-     */
-    protected void setPosition(Piece piece, int x, int y) {
-        
-        //Remove the piece from its previous board index.
-        if(boardPieces[piece.getCol()][piece.getRow()] == piece)
-            boardPieces[piece.getCol()][piece.getRow()] = null;
-        
-        //Add the piece to its new board index.
-        boardPieces[x][y] = piece;
-        playerPieces[piece.getOwnerId() - 1].add(piece);
-        
-        //Set the graphical positon of the piece.
-        board.setPosition(piece, x, y);
-        
-        piece.x = x;
-        piece.y = y;
-    }
-    
-    /**
      * Finds the piece at a position on the board, if on exists.
      * @param x the x position to check.
      * @param y the y position to check.
@@ -132,14 +109,13 @@ public abstract class GridGame extends Game {
     }
     
     @Override
-    protected void setupTurn() {
+    protected void preTurn() {
         //Set the title to indicate the players' turn.
-        window.setTitle(title + " - " + getCurrentPlayer().getName() + "'s Turn ("
-                + getColourName(getCurrentPlayerId()) + ")");
+        window.setTitle(title + " - " + getCurrentPlayer().getName() + "'s Turn");
     }
     
     @Override
-    protected void verifyTurn() {
+    protected void postTurn() {
         //Ensure the player completed their turn.
         if(!turnTaken() && getWindow().isOpen())
             throw new IllegalMoveException("Player did not complete turn.");
@@ -149,10 +125,31 @@ public abstract class GridGame extends Game {
     protected void onFinish() {
         //Display the winner of the game.
         if(getWinner().isPresent()) {
-            getBoard().getWindow().setTitle(title + " - " + getWinner().get().getName()
-                    + " (" + getColourName(getCurrentPlayerId()) + ") has won!");
-            
+            getBoard().getWindow().setTitle(title + " - "
+                    + getWinner().get().getName() + " has won!");
         }
+    }
+    
+    /**
+     * Performs basic validity checks on pieces being moved or placed.
+     * Ensures the game is running, the turn hasn't yet been taken,
+     * the position is in bounds and the piece exists.
+     * @param x the x position of the piece.
+     * @param y the y position of the piece.
+     */
+    protected void validateMove(int x, int y) {
+        
+        //Ensure game is running.
+        if(!isRunning())
+            throw new IllegalMoveException("Can't take moves while the game isn't running.");
+        
+        //Ensure no piece has already been moved this turn.
+        if(turnTaken())
+            throw new IllegalMoveException("Can't move pieces twice.");
+        
+        //Ensure source location is in bounds.
+        if(x < 0 || x >= getWidth() || y < 0 || y >= getHeight())
+            throw new IllegalMoveException("Location out of bounds.");
     }
     
     /**
@@ -168,7 +165,7 @@ public abstract class GridGame extends Game {
         private int ownerId;
         
         /** The board position of this piece. */
-        protected int x, y;
+        private int x, y;
         
         /**
          * Constructs a new piece of a particular owner at a particular position.
@@ -187,11 +184,51 @@ public abstract class GridGame extends Game {
             this.ownerId = ownerId;
             
             //Update the position of this piece.
-            GridGame.this.setPosition(this, x, y);
+            setBoardPos(x, y);
             
             //Match the size of the piece to the grid size of the board.
             setSize(ChessBoard.TILE_SIZE, ChessBoard.TILE_SIZE);
             setColour(Colour.WHITE);
+        }
+        
+        /**
+         * Sets the position of this piece.
+         * @param piece the piece for which to set the position.
+         * @param x the new x position.
+         * @param y the new y position.
+         */
+        public void setBoardPos(int x, int y) {
+            
+            //Remove the piece from its previous board index.
+            if(boardPieces[getCol()][getRow()] == this)
+                boardPieces[getCol()][getRow()] = null;
+            
+            //Add the piece to its new board index.
+            boardPieces[x][y] = this;
+            playerPieces[getOwnerId() - 1].add(this);
+            
+            //Set the graphical positon of the piece.
+            board.setPosition(this, x, y);
+            
+            this.x = x;
+            this.y = y;
+        }
+        
+        /**
+         * Removes this piece from the board.
+         */
+        @Override
+        public void delete() {
+            
+            //Remove the piece from the board pieces array.
+            if(boardPieces[getCol()][getRow()] == this)
+                boardPieces[getCol()][getRow()] = null;
+            
+            //Remove the piece from the player pieces set.
+            playerPieces[getOwnerId() - 1].remove(this);
+            
+            //Remove this tile from the renderer.
+            super.delete();
         }
         
         /**
