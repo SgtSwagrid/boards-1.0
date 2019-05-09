@@ -1,11 +1,14 @@
 package launch;
 
+import bots.legacy.SwagConnectBot;
 import games.Amazons;
 import games.Amazons.AmazonsController;
 import games.Chomp;
 import games.Chomp.ChompController;
 import games.HyperMNK;
 import games.HyperMNK.HyperMNKController;
+import games.legacy.ConnectFour;
+import games.legacy.ConnectFour.ConnectFourController;
 import games.HyperMNK.Gravity;
 
 public class Main {
@@ -14,7 +17,7 @@ public class Main {
     private static final int AMAZONS = 1;
     private static final int CHOMP = 2;
 	
-    private static int game = AMAZONS;
+    private static int game = 3;
     
 	public static void main(String[] args) {
 	    
@@ -37,6 +40,9 @@ public class Main {
 	        case CHOMP:
 	            new Chomp(8, 8, new ChompController(), new ChompController());
 	            break;
+	            
+	        case 3:
+	            new ConnectFour(new SwagConnectBot(3000), new ConnectFourController());
 	    }
 	}
 }
