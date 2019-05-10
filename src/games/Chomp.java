@@ -47,6 +47,10 @@ public class Chomp extends GridGame {
         
         validateMove(x, y);
         
+        //Ensure chomp location isn't already chomped.
+        if(chomped[x][y])
+            throw new IllegalMoveException("Tile has already been chomped.");
+        
         //Perform a chomp on all tiles above and to the right of the given location.
         for(int xx = x; xx < getWidth(); xx++) {
             for(int yy = y; yy < getHeight(); yy++) {
@@ -66,16 +70,6 @@ public class Chomp extends GridGame {
             }
         }
         setTurnTaken();
-    }
-    
-    @Override
-    protected void validateMove(int x, int y) {
-        
-        super.validateMove(x, y);
-        
-        //Ensure chomp location isn't already chomped.
-        if(chomped[x][y])
-            throw new IllegalMoveException("Tile has already been chomped.");
     }
     
     /**
