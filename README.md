@@ -27,7 +27,7 @@ https://en.wikipedia.org/wiki/Checkers
 https://en.wikipedia.org/wiki/Chess
 ### Chomp
 https://en.wikipedia.org/wiki/Chomp
-### Clobber (In Progress)
+### Clobber
 https://en.wikipedia.org/wiki/Clobber
 ### Dots and Boxes (In Progress)
 https://en.wikipedia.org/wiki/Dots_and_Boxes
