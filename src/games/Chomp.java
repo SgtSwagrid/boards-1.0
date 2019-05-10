@@ -68,16 +68,10 @@ public class Chomp extends GridGame {
         setTurnTaken();
     }
     
-    /**
-     * Verifies that a move is legitimate, throwing an exception if it isn't.
-     * @param x the x coordinate of the chomp.
-     * @param y the y coordinate of the chomp.
-     * @throws IllegalMoveException
-     */
     @Override
     protected void validateMove(int x, int y) {
         
-        validateMove(x, y);
+        super.validateMove(x, y);
         
         //Ensure chomp location isn't already chomped.
         if(chomped[x][y])
