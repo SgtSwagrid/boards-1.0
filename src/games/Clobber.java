@@ -189,6 +189,7 @@ public class Clobber extends GridGame {
                             //Move the selected piece to this location.
                             game.moveStone(selected.get().getCol(), selected.get().getRow(), x, y);
                             game.getBoard().resetColours();
+                            selected = Optional.empty();
                             
                         //Invalid moves should be ignored.
                         } catch(IllegalMoveException e) {}
