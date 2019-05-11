@@ -23,7 +23,7 @@ public class Main {
     private static final int CLOBBER = 3;
     private static final int REVERSI = 4;
 	
-    private static int game = REVERSI;
+    private static int game = AMAZONS;
     
 	public static void main(String[] args) {
 	    
@@ -52,7 +52,7 @@ public class Main {
 	            break;
 	            
 	        case REVERSI:
-	            new Reversi(8, 8, new ReversiController("White"), new ReversiController("Black"));
+	            new Reversi(8, 8, new ReversiController(), new ReversiController());
 	            break;
 	            
 	        case 69:

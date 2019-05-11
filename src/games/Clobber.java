@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import games.util.GridGame;
 import swagui.api.Colour;
-import swagui.api.Texture;
 
 /**
  * <b>Clobber implementation.</b><br>
@@ -21,10 +20,18 @@ public class Clobber extends GridGame {
     /** Title of the window. */
     private static final String TITLE = "Clobber";
     
+    /** Textures used for game pieces. */
+    private static final String[] STONE_TEXTURES = new String[] {
+            "res/chess/white_pawn.png", "res/chess/black_pawn.png"};
+    
+    /** The display name of the colour of each player. */
+    private static final String[] COLOUR_NAMES = new String[] {
+            "White", "Black"};
+    
     /** Colour used for selected pieces. */
-    public static final Colour HIGHLIGHT_COLOUR = Colour.rgb(88, 177, 159);
+    private static final Colour HIGHLIGHT_COLOUR = Colour.rgb(88, 177, 159);
     /** Colour used to highlight the losing players pieces. */
-    public static final Colour LOSER_COLOUR = Colour.rgb(249, 127, 81);
+    private static final Colour LOSER_COLOUR = Colour.rgb(249, 127, 81);
     
     /**
      * Asynchronously runs a new Clobber instance.
@@ -32,9 +39,8 @@ public class Clobber extends GridGame {
      * @param height the height of the game board.
      * @players the players who are to participate.
      */
-    @SafeVarargs
-    public Clobber(int width, int height, Player<Clobber>... players) {
-        super(width, height, TITLE, players);
+    public Clobber(int width, int height, Player<Clobber> player1, Player<Clobber> player2) {
+        super(width, height, TITLE, player1, player2);
     }
     
     /**
@@ -140,6 +146,11 @@ public class Clobber extends GridGame {
         }
     }
     
+    @Override
+    protected String getPlayerName(int playerId) {
+        return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
+    }
+    
     /**
      * Implementation of Player<Clobber> for use in inserting a human-controlled player.<br>
      * Each ClobberController will make moves based on mouse input on the game display window.
@@ -216,12 +227,7 @@ public class Clobber extends GridGame {
     private class Stone extends Piece {
         
         Stone(int ownerId, int x, int y) {
-            
-            super(ownerId, x, y);
-            
-            //Select the appropriate texture depending on the owner.
-            setTexture(Texture.getTexture(ownerId == 1 ?
-                    "res/chess/white_pawn.png" : "res/chess/black_pawn.png"));
+            super(ownerId, x, y, STONE_TEXTURES[ownerId - 1]);
         }
 
         @Override

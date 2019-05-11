@@ -5,7 +5,6 @@ import java.util.Optional;
 import games.util.GridGame;
 
 import swagui.api.Colour;
-import swagui.api.Texture;
 
 /**
  * <b>Game of the Amazons implementation.</b><br>
@@ -26,6 +25,18 @@ public class Amazons extends GridGame {
     public static final Colour HIGHLIGHT_COLOUR1 = Colour.rgb(88, 177, 159);
     /** Colour used for moved pieces. */
     public static final Colour HIGHLIGHT_COLOUR2 = Colour.rgb(249, 127, 81);
+    
+    /** Textures used for game pieces. */
+    private static final String[] AMAZON_TEXTURES = new String[] {
+            "res/chess/white_queen.png", "res/chess/black_queen.png"};
+    
+    /** Textures used for game pieces. */
+    private static final String[] ARROW_TEXTURES = new String[] {
+            "res/chess/white_pawn.png", "res/chess/black_pawn.png"};
+    
+    /** The display name of the colour of each player. */
+    private static final String[] COLOUR_NAMES = new String[] {
+            "White", "Black"};
     
     /** The piece which was moved on this turn. */
     private Optional<Amazon> movedPiece = Optional.empty();
@@ -201,6 +212,11 @@ public class Amazons extends GridGame {
         }
     }
     
+    @Override
+    protected String getPlayerName(int playerId) {
+        return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
+    }
+    
     /**
      * Implementation of Player<Amazons> for use in inserting a human-controlled player.<br>
      * Each AmazonsController will make moves based on mouse input on the game display window.
@@ -317,12 +333,7 @@ public class Amazons extends GridGame {
     private class Amazon extends Piece {
         
         Amazon(int ownerId, int x, int y) {
-            
-            super(ownerId, x, y);
-            
-            //Select the appropriate texture depending on the owner.
-            setTexture(Texture.getTexture(ownerId == 1 ?
-                    "res/chess/white_amazon.png" : "res/chess/black_amazon.png"));
+            super(ownerId, x, y, AMAZON_TEXTURES[ownerId - 1]);
         }
         
         @Override
@@ -402,12 +413,7 @@ public class Amazons extends GridGame {
     private class Arrow extends Piece {
         
         private Arrow(int ownerId, int x, int y) {
-            
-            super(ownerId, x, y);
-            
-            //Select the appropriate texture depending on the owner.
-            setTexture(Texture.getTexture(ownerId == 1 ?
-                    "res/chess/white_pawn.png" : "res/chess/black_pawn.png"));
+            super(ownerId, x, y, ARROW_TEXTURES[ownerId - 1]);
         }
         
         @Override

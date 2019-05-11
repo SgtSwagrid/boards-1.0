@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import swagui.api.Colour;
+import swagui.api.Texture;
 import swagui.api.Tile;
 import swagui.api.Window;
 
@@ -58,6 +59,7 @@ public abstract class GridGame extends Game {
         //Set the dimensions.
         this.width = width;
         this.height = height;
+        
         this.title = title;
         
         //Start the game.
@@ -111,7 +113,7 @@ public abstract class GridGame extends Game {
     @Override
     protected void preTurn() {
         //Set the title to indicate the players' turn.
-        window.setTitle(title + " - " + getCurrentPlayer().getName() + "'s Turn");
+        window.setTitle(title + " - Current Turn: " + getPlayerName(getCurrentPlayerId()));
     }
     
     @Override
@@ -126,12 +128,11 @@ public abstract class GridGame extends Game {
         
         //Display the winner of the game.
         if(getWinner().isPresent()) {
-            getBoard().getWindow().setTitle(title + " - "
-                    + getWinner().get().getName() + " has won!");
+            window.setTitle(title + " - Winner: " + getPlayerName(getWinnerId()));
             
         //Set the title to reflect a draw.
         } else {
-            getBoard().getWindow().setTitle(title + " - Draw!");
+            getBoard().getWindow().setTitle(title + " - Draw");
         }
     }
     
@@ -158,6 +159,15 @@ public abstract class GridGame extends Game {
     }
     
     /**
+     * Returns a display name for the given player.
+     * @param playerId the ID of the player for which to return a name.
+     * @return the display name of the player.
+     */
+    protected String getPlayerName(int playerId) {
+        return getPlayer(playerId).getName();
+    }
+    
+    /**
      * Supertype for pieces which are used on a chess board.
      * @author Alec Dorrington
      * @param <G> the game to which this piece belongs.
@@ -180,7 +190,7 @@ public abstract class GridGame extends Game {
          * @param x the x position of this piece.
          * @param y the y position of this piece.
          */
-        protected Piece(int ownerId, int x, int y) {
+        protected Piece(int ownerId, int x, int y, String texture) {
             
             super(board.getWindow());
             
@@ -194,6 +204,7 @@ public abstract class GridGame extends Game {
             //Match the size of the piece to the grid size of the board.
             setSize(ChessBoard.TILE_SIZE, ChessBoard.TILE_SIZE);
             setColour(Colour.WHITE);
+            setTexture(Texture.getTexture(texture));
         }
         
         /**

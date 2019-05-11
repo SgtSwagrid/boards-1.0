@@ -21,6 +21,18 @@ public class Chomp extends GridGame {
     /** Title of the window. */
     private static final String TITLE = "Chomp";
     
+    /** Colours of the chomped tiles of each player. */
+    private static final Colour[] PLAYER_COLOURS = new Colour[] {
+            Colour.rgb(87, 95, 207), Colour.rgb(5, 196, 107)};
+    
+    /** The display name of the colour of each player. */
+    private static final String[] COLOUR_NAMES = new String[] {
+            "Blue", "Green"};
+    
+    /** Background tile colours. */
+    private static final Colour BOARD_COLOUR1 = Colour.rgb(141, 110, 99);
+    private static final Colour BOARD_COLOUR2 = Colour.rgb(93, 64, 55);
+    
     /** Stores whether the tile at each position has been chomped. */
     private boolean[][] chomped;
     /** The running total number of tiles which have been chomped. */
@@ -34,6 +46,7 @@ public class Chomp extends GridGame {
      */
     public Chomp(int width, int height, Player<Chomp> player1, Player<Chomp> player2) {
         super(width, height, TITLE, player1, player2);
+        getBoard().setBackground(BOARD_COLOUR1, BOARD_COLOUR2);
     }
     
     /**
@@ -64,8 +77,8 @@ public class Chomp extends GridGame {
                     
                     //Recolour the tile to indicate that it was chomped by the current player.
                     getBoard().setColour(xx, yy, (xx + yy) % 2 == 0 ?
-                            COLOURS[getCurrentPlayerId() - 1].lighten(0.1F) :
-                            COLOURS[getCurrentPlayerId() - 1]);
+                            PLAYER_COLOURS[getCurrentPlayerId() - 1].lighten(0.1F) :
+                            PLAYER_COLOURS[getCurrentPlayerId() - 1]);
                 }
             }
         }
@@ -104,6 +117,11 @@ public class Chomp extends GridGame {
         } else if(numChomped == getWidth() * getHeight() - 1) {
             endGame(getCurrentPlayerId());
         }
+    }
+    
+    @Override
+    protected String getPlayerName(int playerId) {
+        return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
     }
     
     /**

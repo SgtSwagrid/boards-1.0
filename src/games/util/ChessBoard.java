@@ -23,12 +23,12 @@ import swagui.api.Window;
 public class ChessBoard {
     
     /** Light tile colour. */
-    public static final Colour TILE_COLOUR1 = Colour.rgb(248, 239, 186);
+    public static Colour TILE_COLOUR1 = Colour.rgb(248, 239, 186);
     /** Dark tile colour. */
-    public static final Colour TILE_COLOUR2 = Colour.rgb(234, 181, 67);
+    public static Colour TILE_COLOUR2 = Colour.rgb(234, 181, 67);
     
     /** Size of each tile in pixels. */
-    public static final int TILE_SIZE = 96;
+    public static int TILE_SIZE = 96;
     
     /** Dimensions of the board in number of tiles. */
     private int width, height;
@@ -66,6 +66,18 @@ public class ChessBoard {
             }
         }
         //Set the initial colours for the board.
+        resetColours();
+    }
+    
+    /**
+     * Changes the background colours of the board.<br>
+     * The 2 given colours are distributed in a chessboard pattern.
+     * @param colour1 the first tile colour.
+     * @param colour2 the second tile colour.
+     */
+    public void setBackground(Colour colour1, Colour colour2) {
+        TILE_COLOUR1 = colour1;
+        TILE_COLOUR2 = colour2;
         resetColours();
     }
     

@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import games.util.GridGame;
-import swagui.api.Texture;
+import swagui.api.Colour;
 
 /**
  * <b>Reversi implementation.</b><br>
@@ -21,6 +21,18 @@ public class Reversi extends GridGame {
     /** Title of the window. */
     private static final String TITLE = "Reversi";
     
+    /** Textures used for game pieces. */
+    private static final String[] DISC_TEXTURES = new String[] {
+            "res/chess/white_pawn.png", "res/chess/black_pawn.png"};
+    
+    /** The display name of the colour of each player. */
+    private static final String[] COLOUR_NAMES = new String[] {
+            "White", "Black"};
+    
+    /** Background tile colours. */
+    private static final Colour BOARD_COLOUR1 = Colour.rgb(123, 237, 159);
+    private static final Colour BOARD_COLOUR2 = Colour.rgb(46, 213, 115);
+    
     /**
      * Asynchronously runs a new Reversi instance.
      * @param width the width of the game board.
@@ -30,6 +42,7 @@ public class Reversi extends GridGame {
      */
     public Reversi(int width, int height, Player<Reversi> player1, Player<Reversi> player2) {
         super(width, height, TITLE, player1, player2);
+        getBoard().setBackground(BOARD_COLOUR1, BOARD_COLOUR2);
     }
     
     /**
@@ -188,6 +201,11 @@ public class Reversi extends GridGame {
         return winnerId;
     }
     
+    @Override
+    protected String getPlayerName(int playerId) {
+        return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
+    }
+    
     public static final class ReversiController implements Player<Reversi> {
         
         /** The display name of this player. */
@@ -246,12 +264,7 @@ public class Reversi extends GridGame {
     private class Disc extends Piece {
         
         Disc(int ownerId, int x, int y) {
-            
-            super(ownerId, x, y);
-            
-            //Select the appropriate texture depending on the owner.
-            setTexture(Texture.getTexture(ownerId == 1 ?
-                    "res/chess/white_pawn.png" : "res/chess/black_pawn.png"));
+            super(ownerId, x, y, DISC_TEXTURES[ownerId - 1]);
         }
 
         @Override

@@ -2,8 +2,6 @@ package games.util;
 
 import java.util.Optional;
 
-import swagui.api.Colour;
-
 /**
  * Abstract supertype for many abstract board games.<br>
  * Takes care of turn order progression.
@@ -12,14 +10,6 @@ import swagui.api.Colour;
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class Game {
-    
-    /** List of player colours. */
-    protected static final Colour[] COLOURS = new Colour[] {
-             Colour.rgb(87, 95, 207),
-             Colour.rgb(255, 94, 87),
-             Colour.rgb(5, 196, 107),
-             Colour.rgb(255, 211, 42)
-    };
     
     /** Array of all players participating in this game. */
     private Player[] players;
@@ -85,26 +75,6 @@ public abstract class Game {
     protected Player getCurrentPlayer() { return currentPlayer; }
     
     /**
-     * Skips the next players turn.
-     */
-    protected void skipTurn() {
-        currentPlayerId = currentPlayerId % players.length + 1;
-        currentPlayer = players[currentPlayerId - 1];
-    }
-    
-    /**
-     * Ends the game after the current turn, setting the winner.
-     * @param winnerId the ID of the winner of the game.
-     */
-    protected void endGame(int winnerId) {
-        if(winnerId > 0 && winnerId <= players.length) {
-            this.winnerId = winnerId;
-            winner = Optional.of(players[winnerId - 1]);
-        }
-        running = false;
-    }
-    
-    /**
      * @return whether the current turn has yet been completed.
      */
     protected boolean turnTaken() { return turnTaken; }
@@ -113,6 +83,26 @@ public abstract class Game {
      * Declare the current turn as having been completed.
      */
     protected void setTurnTaken() { turnTaken = true; }
+    
+    /**
+     * Skips the next players turn.
+     */
+    protected final void skipTurn() {
+        currentPlayerId = currentPlayerId % players.length + 1;
+        currentPlayer = players[currentPlayerId - 1];
+    }
+    
+    /**
+     * Ends the game after the current turn, setting the winner.
+     * @param winnerId the ID of the winner of the game.
+     */
+    protected final void endGame(int winnerId) {
+        if(winnerId > 0 && winnerId <= players.length) {
+            this.winnerId = winnerId;
+            winner = Optional.of(players[winnerId - 1]);
+        }
+        running = false;
+    }
     
     /**
      * Starts the game in a new thread.
