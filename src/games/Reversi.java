@@ -33,7 +33,7 @@ public class Reversi extends GridGame {
     }
     
     /**
-     * Places a new piece at the given position.<br>
+     * Places a new disc at the given position.<br>
      * Must be called exactly once per turn.<br>
      * Move must be consistent with the rules of the game, or an exception will be thrown.
      * @param x the x position to place the piece at. 
@@ -64,6 +64,21 @@ public class Reversi extends GridGame {
         }
         
         setTurnTaken();
+    }
+    
+    /**
+     * Returns the disc currently at the given position.<br>
+     * <table border="1">
+     * <tr><td>0</td><td>Empty tile.</td></tr>
+     * <tr><td>1</td><td>Piece owned by player 1.</td></tr>
+     * <tr><td>2</td><td>Piece owned by player 2.</td></tr>
+     * </table>
+     * @param x the x position at which to check for a piece.
+     * @param y the y position at which to check for a piece.
+     * @return the piece at (x, y) on the board.
+     */
+    public int getDisc(int x, int y) {
+        return getPiece(x, y).isPresent() ? getPiece(x, y).get().getOwnerId() : 0;
     }
     
     /**

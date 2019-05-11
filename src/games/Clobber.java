@@ -38,7 +38,7 @@ public class Clobber extends GridGame {
     }
     
     /**
-     * Moves your piece at the given position to a new position.<br>
+     * Moves your stone at the given position to a new position.<br>
      * Must be called exactly once per turn.<br>
      * Move must be consistent with the rules of the game, or an exception will be thrown.
      * @param x_from the current x position of the piece.
@@ -63,7 +63,7 @@ public class Clobber extends GridGame {
     }
     
     /**
-     * Returns the piece currently at the given position.<br>
+     * Returns the stone currently at the given position.<br>
      * <table border="1">
      * <tr><td>0</td><td>Empty tile.</td></tr>
      * <tr><td>1</td><td>Piece owned by player 1.</td></tr>
