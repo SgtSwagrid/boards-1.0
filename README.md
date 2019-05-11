@@ -35,5 +35,5 @@ https://en.wikipedia.org/wiki/Dots_and_Boxes
 https://en.wikipedia.org/wiki/Go_(game)
 ### m,n,k-game
 https://en.wikipedia.org/wiki/M,n,k-game
-### Reversi/Othello (In Progress)
+### Reversi/Othello
 https://en.wikipedia.org/wiki/Reversi
