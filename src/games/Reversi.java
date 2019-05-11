@@ -206,6 +206,11 @@ public class Reversi extends GridGame {
         return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
     }
     
+    /**
+     * Implementation of Player<Reversi> for use in inserting a human-controlled player.<br>
+     * Each ReversiController will make moves based on mouse input on the game display window.
+     * @author Alec Dorrington
+     */
     public static final class ReversiController implements Player<Reversi> {
         
         /** The display name of this player. */
@@ -259,7 +264,7 @@ public class Reversi extends GridGame {
     
     /**
      * Represents a Reversi game piece.
-     * @author Alec
+     * @author Alec Dorrington
      */
     private class Disc extends Piece {
         
