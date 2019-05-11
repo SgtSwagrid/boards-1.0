@@ -85,12 +85,22 @@ public abstract class Game {
     protected Player getCurrentPlayer() { return currentPlayer; }
     
     /**
+     * Skips the next players turn.
+     */
+    protected void skipTurn() {
+        currentPlayerId = currentPlayerId % players.length + 1;
+        currentPlayer = players[currentPlayerId - 1];
+    }
+    
+    /**
      * Ends the game after the current turn, setting the winner.
      * @param winnerId the ID of the winner of the game.
      */
     protected void endGame(int winnerId) {
-        this.winnerId = winnerId;
-        winner = Optional.of(players[winnerId - 1]);
+        if(winnerId > 0 && winnerId <= players.length) {
+            this.winnerId = winnerId;
+            winner = Optional.of(players[winnerId - 1]);
+        }
         running = false;
     }
     

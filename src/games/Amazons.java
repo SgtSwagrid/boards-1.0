@@ -28,9 +28,9 @@ public class Amazons extends GridGame {
     public static final Colour HIGHLIGHT_COLOUR2 = Colour.rgb(249, 127, 81);
     
     /** The piece which was moved on this turn. */
-    private Optional<Queen> movedPiece = Optional.empty();
-    /** Whether a queen has yet been moved on this turn. */
-    private boolean queenMoved = false;
+    private Optional<Amazon> movedPiece = Optional.empty();
+    /** Whether a amazon has yet been moved on this turn. */
+    private boolean amazonMoved = false;
     
     /**
      * Asynchronously runs a new Game of the Amazons instance.
@@ -44,16 +44,16 @@ public class Amazons extends GridGame {
     }
     
     /**
-     * Moves your queen at the given position to a new position.<br>
+     * Moves your amazon at the given position to a new position.<br>
      * Must be called exactly once per turn, before 'shootArrow()' is called.<br>
      * Move must be consistent with the rules of the game, or an exception will be thrown.
-     * @param x_from the current x position of the queen.
-     * @param y_from the current y position of the queen.
-     * @param x_to the new x position of the queen.
-     * @param y_to the new y position of the queen.
+     * @param x_from the current x position of the amazon.
+     * @param y_from the current y position of the amazon.
+     * @param x_to the new x position of the amazon.
+     * @param y_to the new y position of the amazon.
      * @throws IllegalMoveException
      */
-    public void moveQueen(int x_from, int y_from, int x_to, int y_to) {
+    public void moveAmazon(int x_from, int y_from, int x_to, int y_to) {
         
         validateMove(x_from, y_from);
         validateMove(x_to, y_to);
@@ -62,22 +62,22 @@ public class Amazons extends GridGame {
         if(!getPiece(x_from, y_from).isPresent())
             throw new IllegalMoveException("No such piece exists.");
         
-        //Ensure queen hasn't already been moved.
-        if(queenMoved)
+        //Ensure amazon hasn't already been moved.
+        if(amazonMoved)
             throw new IllegalMoveException("Can't move pieces twice.");
         
         //Move the piece, subject to game constraints.
         getPiece(x_from, y_from).get().movePiece(x_to, y_to);
         
         //Remember the piece which was moved, for the arrow-shooting phase.
-        movedPiece = Optional.of((Queen) getPiece(x_to, y_to).get());
-        queenMoved = true;
+        movedPiece = Optional.of((Amazon) getPiece(x_to, y_to).get());
+        amazonMoved = true;
     }
     
     /**
      * Shoots an arrow at a given position.<br>
-     * Must be called exactly once per turn, after 'moveQueen()' is called.<br>
-     * Arrow will be fired from the most recently moved queen.<br>
+     * Must be called exactly once per turn, after 'moveAmazon()' is called.<br>
+     * Arrow will be fired from the most recently moved amazon.<br>
      * Move must be consistent with the rules of the game, or an exception will be thrown.
      * @param x the destination x position of the arrow.
      * @param y the destination y position of the arrow.
@@ -88,13 +88,13 @@ public class Amazons extends GridGame {
         validateMove(x, y);
         
         //Ensure actions are taken in the correct order.
-        if(!queenMoved)
-            throw new IllegalMoveException("Must move a queen before shooting.");
+        if(!amazonMoved)
+            throw new IllegalMoveException("Must move a amazon before shooting.");
         
         //Fire the arrow, subject to game constraints.
         movedPiece.get().shootArrow(x, y);
         
-        setTurnTaken(); queenMoved = false;
+        setTurnTaken(); amazonMoved = false;
     }
     
     /**
@@ -103,8 +103,8 @@ public class Amazons extends GridGame {
      * <table border="1">
      * <tr><td>-1</td><td>Empty tile.</td></tr>
      * <tr><td>0</td><td>Arrow.</td></tr>
-     * <tr><td>1</td><td>Queen owned by player 1.</td></tr>
-     * <tr><td>2</td><td>Queen owned by player 2.</td></tr>
+     * <tr><td>1</td><td>Amazon owned by player 1.</td></tr>
+     * <tr><td>2</td><td>Amazon owned by player 2.</td></tr>
      * </table>
      * @return the game state.
      */
@@ -125,7 +125,7 @@ public class Amazons extends GridGame {
                 else if(getPiece(x, y).get() instanceof Arrow)
                     board[x][y] = 0;
                 
-                //Queen: ID of owner.
+                //Amazon: ID of owner.
                 else board[x][y] = getPiece(x, y).get().getOwnerId();
             }
         }
@@ -139,16 +139,16 @@ public class Amazons extends GridGame {
         int h_indent = (getWidth() - 1) / 3;
         int v_indent = (getHeight() - 1) / 3;
         
-        //Place the queens in their starting positions.
-        new Queen(1, 0, v_indent);
-        new Queen(1, h_indent, 0);
-        new Queen(1, getWidth() - 1 - h_indent, 0);
-        new Queen(1, getWidth() - 1, v_indent);
+        //Place the amazons in their starting positions.
+        new Amazon(1, 0, v_indent);
+        new Amazon(1, h_indent, 0);
+        new Amazon(1, getWidth() - 1 - h_indent, 0);
+        new Amazon(1, getWidth() - 1, v_indent);
         
-        new Queen(2, 0, getHeight() - 1 - v_indent);
-        new Queen(2, h_indent, getHeight() - 1);
-        new Queen(2, getWidth() - 1 - h_indent, getHeight() - 1);
-        new Queen(2, getWidth() - 1, getHeight() - 1 - v_indent);
+        new Amazon(2, 0, getHeight() - 1 - v_indent);
+        new Amazon(2, h_indent, getHeight() - 1);
+        new Amazon(2, getWidth() - 1 - h_indent, getHeight() - 1);
+        new Amazon(2, getWidth() - 1, getHeight() - 1 - v_indent);
     }
     
     @Override
@@ -157,8 +157,8 @@ public class Amazons extends GridGame {
         //Check if any of the opponents pieces are free to move.
         for(Piece piece : getPieces(getCurrentPlayerId() % 2 + 1)) {
             
-            //Only consider queens.
-            if(!(piece instanceof Queen)) continue;
+            //Only consider amazons.
+            if(!(piece instanceof Amazon)) continue;
             
             //Look at all the surrounding tiles for each opponent piece.
             for(int x = Math.max(piece.getCol() - 1, 0);
@@ -184,18 +184,18 @@ public class Amazons extends GridGame {
         //Set the window title to reflect the game completion.
         super.onFinish();
         
-        //Highlight the queen pieces of the winner and loser in different colours.
+        //Highlight the amazon pieces of the winner and loser in different colours.
         if(getWinner().isPresent()) {
             
             //Set the colour for the winning pieces.
             for(Piece p : getPieces(getWinnerId())) {
-                if(p instanceof Queen)
+                if(p instanceof Amazon)
                     getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR1);
             }
             
             //Set the colour for the losing pieces.
             for(Piece p : getPieces(getWinnerId() % 2 + 1)) {
-                if(p instanceof Queen)
+                if(p instanceof Amazon)
                     getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR2);
             }
         }
@@ -235,9 +235,9 @@ public class Amazons extends GridGame {
                 if(playerId != game.getCurrentPlayerId() || !game.isRunning())
                     return;
                 
-                //Move a queen.
-                if(!game.queenMoved) {
-                    moveQueen(game, x, y);
+                //Move a amazon.
+                if(!game.amazonMoved) {
+                    moveAmazon(game, x, y);
                     
                 //Shoot an arrow.
                 } else if(!game.turnTaken()) {
@@ -247,17 +247,17 @@ public class Amazons extends GridGame {
         }
         
         /**
-         * Select or move a queen as appropriate.<br>
-         * To be called when a tile is clicked prior to any queen movement.
+         * Select or move a amazon as appropriate.<br>
+         * To be called when a tile is clicked prior to any amazon movement.
          * @param game the game being played.
          * @param x the x position which was clicked.
          * @param y the y position which was clicked.
          */
-        private void moveQueen(Amazons game, int x, int y) {
+        private void moveAmazon(Amazons game, int x, int y) {
             
-            //Select a queen.
+            //Select a amazon.
             if(game.getPiece(x, y).isPresent()
-                    && game.getPiece(x, y).get() instanceof Queen
+                    && game.getPiece(x, y).get() instanceof Amazon
                     && game.getPiece(x, y).get().getOwnerId() == game.getCurrentPlayerId()) {
                 
                 //Set the selected piece and highlight its tile.
@@ -266,12 +266,12 @@ public class Amazons extends GridGame {
                 selected = game.getPiece(x, y);
                 game.getBoard().setColour(x, y, HIGHLIGHT_COLOUR1);
                 
-            //Move the selected queen.
+            //Move the selected amazon.
             } else if(selected.isPresent()) {
                 
                 try {
                     //Try to move the selected piece to its new tile.
-                    game.moveQueen(selected.get().getCol(), selected.get().getRow(), x, y);
+                    game.moveAmazon(selected.get().getCol(), selected.get().getRow(), x, y);
                     game.getBoard().resetColours();
                     game.getBoard().setColour(x, y, HIGHLIGHT_COLOUR2);
                     
@@ -281,8 +281,8 @@ public class Amazons extends GridGame {
         }
         
         /**
-         * Fire an arrow from the selected queen to the given position.
-         * To be called when a tile is clicked after the queen is moved.
+         * Fire an arrow from the selected amazon to the given position.
+         * To be called when a tile is clicked after the amazon is moved.
          * @param game the game being played.
          * @param x the x position which was clicked.
          * @param y the y position which was clicked.
@@ -311,18 +311,18 @@ public class Amazons extends GridGame {
     }
     
     /**
-     * Represents a queen instance on the board.
+     * Represents a amazon instance on the board.
      * @author Alec Dorrington
      */
-    private class Queen extends Piece {
+    private class Amazon extends Piece {
         
-        Queen(int ownerId, int x, int y) {
+        Amazon(int ownerId, int x, int y) {
             
             super(ownerId, x, y);
             
             //Select the appropriate texture depending on the owner.
             setTexture(Texture.getTexture(ownerId == 1 ?
-                    "res/chess/white_queen.png" : "res/chess/black_queen.png"));
+                    "res/chess/white_amazon.png" : "res/chess/black_amazon.png"));
         }
         
         @Override
@@ -336,7 +336,7 @@ public class Amazons extends GridGame {
         }
         
         /**
-         * Will fire an arrow from this queen to the given position, if such a move is valid.<br>
+         * Will fire an arrow from this amazon to the given position, if such a move is valid.<br>
          * Otherwise, an exception will be thrown.
          * @param x_to the x position to shoot at.
          * @param y_to the y position to shoot at.

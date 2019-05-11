@@ -123,10 +123,15 @@ public abstract class GridGame extends Game {
     
     @Override
     protected void onFinish() {
+        
         //Display the winner of the game.
         if(getWinner().isPresent()) {
             getBoard().getWindow().setTitle(title + " - "
                     + getWinner().get().getName() + " has won!");
+            
+        //Set the title to reflect a draw.
+        } else {
+            getBoard().getWindow().setTitle(title + " - Draw!");
         }
     }
     

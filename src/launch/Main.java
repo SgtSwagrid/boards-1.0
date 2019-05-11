@@ -9,6 +9,8 @@ import games.Clobber;
 import games.Clobber.ClobberController;
 import games.HyperMNK;
 import games.HyperMNK.HyperMNKController;
+import games.Reversi;
+import games.Reversi.ReversiController;
 import games.legacy.ConnectFour;
 import games.legacy.ConnectFour.ConnectFourController;
 import games.HyperMNK.Gravity;
@@ -19,8 +21,9 @@ public class Main {
     private static final int AMAZONS = 1;
     private static final int CHOMP = 2;
     private static final int CLOBBER = 3;
+    private static final int REVERSI = 4;
 	
-    private static int game = CLOBBER;
+    private static int game = REVERSI;
     
 	public static void main(String[] args) {
 	    
@@ -37,15 +40,19 @@ public class Main {
 	            break;
 	            
 	        case AMAZONS:
-	            new Amazons(8, 8, new AmazonsController(), new AmazonsController());
+	            new Amazons(10, 10, new AmazonsController(), new AmazonsController());
 	            break;
 	            
 	        case CHOMP:
-	            new Chomp(8, 8, new ChompController(), new ChompController());
+	            new Chomp(6, 6, new ChompController(), new ChompController());
 	            break;
 	            
 	        case CLOBBER:
 	            new Clobber(5, 6, new ClobberController(), new ClobberController());
+	            break;
+	            
+	        case REVERSI:
+	            new Reversi(8, 8, new ReversiController("White"), new ReversiController("Black"));
 	            break;
 	            
 	        case 69:

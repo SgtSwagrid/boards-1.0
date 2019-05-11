@@ -85,28 +85,7 @@ public class Clobber extends GridGame {
             for(int y = 0; y < getHeight(); y++) {
                 
                 //The stones should be placed in an alternating pattern.
-                new Stone((x + y) % 2 + 1, x, y);
-            }
-        }
-    }
-    
-    @Override
-    protected void onFinish() {
-        
-        //Set the window title to reflect the game completion.
-        super.onFinish();
-        
-        //Highlight the stones of the winner and loser in different colours.
-        if(getWinner().isPresent()) {
-            
-            //Set the colour for the winning pieces.
-            for(Piece p : getPieces(getWinnerId())) {
-                getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR);
-            }
-            
-            //Set the colour for the losing pieces.
-            for(Piece p : getPieces(getWinnerId() % 2 + 1)) {
-                getBoard().setColour(p.getCol(), p.getRow(), LOSER_COLOUR);
+                new Stone((x + y + 1) % 2 + 1, x, y);
             }
         }
     }
@@ -138,6 +117,27 @@ public class Clobber extends GridGame {
             }
         }
         endGame(getCurrentPlayerId());
+    }
+    
+    @Override
+    protected void onFinish() {
+        
+        //Set the window title to reflect the game completion.
+        super.onFinish();
+        
+        //Highlight the stones of the winner and loser in different colours.
+        if(getWinner().isPresent()) {
+            
+            //Set the colour for the winning pieces.
+            for(Piece p : getPieces(getWinnerId())) {
+                getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR);
+            }
+            
+            //Set the colour for the losing pieces.
+            for(Piece p : getPieces(getWinnerId() % 2 + 1)) {
+                getBoard().setColour(p.getCol(), p.getRow(), LOSER_COLOUR);
+            }
+        }
     }
     
     /**
