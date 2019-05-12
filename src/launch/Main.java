@@ -38,9 +38,9 @@ public class Main {
     	            .dimensions(7, 6)
     	            .target(4)
     	            .gravity(Gravity.NEGATIVE, 1)
-    	            .player(new HyperMNKController())
-    	            //.player(new C4_MCTS(1, 2000))
-    	            .player(new C4_MCTS(0, 2500))
+    	            //.player(new HyperMNKController())
+    	            .player(new C4_MCTS(0, 2000)) // Type 0 indicates god bot, 1 indicates dumb level bot, 2 is for kinda smart but also possible to be dumb
+    	            .player(new C4_MCTS(0, 2000)) // 2000 is the number of thinking ms
     	            .start();
 	            break;
 	            
