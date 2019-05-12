@@ -77,7 +77,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		}
 		else
 		{
-			action = mcts(gs);
+			action = mcts2(gs);
 			
 		}
 		
@@ -86,6 +86,208 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		turnNo++;
 		game.placePiece(action.x, action.y);
 	}
+	
+	
+	
+	
+	
+	private Vec2 mcts2(GameState state)
+	{
+		head = new GraphNode(state);
+		
+		GraphNode leaf = head;
+		
+		long startTime = System.currentTimeMillis();
+		int ii = 0;
+		
+		// do iterations
+		while (System.currentTimeMillis() - startTime < 2000) 
+		{
+			leaf = traverse(head, ii);
+			
+			int simResult = rollout2(leaf);
+			
+			backpropogate(leaf, simResult);
+			
+			ii++;
+		}
+		
+		// debug
+		System.out.println("\n Head has " + head.getScore() + "/" + head.getVisits() + " with max Id " + maxNodeIdx(head, 1));
+		
+		for (GraphNode child : head.children)
+		{
+			System.out.print("[" + child.getScore() + ", " + child.getVisits() + "]=" + (100*child.getScore() / child.getVisits()) + "%, ");
+		}
+		
+		return bestAction(head);
+	}
+
+	private GraphNode traverse(GraphNode current, int iteration)
+	{			
+		while (fullyExpanded(current))
+		{	
+			current = bestUCT(current, iteration);
+		}
+		
+		if (current.getChildren().size() == 0)
+		{
+			populateChildren(current);
+		}
+		
+		GraphNode next = pickUnvisited(current);
+		
+		if (next == null)
+		{
+			return current;
+		}
+		else
+		{
+			return next;
+		}
+
+	}
+	
+	private GraphNode bestUCT(GraphNode gn, int iteration)
+	{
+		int num = gn.getChildren().size();
+		
+		float[] UCB1 = new float[num];
+		
+		for (int ii = 0 ; ii < num ; ii++)
+		{
+			UCB1[ii] = UCB1(gn.getChildren().get(ii), iteration);
+		}
+		
+		float maxUCB1 = 0;
+		int maxIdx = 0;
+		
+		for (int ii = 0 ; ii < num ; ii++)
+		{
+			if (UCB1[ii] > maxUCB1)
+			{
+				maxIdx = ii;
+				maxUCB1 = UCB1[ii];
+			}
+		}
+		
+		//System.out.println("Max" + maxUCB1 + " ID " + gn.getDepth() + "_" + maxIdx);
+		return gn.getChildren().get(maxIdx);
+	}
+	
+	private boolean fullyExpanded(GraphNode gn)
+	{
+		int numExpanded = 0;
+		
+		/*if (isTerminal(gn.getState()) || gn.getChildren().size() == 0)
+		{
+			System.out.println("False");
+			return false;
+		}*/
+			
+		
+		for (GraphNode ch : gn.getChildren())
+		{
+			if (ch.getVisits() != 0) numExpanded++;
+		}
+		
+		//System.out.println("fully expanded " + numExpanded + " " + gn.getChildren().size());
+		
+		return (gn.getChildren().size() == numExpanded && gn.getChildren().size() != 0);
+	}
+	
+	private GraphNode pickUnvisited(GraphNode gn)
+	{
+		ArrayList<GraphNode> unvisited = new ArrayList<GraphNode>();
+		
+		for (GraphNode child : gn.getChildren())
+		{
+			if (child.getVisits() == 0)
+			{
+				unvisited.add(child);
+			}
+		}
+		
+		if (unvisited.size() == 0)
+		{
+			return null;
+		}
+		else
+		{
+			return unvisited.get((new Random()).nextInt(unvisited.size()));
+		}
+	}
+	
+	private int rollout2(GraphNode gn)
+	{
+		while (!isTerminal(gn.getState()))
+		{
+			gn = rolloutPolicy(gn);
+		}
+		
+		return checkWin(gn.getState());
+	}
+	
+	
+	private GraphNode rolloutPolicy(GraphNode gn)
+	{
+		ArrayList<Vec2> actions = getActions(gn.getState());
+		
+		GameState nextState = getResult(gn.getState(), actions.get((new Random()).nextInt(actions.size())));
+		
+		return new GraphNode(nextState);
+	}
+	
+	private void backpropogate(GraphNode gn, int winnerID)
+	{
+		if (gn.getState().getPlayer() != winnerID)
+		{
+			gn.addScore(1);
+		}
+		
+		gn.addVisit();
+		
+		if (gn.getDepth() == 0)
+		{
+			return;
+		}
+		
+		backpropogate(gn.getParent(), winnerID);
+			
+	}
+	
+	private Vec2 bestAction(GraphNode gn)
+	{
+		ArrayList<Vec2> actions = getActions(gn.getState());
+		
+		int maxVisits = 0, maxID = 0;
+		
+		for (int ii = 0 ; ii < gn.getChildren().size(); ii++)
+		{
+			if (gn.getChildren().get(ii).getVisits() > maxVisits)
+			{
+				maxVisits = gn.getChildren().get(ii).getVisits();
+				maxID = ii;
+			}
+		}
+		
+		return actions.get(maxID);
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	private Vec2 mcts(GameState state)
 	{
@@ -247,7 +449,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 	{
 		float multiplier = 1;//gn.getDepth() % 2 == 0 ? 1.0f : -1.0f ;
 		//System.out.println("Dep[th " + multiplier);
-		return (float)(multiplier * gn.getScore()/(gn.getVisits()+0.00001) + 1.21 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
+		return (float)(multiplier * gn.getScore()/(gn.getVisits()+0.00001) + 1.41 * Math.sqrt((Math.log(gn.getParent().getVisits()))/(gn.getVisits()+0.00001)));
 	}
 	
 	private void populateChildren(GraphNode gn)
@@ -261,7 +463,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		{
 			GraphNode child = new GraphNode(getResult(state, act), gn);
 			
-			child.setData(getMCTSDataSafe(child.getState()));
+			//child.setData(getMCTSDataSafe(child.getState()));
 			
 			gn.addChild(child);
 		}
