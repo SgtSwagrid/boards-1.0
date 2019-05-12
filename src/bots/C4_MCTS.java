@@ -54,7 +54,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
             FileOutputStream fileOut = new FileOutputStream(zMapPath);
             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
 
-            objectOut.writeObject(zobrist);
+            //objectOut.writeObject(zobrist);
             
             objectOut.close();
             System.out.println("The Object  was succesfully written to a file");
@@ -117,7 +117,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		int ii = 0;
 		
 		// do iterations
-		while (System.currentTimeMillis() - startTime < 1000)
+		while (System.currentTimeMillis() - startTime < 2000)
 		{
 			// check for children, if no chilrden find some
 			if (current.getChildren().size() == 0)
@@ -161,6 +161,11 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		}
 		
 		System.out.println("\n Head has " + head.getScore() + "/" + head.getVisits() + " with max Id " + maxNodeIdx(head, 1));
+		
+		for (GraphNode child : head.children)
+		{
+			System.out.print("[" + child.getScore() + ", " + child.getVisits() + "]=" + (100*child.getScore() / child.getVisits()) + "%, ");
+		}
 		
 		return getActions(head.getState()).get(maxNodeIdx(head, 1));
 		
@@ -282,8 +287,10 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		}
 		else if (winner == gn.getState().getOp())
 		{
-			score = 0;
+			score = -1;
 		}
+		
+		score *= (gn.getDepth()) / 2;
 		
 		// backpropogate 
 		do
@@ -482,7 +489,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 			e.printStackTrace();
 		}
 		
-		return zob;
+		return null; //zob;
 	}
 	
 	public MCTSData getMCTSData(GameState state)
