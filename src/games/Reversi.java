@@ -211,55 +211,21 @@ public class Reversi extends GridGame {
      * Each ReversiController will make moves based on mouse input on the game display window.
      * @author Alec Dorrington
      */
-    public static final class ReversiController implements Player<Reversi> {
+    public static final class ReversiController extends Controller<Reversi> {
         
-        /** The display name of this player. */
-        private String name = "Controller";
-        
-        /**
-         * Constructs a new ReversiController with the default name of "Controller".
-         */
         public ReversiController() {}
         
-        /** 
-         * Constructs a new ReversiController with the given name.
-         * @param name the display name of this controller.
-         */
-        public ReversiController(String name) { this.name = name; }
+        public ReversiController(String name) { super(name); }
         
         @Override
-        public void init(Reversi game, int playerId) {
+        public void onTileClicked(Reversi game, int playerId, int x, int y) {
             
-        	//Add a click listener to each grid cell on the board.
-            for(int i = 0; i < game.getWidth(); i++) {
-                for(int j = 0; j < game.getHeight(); j++) {
-                    
-                    int x = i, y = j;
-                    game.getBoard().addListener(x, y, () -> {
-                        
-                        //Listeners should only be active on your own turn.
-                        if(playerId != game.getCurrentPlayerId())
-                            return;
-                        
-                        //Place a piece.
-                        try {
-                            game.placeDisc(x, y);
-                        //Invalid moves should be ignored.
-                        } catch(IllegalMoveException e) {}
-                    });
-                }
-            }
+            //Place a piece.
+            try {
+                game.placeDisc(x, y);
+            //Invalid moves should be ignored.
+            } catch(IllegalMoveException e) {}
         }
-        
-        @Override
-        public void takeTurn(Reversi game, int playerId) {
-            //Wait until the turn is complete before returning control to the game.
-            //Actual logic is handled asynchronously by the above button listeners.
-            while(!game.turnTaken() && game.getWindow().isOpen()) {}
-        }
-        
-        @Override
-        public String getName() { return name; }
     }
     
     /**

@@ -1,9 +1,6 @@
 package games;
 
-import java.util.Optional;
-
 import games.util.GridGame;
-import swagui.api.Colour;
 
 /**
  * <b>Clobber implementation.</b><br>
@@ -28,16 +25,12 @@ public class Clobber extends GridGame {
     private static final String[] COLOUR_NAMES = new String[] {
             "White", "Black"};
     
-    /** Colour used for selected pieces. */
-    private static final Colour HIGHLIGHT_COLOUR = Colour.rgb(88, 177, 159);
-    /** Colour used to highlight the losing players pieces. */
-    private static final Colour LOSER_COLOUR = Colour.rgb(249, 127, 81);
-    
     /**
      * Asynchronously runs a new Clobber instance.
      * @param width the width of the game board.
      * @param height the height of the game board.
-     * @players the players who are to participate.
+     * @param player1 the first (white) player to participate.
+     * @param player2 the second (black) player to participate.
      */
     public Clobber(int width, int height, Player<Clobber> player1, Player<Clobber> player2) {
         super(width, height, TITLE, player1, player2);
@@ -61,6 +54,10 @@ public class Clobber extends GridGame {
         //Ensure there is a piece at the from location.
         if(!getPiece(x_from, y_from).isPresent())
             throw new IllegalMoveException("No such piece exists.");
+        
+        //Ensure piece is owned by the current player.
+        if(getPiece(x_from, y_from).get().getOwnerId() != getCurrentPlayerId())
+            throw new IllegalMoveException("Can't move an opponents piece.");
         
         //Move the piece, subject to game constraints.
         getPiece(x_from, y_from).get().movePiece(x_to, y_to);
@@ -126,27 +123,6 @@ public class Clobber extends GridGame {
     }
     
     @Override
-    protected void onFinish() {
-        
-        //Set the window title to reflect the game completion.
-        super.onFinish();
-        
-        //Highlight the stones of the winner and loser in different colours.
-        if(getWinner().isPresent()) {
-            
-            //Set the colour for the winning pieces.
-            for(Piece p : getPieces(getWinnerId())) {
-                getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR);
-            }
-            
-            //Set the colour for the losing pieces.
-            for(Piece p : getPieces(getWinnerId() % 2 + 1)) {
-                getBoard().setColour(p.getCol(), p.getRow(), LOSER_COLOUR);
-            }
-        }
-    }
-    
-    @Override
     protected String getPlayerName(int playerId) {
         return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
     }
@@ -156,68 +132,34 @@ public class Clobber extends GridGame {
      * Each ClobberController will make moves based on mouse input on the game display window.
      * @author Alec Dorrington
      */
-    public static final class ClobberController implements Player<Clobber> {
+    public static final class ClobberController extends Controller<Clobber> {
         
-        /** The display name of this player. */
-        private String name = "Controller";
-        
-        /** The piece currently selected by the mouse, if there is any. */
-        private Optional<Piece> selected = Optional.empty();
-        
-        /**
-         * Constructs a new ClobberController with the default name of "Controller".
-         */
         public ClobberController() {}
         
-        /** 
-         * Constructs a new ClobberController with the given name.
-         * @param name the display name of this controller.
-         */
-        public ClobberController(String name) { this.name = name; }
+        public ClobberController(String name) { super(name); }
         
         @Override
-        public void init(Clobber game, int playerId) {
+        public void onTileClicked(Clobber game, int playerId, int x, int y) {
             
-            //Add a click listener to each grid cell on the board.
-            game.getBoard().addListenerToAll((x, y) -> {
+            if(game.getPiece(x, y).isPresent()) {
                 
-                //Listeners should only be active on your own turn.
-                if(playerId != game.getCurrentPlayerId() || !game.isRunning())
-                    return;
-                
-                if(game.getPiece(x, y).isPresent()) {
+                //Select the piece if it belongs to this player.
+                if(game.getPiece(x, y).get().getOwnerId() == playerId) {
+                    selectPiece(game, game.getPiece(x, y).get());
                     
-                    if(game.getPiece(x, y).get().getOwnerId() == playerId) {
+                } else if(getSelected().isPresent()) {
+                    
+                    try {
+                        //Move the selected piece to this location.
+                        game.moveStone(getSelected().get().getCol(),
+                                getSelected().get().getRow(), x, y);
+                        deselectPiece(game);
                         
-                        //Select this piece.
-                        selected = game.getPiece(x, y);
-                        game.getBoard().resetColours();
-                        game.getBoard().setColour(x, y, HIGHLIGHT_COLOUR);
-                        
-                    } else if(selected.isPresent()) {
-                        
-                        try {
-                            //Move the selected piece to this location.
-                            game.moveStone(selected.get().getCol(), selected.get().getRow(), x, y);
-                            game.getBoard().resetColours();
-                            selected = Optional.empty();
-                            
-                        //Invalid moves should be ignored.
-                        } catch(IllegalMoveException e) {}
-                    }
+                    //Invalid moves should be ignored.
+                    } catch(IllegalMoveException e) {}
                 }
-            });
+            }
         }
-        
-        @Override
-        public void takeTurn(Clobber game, int playerId) {
-            //Wait until the turn is complete before returning control to the game.
-            //Actual logic is handled asynchronously by the above button listeners.
-            while(!game.turnTaken() && game.getWindow().isOpen()) {}
-        }
-        
-        @Override
-        public String getName() { return name; }
     }
     
     /**
@@ -247,9 +189,6 @@ public class Clobber extends GridGame {
                     !(Math.abs(getCol() - x_to) == 1 && Math.abs(getRow() - y_to) == 0)) {
                 throw new IllegalMoveException("Must move onto an adjacent piece.");
             }
-            
-            //Delete the tile being captured.
-            getPiece(x_to, y_to).get().delete();
             
             //Move the piece on top of the captured piece.
             setBoardPos(x_to, y_to);

@@ -18,6 +18,9 @@ import swagui.api.Window;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class GridGame extends Game {
     
+    /** Colour used for selected pieces. */
+    private static final Colour HIGHLIGHT_COLOUR = Colour.rgb(88, 177, 159);
+    
     /** The window in which the board resides. */
     private final Window window;
     
@@ -208,12 +211,17 @@ public abstract class GridGame extends Game {
         }
         
         /**
-         * Sets the position of this piece.
+         * Sets the position of this piece.<br>
+         * Captures (removes) the piece which was previously at this location if there is one.
          * @param piece the piece for which to set the position.
          * @param x the new x position.
          * @param y the new y position.
          */
         public void setBoardPos(int x, int y) {
+            
+            //Capture a piece if this piece is moving on top of it.
+            if(getPiece(x, y).isPresent())
+                getPiece(x, y).get().delete();
             
             //Remove the piece from its previous board index.
             if(boardPieces[getCol()][getRow()] == this)
@@ -281,5 +289,90 @@ public abstract class GridGame extends Game {
          * @throws IllegalMoveException
          */
         public abstract void movePiece(int x_to, int y_to);
+    }
+    
+    /**
+     * Abstract supertype of player implementations for use in inserting human players.
+     * @author Alec Dorrington
+     * @param <G> the game which this player plays.
+     */
+    protected static abstract class Controller<G extends GridGame> implements Player<G> {
+        
+        /** The display name of this player. */
+        private String name = "Controller";
+        
+        /** The piece currently selected by the mouse, if there is any. */
+        private Optional<Piece> selected = Optional.empty();
+        
+        /**
+         * Constructs a new Controller with the default name of "Controller".
+         */
+        public Controller() {}
+        
+        /** 
+         * Constructs a new Controller with the given name.
+         * @param name the display name of this controller.
+         */
+        public Controller(String name) { this.name = name; }
+        
+        @Override
+        public void init(G game, int playerId) {
+            
+            game.getBoard().addListenerToAll((x, y) -> {
+                
+                //Listeners should only be active on your own turn.
+                if(playerId != game.getCurrentPlayerId() || !game.isRunning())
+                    return;
+                
+                //Call the game-specific method to deal with tile clicks.
+                onTileClicked(game, playerId, x, y);
+            });
+        }
+        
+        /**
+         * Called once each time the board is left clicked by the mouse.<br>
+         * Is only called by clicks made within this players turn.
+         * @param game the game being played.
+         * @param playerId the ID of this player.
+         * @param x the x position of the tile that was clicked.
+         * @param y the y position of the tile that was clicked.
+         */
+        protected abstract void onTileClicked(G game, int playerId, int x, int y);
+        
+        @Override
+        public void takeTurn(G game, int playerId) {
+            //Wait until the turn is complete before returning control to the game.
+            //Actual logic is handled asynchronously by listeners set up in init().
+            while(!game.turnTaken() && game.getWindow().isOpen()) {}
+        }
+        
+        /**
+         * Selects the given piece. This piece will be highlighted.
+         *  @param game the game being played.
+         * @param piece the piece to store as selected.
+         */
+        protected void selectPiece(G game, Piece piece) {
+            //Select this piece.
+            selected = Optional.of(piece);
+            game.getBoard().resetColours();
+            game.getBoard().setColour(piece.getCol(), piece.getRow(), HIGHLIGHT_COLOUR);
+        }
+        
+        /**
+         * Deselects the currently selected piece.
+         * @param game the game being played.
+         */
+        protected void deselectPiece(G game) {
+            selected = Optional.empty();
+            game.getBoard().resetColours();
+        }
+        
+        /**
+         * @return the currently selected piece, if there is any.
+         */
+        protected Optional<Piece> getSelected() { return selected; }
+        
+        @Override
+        public String getName() { return name; }
     }
 }

@@ -181,6 +181,7 @@ public abstract class Game {
     /**
      * Supertype for all player implementations.
      * @author Alec Dorrington
+     * @param <G> the game which this player plays.
      */
     public interface Player<G extends Game> {
         

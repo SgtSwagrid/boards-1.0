@@ -42,7 +42,8 @@ public class Chomp extends GridGame {
      * Asynchronously runs a new Chomp instance.
      * @param width the width of the board.
      * @param height the height of the board.
-     * @param players the players who are to participate.
+     * @param player1 the first (blue) player to participate.
+     * @param player2 the second (green) player to participate.
      */
     public Chomp(int width, int height, Player<Chomp> player1, Player<Chomp> player2) {
         super(width, height, TITLE, player1, player2);
@@ -129,48 +130,20 @@ public class Chomp extends GridGame {
      * Each ChompController will make moves based on mouse input on the game display window.
      * @author Alec Dorrington
      */
-    public static final class ChompController implements Player<Chomp> {
+    public static final class ChompController extends Controller<Chomp> {
         
-        /** The display name of this player. */
-        private String name = "Controller";
-        
-        /**
-         * Constructs a new ChompController with the default name of "Controller".
-         */
         public ChompController() {}
         
-        /** 
-         * Constructs a new ChompController with the given name.
-         * @param name the display name of this controller.
-         */
-        public ChompController(String name) { this.name = name; }
+        public ChompController(String name) { super(name); }
         
         @Override
-        public void init(Chomp game, int playerId) {
+        public void onTileClicked(Chomp game, int playerId, int x, int y) {
             
-            //Add a click listener to each grid cell on the board.
-            game.getBoard().addListenerToAll((x, y) -> {
-                
-                //Listeners should only be active on your turn.
-                if(playerId != game.getCurrentPlayerId() || !game.isRunning())
-                    return;
-                
-                try {
-                    //Attempt to chomp this tile.
-                    game.chompTile(x, y);
-                //Invalid moves should be ignored.
-                } catch(IllegalMoveException e) {}
-            });
+            try {
+                //Attempt to chomp this tile.
+                game.chompTile(x, y);
+            //Invalid moves should be ignored.
+            } catch(IllegalMoveException e) {}
         }
-
-        @Override
-        public void takeTurn(Chomp game, int playerId) {
-            //Wait until the turn is complete before returning control to the game.
-            //Actual logic is handled asynchronously by the above button listeners.
-            while(!game.turnTaken() && game.getWindow().isOpen()) {}
-        }
-        
-        @Override
-        public String getName() { return name; }
     }
 }

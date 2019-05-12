@@ -4,8 +4,6 @@ import java.util.Optional;
 
 import games.util.GridGame;
 
-import swagui.api.Colour;
-
 /**
  * <b>Game of the Amazons implementation.</b><br>
  * <br>
@@ -20,11 +18,6 @@ public class Amazons extends GridGame {
     
     /** Title of the window. */
     private static final String TITLE = "Game of the Amazons";
-    
-    /** Colour used for selected pieces. */
-    public static final Colour HIGHLIGHT_COLOUR1 = Colour.rgb(88, 177, 159);
-    /** Colour used for moved pieces. */
-    public static final Colour HIGHLIGHT_COLOUR2 = Colour.rgb(249, 127, 81);
     
     /** Textures used for game pieces. */
     private static final String[] AMAZON_TEXTURES = new String[] {
@@ -190,29 +183,6 @@ public class Amazons extends GridGame {
     }
     
     @Override
-    protected void onFinish() {
-        
-        //Set the window title to reflect the game completion.
-        super.onFinish();
-        
-        //Highlight the amazon pieces of the winner and loser in different colours.
-        if(getWinner().isPresent()) {
-            
-            //Set the colour for the winning pieces.
-            for(Piece p : getPieces(getWinnerId())) {
-                if(p instanceof Amazon)
-                    getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR1);
-            }
-            
-            //Set the colour for the losing pieces.
-            for(Piece p : getPieces(getWinnerId() % 2 + 1)) {
-                if(p instanceof Amazon)
-                    getBoard().setColour(p.getCol(), p.getRow(), HIGHLIGHT_COLOUR2);
-            }
-        }
-    }
-    
-    @Override
     protected String getPlayerName(int playerId) {
         return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
     }
@@ -222,44 +192,23 @@ public class Amazons extends GridGame {
      * Each AmazonsController will make moves based on mouse input on the game display window.
      * @author Alec Dorrington
      */
-    public static final class AmazonsController implements Player<Amazons> {
+    public static final class AmazonsController extends Controller<Amazons> {
         
-        /** The display name of this player. */
-        private String name = "Controller";
-        
-        /** The piece currently selected by the mouse, if there is any. */
-        private Optional<Piece> selected = Optional.empty();
-        
-        /**
-         * Constructs a new AmazonsController with the default name of "Controller".
-         */
         public AmazonsController() {}
         
-        /** 
-         * Constructs a new AmazonsController with the given name.
-         * @param name the display name of this controller.
-         */
-        public AmazonsController(String name) { this.name = name; }
+        public AmazonsController(String name) { super(name); }
         
         @Override
-        public void init(Amazons game, int playerId) {
+        public void onTileClicked(Amazons game, int playerId, int x, int y) {
             
-            //Add a click listener to each grid cell on the board.
-            game.getBoard().addListenerToAll((x, y) -> {
+            //Move a amazon.
+            if(!game.amazonMoved) {
+                moveAmazon(game, x, y);
                 
-                //Listeners should only be active on your own turn.
-                if(playerId != game.getCurrentPlayerId() || !game.isRunning())
-                    return;
-                
-                //Move a amazon.
-                if(!game.amazonMoved) {
-                    moveAmazon(game, x, y);
-                    
-                //Shoot an arrow.
-                } else if(!game.turnTaken()) {
-                    shootArrow(game, x, y);
-                }
-            });
+            //Shoot an arrow.
+            } else if(!game.turnTaken()) {
+                shootArrow(game, x, y);
+            }
         }
         
         /**
@@ -276,20 +225,16 @@ public class Amazons extends GridGame {
                     && game.getPiece(x, y).get() instanceof Amazon
                     && game.getPiece(x, y).get().getOwnerId() == game.getCurrentPlayerId()) {
                 
-                //Set the selected piece and highlight its tile.
-                game.getBoard().resetColours();
-                
-                selected = game.getPiece(x, y);
-                game.getBoard().setColour(x, y, HIGHLIGHT_COLOUR1);
+                selectPiece(game, game.getPiece(x, y).get());
                 
             //Move the selected amazon.
-            } else if(selected.isPresent()) {
+            } else if(getSelected().isPresent()) {
                 
                 try {
                     //Try to move the selected piece to its new tile.
-                    game.moveAmazon(selected.get().getCol(), selected.get().getRow(), x, y);
-                    game.getBoard().resetColours();
-                    game.getBoard().setColour(x, y, HIGHLIGHT_COLOUR2);
+                    game.moveAmazon(getSelected().get().getCol(),
+                            getSelected().get().getRow(), x, y);
+                    selectPiece(game, getSelected().get());
                     
                 //Invalid moves should be ignored.
                 } catch(IllegalMoveException e) {}
@@ -308,22 +253,11 @@ public class Amazons extends GridGame {
             try {
                 //Try to spawn an arrow at this location.
                 game.shootArrow(x, y);
-                game.getBoard().resetColours();
-                selected = Optional.empty();
+                deselectPiece(game);
                 
             //Invalid moves should be ignored.
             } catch(IllegalMoveException e) {}
         }
-        
-        @Override
-        public void takeTurn(Amazons game, int playerId) {
-            //Wait until the turn is complete before returning control to the game.
-            //Actual logic is handled asynchronously by the above button listeners.
-            while(!game.turnTaken() && game.getWindow().isOpen()) {}
-        }
-        
-        @Override
-        public String getName() { return name; }
     }
     
     /**

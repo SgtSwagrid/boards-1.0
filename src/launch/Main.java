@@ -3,6 +3,8 @@ package launch;
 import bots.legacy.SwagConnectBot;
 import games.Amazons;
 import games.Amazons.AmazonsController;
+import games.Chess;
+import games.Chess.ChessController;
 import games.Chomp;
 import games.Chomp.ChompController;
 import games.Clobber;
@@ -22,8 +24,9 @@ public class Main {
     private static final int CHOMP = 2;
     private static final int CLOBBER = 3;
     private static final int REVERSI = 4;
+    private static final int CHESS = 5;
 	
-    private static int game = AMAZONS;
+    private static int game = CLOBBER;
     
 	public static void main(String[] args) {
 	    
@@ -53,6 +56,10 @@ public class Main {
 	            
 	        case REVERSI:
 	            new Reversi(8, 8, new ReversiController(), new ReversiController());
+	            break;
+	            
+	        case CHESS:
+	            new Chess(new ChessController(), new ChessController());
 	            break;
 	            
 	        case 69:
