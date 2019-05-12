@@ -87,7 +87,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		{
 			switch (type)
 			{
-				case 0: 
+				case 0: case 2:
 					action = mcts2(gs);
 					break;
 				case 1: 
@@ -134,7 +134,14 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 			System.out.print("[" + child.getScore() + ", " + child.getVisits() + "]=" + (100*child.getScore() / child.getVisits()) + "%, ");
 		}
 		
-		return bestAction(head);
+		
+		switch (type)
+		{
+			case 2:
+				return getActions(head.getState()).get(maxNodeIdx(head, 1));
+			default:
+				return bestAction(head);
+		}
 	}
 
 	private GraphNode traverse(GraphNode current, int iteration)
