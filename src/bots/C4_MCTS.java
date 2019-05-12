@@ -37,9 +37,17 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 	
 	private String zMapPath = "res/C4_Zobrist.dat";
 	
+	private int type = 0, timeLimit = 2000;
+	
 	private class Vec2 {
 		public int x, y;
 		public Vec2(int x, int y) { this.x = x; this.y = y; }
+	}
+	
+	public C4_MCTS(int type, int time)
+	{
+		this.type = type;
+		timeLimit = time;
 	}
 	
 	public C4_MCTS(String path)
@@ -77,8 +85,14 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		}
 		else
 		{
-			action = mcts2(gs);
-			
+			switch (type)
+			{
+				case 0: 
+					action = mcts2(gs);
+					break;
+				case 1: 
+					action = mcts(gs);
+			}
 		}
 		
 		//game.loadState(gs.getGameState());
@@ -101,7 +115,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		int ii = 0;
 		
 		// do iterations
-		while (System.currentTimeMillis() - startTime < 2000) 
+		while (System.currentTimeMillis() - startTime < timeLimit) 
 		{
 			leaf = traverse(head, ii);
 			
@@ -319,7 +333,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		int ii = 0;
 		
 		// do iterations
-		while (System.currentTimeMillis() - startTime < 2000)
+		while (System.currentTimeMillis() - startTime < timeLimit)
 		{
 			// check for children, if no chilrden find some
 			if (current.getChildren().size() == 0)

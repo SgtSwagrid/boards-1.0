@@ -1,5 +1,6 @@
 package launch;
 
+import bots.C4_MCTS;
 import bots.legacy.SwagConnectBot;
 import games.Amazons;
 import games.Amazons.AmazonsController;
@@ -26,7 +27,7 @@ public class Main {
     private static final int REVERSI = 4;
     private static final int CHESS = 5;
 	
-    private static int game = CLOBBER;
+    private static int game = 0;
     
 	public static void main(String[] args) {
 	    
@@ -38,7 +39,8 @@ public class Main {
     	            .target(4)
     	            .gravity(Gravity.NEGATIVE, 1)
     	            .player(new HyperMNKController())
-    	            .player(new HyperMNKController())
+    	            //.player(new C4_MCTS(1, 2000))
+    	            .player(new C4_MCTS(0, 2500))
     	            .start();
 	            break;
 	            
