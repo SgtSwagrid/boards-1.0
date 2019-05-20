@@ -30,7 +30,7 @@ public class Swagmax implements HyperMNKPlayer {
         
         byte[][] board = getBoard();
         
-        int col = evalState(board, playerId, 4, Integer.MIN_VALUE, Integer.MAX_VALUE)[1];
+        int col = evalState(board, playerId, 8, Integer.MIN_VALUE, Integer.MAX_VALUE)[1];
         game.placePiece(col);
     }
     

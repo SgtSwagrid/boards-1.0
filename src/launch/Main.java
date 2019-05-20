@@ -1,6 +1,8 @@
 package launch;
 
 import bots.C4_MCTS;
+import bots.Swagmax;
+import bots.SwagmaxC4;
 import bots.legacy.SwagConnectBot;
 import games.Amazons;
 import games.Amazons.AmazonsController;
@@ -27,7 +29,7 @@ public class Main {
     private static final int REVERSI = 4;
     private static final int CHESS = 5;
 	
-    private static int game = 0;
+    private static int game = HYPER_MNK;
     
 	public static void main(String[] args) {
 	    
@@ -38,9 +40,15 @@ public class Main {
     	            .dimensions(7, 6)
     	            .target(4)
     	            .gravity(Gravity.NEGATIVE, 1)
-    	            //.player(new HyperMNKController())
-    	            .player(new C4_MCTS(0, 2000)) // Type 0 indicates god bot, 1 indicates dumb level bot, 2 is for kinda smart but also possible to be dumb
-    	            .player(new C4_MCTS(0, 2000)) // 2000 is the number of thinking ms
+    	            
+    	            .player(new SwagmaxC4(2000))
+    	            .player(new C4_MCTS(0, 2000))
+    	            
+    	            
+    	            
+    	            
+    	            // Type 0 indicates god bot, 1 indicates dumb level bot, 2 is for kinda smart but also possible to be dumb
+    	            //.player(new C4_MCTS(0, 2000)) // 2000 is the number of thinking ms
     	            .start();
 	            break;
 	            
