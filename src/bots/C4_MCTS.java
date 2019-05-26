@@ -107,7 +107,9 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 	
 	private Vec2 mcts2(GameState state)
 	{
-		head = new GraphNode(state);
+		head = find(state, head, 2);
+		
+		if (head == null) head = new GraphNode(state);
 		
 		GraphNode leaf = head;
 		
@@ -263,7 +265,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 	{
 		if (gn.getState().getPlayer() != winnerID)
 		{
-			gn.addScore(1);
+			gn.addScore(1.0f);
 		}
 		
 		gn.addVisit();
@@ -568,6 +570,7 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		GameState finalState = new GameState(state);
 		
 		finalState.setGameState(action.x, action.y, finalState.getPlayer());
+		finalState.setLastMove(action);
 		finalState.swapPlayer();
 		
 		return finalState;
@@ -597,7 +600,17 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 	private int checkWin(GameState state)
 	{
 		int width = state.getWidth(), height = state.getHeight(), target = state.getGame().getTarget();
-		List<List<int[]>> streaks = findStreaks(state, target);
+		
+		List<List<int[]>> streaks = null;
+		
+		if (state.getLastMove() != null)
+		{
+			streaks = findSimpleStreaks(state, state.getLastMove(), target);
+		}
+		else
+		{
+			streaks = findStreaks(state, target);
+		}
 		
 		for(List<int[]> streak : streaks) {
 			
@@ -652,6 +665,43 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 					
 				} else continue;
 			}
+		}
+		
+		return streaks;
+	}
+	
+	private List<List<int[]>> findSimpleStreaks(GameState state, Vec2 lastMove, int target)
+	{
+		int width = state.getWidth(), height = state.getHeight();
+		List<List<int[]>> streaks = new LinkedList<>();
+		
+		int x = lastMove.x;
+		int y = lastMove.y;
+
+		if(state.getGameState()[x][y] != 0) {
+			
+			List<int[]> streak;
+			
+			streak = new ArrayList<>(target);
+			for(int i = 0; i < target; i++)
+				streak.add(new int[] {x + i, y});
+			streaks.add(streak);
+			
+			streak = new ArrayList<>(target);
+			for(int i = 0; i < target; i++)
+				streak.add(new int[] {x + i, y + i});
+			streaks.add(streak);
+			
+			streak = new ArrayList<>(target);
+			for(int i = 0; i < target; i++)
+				streak.add(new int[] {x, y + i});
+			streaks.add(streak);
+			
+			streak = new ArrayList<>(target);
+			for(int i = 0; i < target; i++)
+				streak.add(new int[] {x - i, y + i});
+			streaks.add(streak);
+			
 		}
 		
 		return streaks;
@@ -750,6 +800,8 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		private GraphNode parent = null;
 		private ArrayList<GraphNode> children;
 		
+		private int depth = 0;
+		
 		public GraphNode(GameState state)
 		{
 			gs = state;
@@ -761,6 +813,13 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		{
 			this(state);
 			this.parent = parent;
+			
+			GraphNode cur = parent;
+			while (cur != null)
+			{
+				depth++;
+				cur = cur.parent;
+			}
 		}
 		
 		public ArrayList<GraphNode> getChildren()
@@ -783,12 +842,12 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 			return gs;
 		}
 		
-		public int getScore()
+		public float getScore()
 		{
 			return data.score;
 		}
 		
-		public void addScore(int score)
+		public void addScore(float score)
 		{
 			this.data.score += score;
 		}
@@ -820,14 +879,6 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		
 		public int getDepth()
 		{
-			int depth = 0;
-			GraphNode cur = parent;
-			while (cur != null)
-			{
-				depth++;
-				cur = cur.parent;
-			}
-			
 			return depth;
 		}
 	}
@@ -839,6 +890,8 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 		
 		private int gameState[][];
 		private HyperMNK game;
+		
+		private Vec2 moved = null;
 		
 		private int width, height;
 		
@@ -862,6 +915,13 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 			return game;
 		}
 
+		public GameState(GameState state, Vec2 prev)
+		{
+			this(state);
+			
+			moved = prev;
+		}
+		
 		public GameState(GameState state)
 		{
 			this.game = state.getGame();
@@ -885,6 +945,16 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 					gameState[xx][yy] = (int)game.getPiece(xx, yy);
 				}
 			}
+		}
+		
+		public Vec2 getLastMove()
+		{
+			return moved;
+		}
+		
+		public void setLastMove(Vec2 move)
+		{
+			moved = move;
 		}
 		
 		public int getPlayer()
@@ -951,10 +1021,11 @@ public class C4_MCTS implements HyperMNKPlayer, Serializable {
 
 class MCTSData implements Serializable {
 	
-	public int visits, score;
+	public int visits;
+	public float score;
 	
-	public MCTSData(int s, int v) { 
-		this.visits = v; 
+	public MCTSData(float s, int v) { 
 		this.score = s; 
+		this.visits = v; 
 	}
 }
