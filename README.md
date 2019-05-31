@@ -19,8 +19,6 @@ https://github.com/SgtSwagrid/swag-ui
 <br />
 
 ## Featured games:
-### Game of the Amazons
-https://en.wikipedia.org/wiki/Game_of_the_Amazons
 ### Checkers (TODO)
 https://en.wikipedia.org/wiki/Checkers
 ### Chess (In Progress)
@@ -31,9 +29,13 @@ https://en.wikipedia.org/wiki/Chomp
 https://en.wikipedia.org/wiki/Clobber
 ### Dots and Boxes (In Progress)
 https://en.wikipedia.org/wiki/Dots_and_Boxes
+### Game of the Amazons
+https://en.wikipedia.org/wiki/Game_of_the_Amazons
 ### Go (TODO)
 https://en.wikipedia.org/wiki/Go_(game)
 ### m,n,k-game
 https://en.wikipedia.org/wiki/M,n,k-game
+### Pentago (TODO)
+https://en.wikipedia.org/wiki/Pentago
 ### Reversi/Othello
 https://en.wikipedia.org/wiki/Reversi
