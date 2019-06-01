@@ -205,7 +205,6 @@ public abstract class TileGame extends Game {
             setBoardPos(x, y);
             
             //Match the size of the piece to the grid size of the board.
-            setSize(Board.TILE_SIZE, Board.TILE_SIZE);
             setColour(Colour.WHITE);
             setTexture(Texture.getTexture(texture));
         }
@@ -359,10 +358,10 @@ public abstract class TileGame extends Game {
         }
         
         /**
-         * Deselects the currently selected piece.
+         * Unselects the currently selected piece.
          * @param game the game being played.
          */
-        protected void deselectPiece(G game) {
+        protected void unselectPiece(G game) {
             selected = Optional.empty();
             game.getBoard().resetColours();
         }

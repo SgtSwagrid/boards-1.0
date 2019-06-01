@@ -253,7 +253,7 @@ public class Amazons extends TileGame {
             try {
                 //Try to spawn an arrow at this location.
                 game.shootArrow(x, y);
-                deselectPiece(game);
+                unselectPiece(game);
                 
             //Invalid moves should be ignored.
             } catch(IllegalMoveException e) {}

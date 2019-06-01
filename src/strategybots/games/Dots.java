@@ -28,9 +28,9 @@ public class Dots extends TileGame {
             "Blue", "Green"};
     
     /** Background colours. */
-    private static final Colour BACKGROUND_COLOUR = Colour.WHITE;
+    private static final Colour BACKGROUND_COLOUR = Colour.rgb(223, 249, 251);
     private static final Colour LINE_COLOUR = Colour.BLACK;
-    private static final Colour BORDER_COLOUR = Colour.WHITE.darken(0.1F);
+    private static final Colour BORDER_COLOUR = Colour.rgb(149, 175, 192);
     
     /** The size of the board, in number of squares. */
     private final int WIDTH, HEIGHT;
@@ -52,6 +52,14 @@ public class Dots extends TileGame {
     protected void init() {
         
         getBoard().setBackground(BACKGROUND_COLOUR, BORDER_COLOUR, Pattern.TABLE);
+        
+        for(int x = 1; x < getBoard().getWidth(); x += 2) {
+            getBoard().setColWidth(x, 3);
+        }
+        
+        for(int y = 1; y < getBoard().getWidth(); y += 2) {
+            getBoard().setRowHeight(y, 3);
+        }
         
         //Create boolean arrays for storing lines.
         h_lines = new boolean[WIDTH + 1][HEIGHT];

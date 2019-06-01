@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 import org.lwjgl.opengl.Display;
 import org.lwjgl.util.vector.Vector2f;
@@ -20,6 +21,8 @@ public class TileRenderer extends Renderer {
                                 FRAGMENT_SHADER = "/strategybots/graphics/tile_fragment.shdr";
     
     private Map<Optional<Texture>, Set<Tile>> tiles = new HashMap<>();
+    
+    private Semaphore lock = new Semaphore(1);
     
     public TileRenderer() { super(VERTEX_SHADER, FRAGMENT_SHADER); }
     
@@ -44,6 +47,8 @@ public class TileRenderer extends Renderer {
     @Override
     protected void render() {
         
+        acquireLock();
+        
         loadMesh(Mesh.SQUARE);
         
         for(Optional<Texture> texture : tiles.keySet()) {
@@ -56,6 +61,8 @@ public class TileRenderer extends Renderer {
             }
         }
         unloadMesh();
+        
+        lock.release();
     }
     
     private void renderTile(Tile t) {
@@ -100,15 +107,31 @@ public class TileRenderer extends Renderer {
     
     public void addTile(Tile tile) {
         
+        acquireLock();
+        
         if(!tiles.containsKey(tile.getTexture()))
             tiles.put(tile.getTexture(), new HashSet<>());
         
         tiles.get(tile.getTexture()).add(tile);
+        
+        lock.release();
     }
     
     public void removeTile(Tile tile) {
         
+        acquireLock();
+        
         if(tiles.containsKey(tile.getTexture()))
             tiles.get(tile.getTexture()).remove(tile);
+        
+        lock.release();
+    }
+    
+    private void acquireLock() {
+        try {
+            lock.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

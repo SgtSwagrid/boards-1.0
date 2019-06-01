@@ -153,7 +153,7 @@ public class Clobber extends TileGame {
                         //Move the selected piece to this location.
                         game.moveStone(getSelected().get().getCol(),
                                 getSelected().get().getRow(), x, y);
-                        deselectPiece(game);
+                        unselectPiece(game);
                         
                     //Invalid moves should be ignored.
                     } catch(IllegalMoveException e) {}

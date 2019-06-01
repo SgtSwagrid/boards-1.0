@@ -1,6 +1,5 @@
 package strategybots.games;
 
-import strategybots.games.util.Board;
 import strategybots.games.util.TileGame;
 import strategybots.games.util.Board.Pattern;
 import strategybots.graphics.Colour;
@@ -104,7 +103,6 @@ public class Chomp extends TileGame {
         
         //Create a poison marker on the bottom-left tile.
         Tile poison = new Tile(getWindow());
-        poison.setSize(Board.TILE_SIZE, Board.TILE_SIZE);
         poison.setTexture(Texture.getTexture("res/misc/poison.png"));
         poison.setColour(Colour.WHITE);
         getBoard().setPosition(poison, 0, 0);

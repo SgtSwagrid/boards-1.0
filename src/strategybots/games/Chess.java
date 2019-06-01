@@ -114,7 +114,7 @@ public class Chess extends TileGame {
                 try {
                     //Move the selected piece to this location.
                     game.movePiece(getSelected().get().getCol(), getSelected().get().getRow(), x, y);
-                    deselectPiece(game);
+                    unselectPiece(game);
                     
                 //Invalid moves should be ignored.
                 } catch(IllegalMoveException e) {}

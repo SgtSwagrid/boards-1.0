@@ -1,16 +1,19 @@
 package strategybots.games.util;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 
+import strategybots.event.Event;
 import strategybots.graphics.Button;
 import strategybots.graphics.Colour;
 import strategybots.graphics.Tile;
 import strategybots.graphics.Window;
+import strategybots.graphics.Window.WindowResizeEvent;
 
 /**
  * Chessboard implementation for use in games which require
@@ -24,13 +27,12 @@ public class Board {
     
     public enum Pattern { CHECKERED, TABLE, SOLID }
     
-    /** Size of each tile in pixels. */
-    public static final int TILE_SIZE = 96;
-    
     /** Light tile colour. */
     private Colour tileColour1 = Colour.rgb(248, 239, 186);
     /** Dark tile colour. */
     private Colour tileColour2 = Colour.rgb(234, 181, 67);
+    /** Background colour. */
+    private Colour background = Colour.rgb(112, 111, 211);
     
     /** The pattern with which the background is created. */
     private Pattern pattern = Pattern.CHECKERED;
@@ -42,7 +44,12 @@ public class Board {
     private Window window;
     
     /** The tile squares. */
-    private ChessboardTile[][] tiles;
+    private BoardTile[][] tiles;
+    
+    /** Relative size ratio of each column/row. */
+    private int[] colSize, rowSize;
+    /** Cumulative size of columns/rows. */
+    private int[] cumWidth, cumHeight;
     
     /**
      * Constructs a new chessboard with the given dimensions and title.<br>
@@ -58,20 +65,51 @@ public class Board {
         this.height = height;
         
         //Create an appropriately sized window.
-        window = new Window(width * TILE_SIZE, height * TILE_SIZE, title);
+        window = new Window(1000, 1000, title);
+        window.setColour(background);
         
-        //Create arrays for buttons (tiles) and associated click listeners.
-        tiles = new ChessboardTile[width][height];
+        //Tiles should automatically resize/reposition on window resize.
+        Event.addHandler(WindowResizeEvent.class, e -> update());
         
-        //For each grid cell.
-        for(int x = 0; x < width; x++) {
-            for(int y = 0; y < height; y++) {
-                //Create each tile in the board.
-                tiles[x][y] = new ChessboardTile(window, x, y);
-            }
-        }
+        //Create the tiles (grid cells).
+        createTiles();
+        
         //Set the initial colours for the board.
         resetColours();
+    }
+    
+    /**
+     * Sets the relative width of the given column.
+     * @param col the index of the column to be changed.
+     * @param width the new relative width.
+     */
+    public void setColWidth(int col, int width) {
+        
+        //Determine difference between old and new widths.
+        int delta = width - colSize[col];
+        colSize[col] = width;
+        //Update cumulative width for all subsequent columns.
+        for(int x = col; x < this.width; x++) {
+            cumWidth[x] += delta;
+        }
+        update();
+    }
+    
+    /**
+     * Sets the relative height of the given row.
+     * @param row the index of the row to be changed.
+     * @param height the new relative height.
+     */
+    public void setRowHeight(int row, int height) {
+        
+        //Determine different between old and new heights.
+        int delta = height - rowSize[row];
+        rowSize[row] = height;
+        //Update cumulative height for all subsequent rows.
+        for(int y = row; y < this.height; y++) {
+            cumHeight[y] += delta;
+        }
+        update();
     }
     
     /**
@@ -126,7 +164,7 @@ public class Board {
      * @param y the y position to move the tile to.
      */
     public void setPosition(Tile tile, int x, int y) {
-        tiles[x][y].moveTile(tile);
+        tiles[x][y].setPiece(tile);
     }
     
     /**
@@ -193,6 +231,74 @@ public class Board {
     public Window getWindow() { return window; }
     
     /**
+     * Creates the tiles (grid cells) for the board.
+     */
+    private void createTiles() {
+        
+        //Create arrays for buttons (tiles) and associated click listeners.
+        tiles = new BoardTile[width][height];
+        
+        //Initialise column/row relative size arrays.
+        colSize = new int[width];
+        rowSize = new int[height];
+        
+        cumWidth = new int[width];
+        cumHeight = new int[height];
+        
+        //Set all columns to be of equal width.
+        for(int x = 0; x < width; x++) {
+            colSize[x] = 1;
+            cumWidth[x] = x+1;
+        }
+        
+        //Set all rows to be of equal height.
+        for(int y = 0; y < height; y++) {
+            rowSize[y] = 1;
+            cumHeight[y] = y+1;
+        }
+        
+        //For each grid cell.
+        for(int x = 0; x < width; x++) {
+            for(int y = 0; y < height; y++) {
+                //Create each tile in the board.
+                tiles[x][y] = new BoardTile(window, x, y);
+            }
+        }
+    }
+    
+    /**
+     * Updates the position and size of all the tiles.
+     */
+    private void update() {
+        
+        for(int x = 0; x < width; x++) {
+            for(int y = 0; y < height; y++) {
+                tiles[x][y].update();
+            }
+        }
+    }
+    
+    /**
+     * Calculates the required board width to match the window size,
+     * subject to maintaining proper aspect ratios.
+     * @return the width of the board itself, in pixels.
+     */
+    private int getBoardWidth() {
+        return Math.min(window.getWidth(), window.getHeight()
+                * cumWidth[width-1]/cumHeight[height-1]);
+    }
+    
+    /**
+     * Calculates the required board height to match the window size,
+     * subject to maintaining proper aspect ratios.
+     * @return the height of the board itself, in pixels.
+     */
+    private int getBoardHeight() {
+        return Math.min(window.getHeight(), window.getWidth()
+                * cumHeight[height-1]/cumWidth[width-1]);
+    }
+    
+    /**
      * Functional interface used for on click listeners.
      * @author Alec Dorrington
      */
@@ -200,13 +306,16 @@ public class Board {
     public interface Action { void run(); }
     
     /**
-     * Represents a single tile in a chessboard.
+     * Represents a single grid cell in a board.
      * @author Alec Dorrington
      */
-    private class ChessboardTile extends Button {
+    private class BoardTile extends Button {
         
         //The position of this tile.
         int x, y;
+        
+        //The piece currently on this tile.
+        Optional<Tile> piece = Optional.empty();
         
         /** Click listeners for this tile. */
         Set<Action> listeners = new HashSet<>();
@@ -217,7 +326,7 @@ public class Board {
          * @param x the x position of the tile.
          * @param y the y position of the tile.
          */
-        public ChessboardTile(Window window, int x, int y) {
+        public BoardTile(Window window, int x, int y) {
             
             super(window);
             //Set the position of this tile.
@@ -225,23 +334,50 @@ public class Board {
             this.y = y;
             
             //Set the graphical position of the tile.
-            moveTile(this);
-            setSize(TILE_SIZE, TILE_SIZE);
+            update();
             setDepth(0.05F);
         }
         
         /**
-         * Moves the tile so that it is centered on this chess tile.
+         * Sets the piece currently on this tile.
+         * Will remove any previous pieces.
+         * Used to keep the piece updated graphically.
+         * @param piece the piece to move onto this tile.
+         */
+        void setPiece(Tile piece) {
+            this.piece = Optional.of(piece);
+            moveTile(piece);
+        }
+        
+        /**
+         * Moves a tile so that it is centered on this board tile.
          * @param tile the tile to move.
          */
         void moveTile(Tile tile) {
             
-            //Calculate the position (in pixels) to which the tile should be moved.
-            int xx = (x - width / 2) * TILE_SIZE + (width + 1) % 2 * TILE_SIZE / 2;
-            int yy = (y - height / 2) * TILE_SIZE + (height + 1) % 2 * TILE_SIZE / 2;
+            //Calculate the position (in relative coordinates) to which the tile should be moved.
+            int xx = (x != 0 ? 2*cumWidth[x-1] : 0) + colSize[x];
+            int yy = (y != 0 ? 2*cumHeight[y-1] : 0) + rowSize[y];
+            
+            //Convert the position to pixel space.
+            xx = -getBoardWidth()/2 + xx * getBoardWidth()/cumWidth[width-1]/2;
+            yy = -getBoardHeight()/2 + yy * getBoardHeight()/cumHeight[height-1]/2;
             
             //Move the tile to its new position.
             tile.setPosition(xx, yy);
+            
+            //Determine the appropriate size in pixels given relative column/row sizes.
+            tile.setWidth(colSize[x] * getBoardWidth()/cumWidth[width - 1] + 2);
+            tile.setHeight(rowSize[y] * getBoardHeight()/cumHeight[height - 1] + 2);
+        }
+        
+        /**
+         * Update this tile by repositioning/resizing it and any of its attached pieces.
+         * To be called upon initialization or window resize.
+         */
+        void update() {
+            moveTile(this);
+            if(piece.isPresent()) moveTile(piece.get());
         }
         
         @Override
