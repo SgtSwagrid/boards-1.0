@@ -8,24 +8,14 @@ Bot implementations can be found in `src/bots/`.<br />
 
 LWJGL 2.X is required to run these games, available at http://legacy.lwjgl.org/.
 
-## Featured games:
-### Checkers (TODO)
-https://en.wikipedia.org/wiki/Checkers
-### Chess (In Progress)
-https://en.wikipedia.org/wiki/Chess
-### Chomp
-https://en.wikipedia.org/wiki/Chomp
-### Clobber
-https://en.wikipedia.org/wiki/Clobber
-### Dots and Boxes (In Progress)
-https://en.wikipedia.org/wiki/Dots_and_Boxes
-### Game of the Amazons
-https://en.wikipedia.org/wiki/Game_of_the_Amazons
-### Go (TODO)
-https://en.wikipedia.org/wiki/Go_(game)
-### m,n,k-game
-https://en.wikipedia.org/wiki/M,n,k-game
-### Pentago (TODO)
-https://en.wikipedia.org/wiki/Pentago
-### Reversi/Othello
-https://en.wikipedia.org/wiki/Reversi
+### Featured games:
+* [Checkers](https://en.wikipedia.org/wiki/Checkers)
+* [Chess](https://en.wikipedia.org/wiki/Chess)
+* [Chomp](https://en.wikipedia.org/wiki/Chomp)
+* [Clobber](https://en.wikipedia.org/wiki/Clobber)
+* [Dots and Boxes](https://en.wikipedia.org/wiki/Dots_and_Boxes)
+* [Game of the Amazons](https://en.wikipedia.org/wiki/Game_of_the_Amazons)
+* [Go](https://en.wikipedia.org/wiki/Go_(game))
+* [M,N,K-Game](https://en.wikipedia.org/wiki/M,n,k-game)
+* [Pentago](https://en.wikipedia.org/wiki/Pentago)
+* [Reversi/Othello](https://en.wikipedia.org/wiki/Reversi)
