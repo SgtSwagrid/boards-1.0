@@ -6,9 +6,7 @@ This repository is an ongoing project featuring:
 Game implementations can be found in `src/games/`.<br />
 Bot implementations can be found in `src/bots/`.<br />
 
-LWJGL 2.X is required to run these games, available at http://legacy.lwjgl.org/
-
-<br />
+LWJGL 2.X is required to run these games, available at http://legacy.lwjgl.org/.
 
 ## Featured games:
 ### Checkers (TODO)
