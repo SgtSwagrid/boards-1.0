@@ -25,17 +25,17 @@ import strategybots.graphics.Window.WindowResizeEvent;
  */
 public class Board {
     
-    public enum Pattern { CHECKERED, TABLE, SOLID }
+    public enum Pattern { CHECKER, TABLE, GINGHAM, SOLID }
     
-    /** Light tile colour. */
-    private Colour tileColour1 = Colour.rgb(248, 239, 186);
-    /** Dark tile colour. */
-    private Colour tileColour2 = Colour.rgb(234, 181, 67);
+    /** Tile colours. */
+    private Colour[] tileColours = new Colour[] {
+            Colour.rgb(248, 239, 186), Colour.rgb(234, 181, 67)};
+    
     /** Background colour. */
     private Colour background = Colour.rgb(112, 111, 211);
     
     /** The pattern with which the background is created. */
-    private Pattern pattern = Pattern.CHECKERED;
+    private Pattern pattern = Pattern.CHECKER;
     
     /** Dimensions of the board in number of tiles. */
     private int width, height;
@@ -114,14 +114,12 @@ public class Board {
     
     /**
      * Changes the background colours and pattern of the board.<br>
-     * @param colour1 the first tile colour.
-     * @param colour2 the second tile colour.
      * @param pattern the pattern with which the colours are arranged.
+     * @param the colours to use.
      */
-    public void setBackground(Colour colour1, Colour colour2, Pattern pattern) {
-        tileColour1 = colour1;
-        tileColour2 = colour2;
+    public void setBackground(Pattern pattern, Colour... colours) {
         this.pattern = pattern;
+        tileColours = colours.clone();
         resetColours();
     }
     
@@ -190,20 +188,27 @@ public class Board {
                 switch(pattern) {
                     
                     //Checked pattern.
-                    case CHECKERED:
+                    case CHECKER:
                         tiles[x][y].setColour((x + y) % 2 == 0
-                                ? tileColour1 : tileColour2);
+                                ? tileColours[0] : tileColours[1]);
                         break;
                     
                     //Table pattern.
                     case TABLE:
                         tiles[x][y].setColour(x % 2 == 1 && y % 2 == 1
-                                ? tileColour1 : tileColour2);
+                                ? tileColours[0] : tileColours[1]);
+                        break;
+                        
+                    //Gingham pattern.
+                    case GINGHAM:
+                        if(x % 2 == 1 && y % 2 == 1) tiles[x][y].setColour(tileColours[0]);
+                        else if(x % 2 == 1 ^ y % 2 == 1) tiles[x][y].setColour(tileColours[1]);
+                        else tiles[x][y].setColour(tileColours[2]);
                         break;
                         
                     //Solid colour.
                     case SOLID:
-                        tiles[x][y].setColour(tileColour1);
+                        tiles[x][y].setColour(tileColours[0]);
                         break;
                 }
             }
@@ -367,8 +372,8 @@ public class Board {
             tile.setPosition(xx, yy);
             
             //Determine the appropriate size in pixels given relative column/row sizes.
-            tile.setWidth(colSize[x] * getBoardWidth()/cumWidth[width - 1] + 2);
-            tile.setHeight(rowSize[y] * getBoardHeight()/cumHeight[height - 1] + 2);
+            tile.setWidth(colSize[x] * getBoardWidth()/cumWidth[width - 1] + 1);
+            tile.setHeight(rowSize[y] * getBoardHeight()/cumHeight[height - 1] + 1);
         }
         
         /**

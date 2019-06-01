@@ -76,7 +76,7 @@ public class Main {
 	            break;
 	            
 	        case DOTS:
-	            new Dots(5, 5, new DotsController(), new DotsController());
+	            new Dots(6, 6, new DotsController(), new DotsController());
 	            break;
 	            
 	        case 69:

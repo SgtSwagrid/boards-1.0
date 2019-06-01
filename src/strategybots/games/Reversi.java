@@ -148,7 +148,7 @@ public class Reversi extends TileGame {
     protected void init() {
         
         //Set the board colours.
-        getBoard().setBackground(BOARD_COLOUR1, BOARD_COLOUR2, Pattern.CHECKERED);
+        getBoard().setBackground(Pattern.CHECKER, BOARD_COLOUR1, BOARD_COLOUR2);
         
         //Place the initial pieces on the board.
         new Disc(1, getWidth() / 2 - 1, getHeight() / 2);
