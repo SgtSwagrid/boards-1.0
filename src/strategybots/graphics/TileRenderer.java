@@ -16,8 +16,8 @@ import org.lwjgl.util.vector.Vector2f;
 
 public class TileRenderer extends Renderer {
     
-    private static final String VERTEX_SHADER   = "/swagui/internal/tile_vertex.shdr",
-                                FRAGMENT_SHADER = "/swagui/internal/tile_fragment.shdr";
+    private static final String VERTEX_SHADER   = "/strategybots/graphics/tile_vertex.shdr",
+                                FRAGMENT_SHADER = "/strategybots/graphics/tile_fragment.shdr";
     
     private Map<Optional<Texture>, Set<Tile>> tiles = new HashMap<>();
     
