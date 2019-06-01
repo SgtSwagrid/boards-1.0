@@ -6,15 +6,7 @@ This repository is an ongoing project featuring:
 Game implementations can be found in `src/games/`.<br />
 Bot implementations can be found in `src/bots/`.<br />
 
-<br />
-
-## Required libraries:
-### LWJGL 2.X
-http://legacy.lwjgl.org/
-### Choco solver
-http://www.choco-solver.org/
-### SwagUI
-https://github.com/SgtSwagrid/swag-ui
+LWJGL 2.X is required to run these games, available at http://legacy.lwjgl.org/
 
 <br />
 
