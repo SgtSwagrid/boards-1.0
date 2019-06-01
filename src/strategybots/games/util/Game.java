@@ -131,7 +131,10 @@ public abstract class Game {
                     //Have the current player take their turn.
                     turnTaken = false;
                     preTurn();
-                    currentPlayer.takeTurn(Game.this, currentPlayerId);
+                    
+                    while(!turnTaken && isRunning())
+                        currentPlayer.takeTurn(Game.this, currentPlayerId);
+                    
                     postTurn();
                     checkWin();
                     

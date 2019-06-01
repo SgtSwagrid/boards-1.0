@@ -123,7 +123,7 @@ public class Chomp extends TileGame {
     
     @Override
     protected String getPlayerName(int playerId) {
-        return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
+        return getPlayer(playerId).getName() + " ("+COLOUR_NAMES[playerId-1]+")";
     }
     
     /**

@@ -145,20 +145,12 @@ public abstract class TileGame extends Game {
      * the position is in bounds and the piece exists.
      * @param x the x position of the piece.
      * @param y the y position of the piece.
+     * @return whether this move is valid.
      */
-    protected void validateMove(int x, int y) {
-        
-        //Ensure game is running.
-        if(!isRunning())
-            throw new IllegalMoveException("Can't take moves while the game isn't running.");
-        
-        //Ensure no piece has already been moved this turn.
-        if(turnTaken())
-            throw new IllegalMoveException("Can't move pieces twice.");
-        
-        //Ensure source location is in bounds.
-        if(x < 0 || x >= getWidth() || y < 0 || y >= getHeight())
-            throw new IllegalMoveException("Location out of bounds.");
+    protected boolean validateMove(int x, int y) {
+        //Ensure game is running, the turn has not been taken and the move is in bounds.
+        return isRunning() && !turnTaken() && x >= 0 && x < width
+                && y >= 0 && y < height;
     }
     
     /**
