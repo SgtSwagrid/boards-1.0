@@ -19,5 +19,7 @@ Bot implementations can be found in `src/bots/`.<br />
 * [Game of the Amazons](https://en.wikipedia.org/wiki/Game_of_the_Amazons)
 * [Go](https://en.wikipedia.org/wiki/Go_(game))
 * [M,N,K-Game](https://en.wikipedia.org/wiki/M,n,k-game)
+  * [Connect Four](https://en.wikipedia.org/wiki/Connect_Four)
+  * [Tic Tac Toe](https://en.wikipedia.org/wiki/Tic-tac-toe)
 * [Pentago](https://en.wikipedia.org/wiki/Pentago)
 * [Reversi/Othello](https://en.wikipedia.org/wiki/Reversi)
