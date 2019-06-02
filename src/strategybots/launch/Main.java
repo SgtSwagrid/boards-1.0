@@ -32,7 +32,7 @@ public class Main {
     private static final int CHESS = 5;
     private static final int DOTS = 6;
 	
-    private static int game = DOTS;
+    private static int game = CHESS;
     
 	public static void main(String[] args) {
 	    

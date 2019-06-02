@@ -140,17 +140,12 @@ public abstract class TileGame extends Game {
     }
     
     /**
-     * Performs basic validity checks on pieces being moved or placed.
-     * Ensures the game is running, the turn hasn't yet been taken,
-     * the position is in bounds and the piece exists.
-     * @param x the x position of the piece.
-     * @param y the y position of the piece.
-     * @return whether this move is valid.
+     * @param x the x position to check.
+     * @param y the y position to check.
+     * @return whether this position is within the bounds of the board.
      */
-    protected boolean validateMove(int x, int y) {
-        //Ensure game is running, the turn has not been taken and the move is in bounds.
-        return isRunning() && !turnTaken() && x >= 0 && x < width
-                && y >= 0 && y < height;
+    protected boolean inBounds(int x, int y) {
+        return x>=0 && y>=0 && x<getWidth() && y<getWidth();
     }
     
     /**
@@ -279,7 +274,7 @@ public abstract class TileGame extends Game {
          * @param y_to the y position to move to.
          * @throws IllegalMoveException
          */
-        public abstract void movePiece(int x_to, int y_to);
+        public abstract boolean movePiece(int x_to, int y_to);
     }
     
     /**

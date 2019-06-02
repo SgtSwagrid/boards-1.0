@@ -44,25 +44,27 @@ public class Clobber extends TileGame {
      * @param y_from the current y position of the piece.
      * @param x_to the new x position of the piece.
      * @param y_to the new y position of the piece.
-     * @throws IllegalMoveException
+     * @return whether the move was valid and successful.
      */
-    public void moveStone(int x_from, int y_from, int x_to, int y_to) {
+    public boolean moveStone(int x_from, int y_from, int x_to, int y_to) {
         
-        validateMove(x_from, y_from);
-        validateMove(x_to, y_to);
+        //Ensure game is running and turn hasn't already been taken.
+        if(!isRunning() || turnTaken()) return false;
+        
+        //Ensure positions are in bounds.
+        if(!inBounds(x_from, y_from) || !inBounds(x_to, y_to)) return false;
         
         //Ensure there is a piece at the from location.
-        if(!getPiece(x_from, y_from).isPresent())
-            throw new IllegalMoveException("No such piece exists.");
+        if(!getPiece(x_from, y_from).isPresent()) return false;
         
         //Ensure piece is owned by the current player.
-        if(getPiece(x_from, y_from).get().getOwnerId() != getCurrentPlayerId())
-            throw new IllegalMoveException("Can't move an opponents piece.");
+        if(getPiece(x_from, y_from).get().getOwnerId() != getCurrentPlayerId()) return false;
         
         //Move the piece, subject to game constraints.
-        getPiece(x_from, y_from).get().movePiece(x_to, y_to);
+        if(!getPiece(x_from, y_from).get().movePiece(x_to, y_to)) return false;
         
         setTurnTaken();
+        return true;
     }
     
     /**
@@ -173,25 +175,23 @@ public class Clobber extends TileGame {
         }
 
         @Override
-        public void movePiece(int x_to, int y_to) {
+        public boolean movePiece(int x_to, int y_to) {
             
             //Ensure piece is owned by the current player.
-            if(getOwnerId() != getCurrentPlayerId())
-                throw new IllegalMoveException("Can't move an opponents piece.");
+            if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure piece moves on top of an opponent piece.
-            if(!getPiece(x_to, y_to).isPresent() ||
-                    getPiece(x_to, y_to).get().getOwnerId() == getCurrentPlayerId())
-                throw new IllegalMoveException("Must move onto an opponent piece.");
+            if(!getPiece(x_to, y_to).isPresent() || getPiece(x_to, y_to).get().getOwnerId()
+                    == getCurrentPlayerId()) return false;
             
             //Ensure piece moves to an adjacent piece.
             if(!(Math.abs(getCol() - x_to) == 0 && Math.abs(getRow() - y_to) == 1) &&
-                    !(Math.abs(getCol() - x_to) == 1 && Math.abs(getRow() - y_to) == 0)) {
-                throw new IllegalMoveException("Must move onto an adjacent piece.");
-            }
+                    !(Math.abs(getCol() - x_to) == 1 && Math.abs(getRow() - y_to) == 0))
+                return false;
             
             //Move the piece on top of the captured piece.
             setBoardPos(x_to, y_to);
+            return true;
         }
     }
 }

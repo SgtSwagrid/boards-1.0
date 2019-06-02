@@ -55,27 +55,29 @@ public class Amazons extends TileGame {
      * @param y_from the current y position of the amazon.
      * @param x_to the new x position of the amazon.
      * @param y_to the new y position of the amazon.
-     * @throws IllegalMoveException
+     * @return whether the move was valid and successful.
      */
-    public void moveAmazon(int x_from, int y_from, int x_to, int y_to) {
+    public boolean moveAmazon(int x_from, int y_from, int x_to, int y_to) {
         
-        validateMove(x_from, y_from);
-        validateMove(x_to, y_to);
+        //Ensure game is running and turn hasn't already been taken.
+        if(!isRunning() || turnTaken()) return false;
+        
+        //Ensure positions are in bounds.
+        if(!inBounds(x_from, y_from) || !inBounds(x_to, y_to)) return false;
         
         //Ensure there is a piece at the from location.
-        if(!getPiece(x_from, y_from).isPresent())
-            throw new IllegalMoveException("No such piece exists.");
+        if(!getPiece(x_from, y_from).isPresent()) return false;
         
         //Ensure amazon hasn't already been moved.
-        if(amazonMoved)
-            throw new IllegalMoveException("Can't move pieces twice.");
+        if(amazonMoved) return false;
         
         //Move the piece, subject to game constraints.
-        getPiece(x_from, y_from).get().movePiece(x_to, y_to);
+        if(!getPiece(x_from, y_from).get().movePiece(x_to, y_to)) return false;
         
         //Remember the piece which was moved, for the arrow-shooting phase.
         movedPiece = Optional.of((Amazon) getPiece(x_to, y_to).get());
         amazonMoved = true;
+        return true;
     }
     
     /**
@@ -85,20 +87,27 @@ public class Amazons extends TileGame {
      * Move must be consistent with the rules of the game, or an exception will be thrown.
      * @param x the destination x position of the arrow.
      * @param y the destination y position of the arrow.
-     * @throws IllegalMoveException
+     * @return whether the move was valid and successful.
      */
-    public void shootArrow(int x, int y) {
+    public boolean shootArrow(int x, int y) {
         
-        validateMove(x, y);
+        //Ensure game is running and turn hasn't already been taken.
+        if(!isRunning() || turnTaken()) return false;
         
         //Ensure actions are taken in the correct order.
-        if(!amazonMoved)
-            throw new IllegalMoveException("Must move a amazon before shooting.");
+        if(!amazonMoved) return false;
+        
+        //Ensure position is in bounds.
+        if(!inBounds(x, y) ) return false;
         
         //Fire the arrow, subject to game constraints.
-        movedPiece.get().shootArrow(x, y);
+        boolean success = movedPiece.get().shootArrow(x, y);
         
-        setTurnTaken(); amazonMoved = false;
+        if(success) {
+            setTurnTaken();
+            amazonMoved = false;
+        }
+        return success;
     }
     
     /**
@@ -271,13 +280,14 @@ public class Amazons extends TileGame {
         }
         
         @Override
-        public void movePiece(int x_to, int y_to) {
+        public boolean movePiece(int x_to, int y_to) {
             
             //Ensure a move is valid before making it.
-            validateMove(getCol(), getRow(), x_to, y_to);
+            if(!validateMove(getCol(), getRow(), x_to, y_to)) return false;
             
             //Update the position of the piece.
             setBoardPos(x_to, y_to);
+            return true;
         }
         
         /**
@@ -285,12 +295,13 @@ public class Amazons extends TileGame {
          * Otherwise, an exception will be thrown.
          * @param x_to the x position to shoot at.
          * @param y_to the y position to shoot at.
-         * @throws IllegalMoveException
+         * @return whether the move was valid and successful.
          */
-        void shootArrow(int x_to, int y_to) {
+        boolean shootArrow(int x_to, int y_to) {
             
-            validateMove(getCol(), getRow(), x_to, y_to);
+            if(!validateMove(getCol(), getRow(), x_to, y_to)) return false;
             new Arrow(getOwnerId(), x_to, y_to);
+            return true;
         }
         
         /**
@@ -300,26 +311,22 @@ public class Amazons extends TileGame {
          * @param y_from the y position from which a piece is moving.
          * @param x_to the x position to which a piece is moving.
          * @param y_to the y position to which a piece is moving.
-         * @throws IllegalMoveException
+         * @return whether the move was valid and successful.
          */
-        void validateMove(int x_from, int y_from, int x_to, int y_to) {
+        boolean validateMove(int x_from, int y_from, int x_to, int y_to) {
             
             //Ensure piece is owned by the current player.
-            if(getOwnerId() != getCurrentPlayerId())
-                throw new IllegalMoveException("Can't move an opponents piece.");
+            if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure piece doesn't move on top of itself.
-            if(x_to == x_from && y_to == y_from)
-                throw new IllegalMoveException("Must move somewhere else.");
+            if(x_to == x_from && y_to == y_from) return false;
             
             //Ensure piece doesn't move on top of another piece.
-            if(getPiece(x_to, y_to).isPresent())
-                throw new IllegalMoveException("Can't move onto another piece.");
+            if(getPiece(x_to, y_to).isPresent()) return false;
             
             //Ensure piece moves in a straight line (incl. diagonally).
             if(Math.abs(x_to - x_from) != Math.abs(y_to - y_from)
-                    && x_to != x_from && y_to != y_from)
-                throw new IllegalMoveException("Must move in a straight line.");
+                    && x_to != x_from && y_to != y_from) return false;
             
             
             int x_sign = (int) Math.signum(x_to - x_from);
@@ -331,12 +338,12 @@ public class Amazons extends TileGame {
             //Ensure piece doesn't jump over any other pieces.
             while(xx != x_to || yy != y_to) {
                 
-                if(getPiece(xx, yy).isPresent())
-                    throw new IllegalMoveException("Can't jump over other pieces.");
+                if(getPiece(xx, yy).isPresent()) return false;
                 
                 xx += x_sign;
                 yy += y_sign;
             }
+            return true;
         }
     }
     
@@ -351,9 +358,9 @@ public class Amazons extends TileGame {
         }
         
         @Override
-        public void movePiece(int x_to, int y_to) {
+        public boolean movePiece(int x_to, int y_to) {
             //Arrows can't be moved.
-            throw new IllegalMoveException("Arrows can't be moved.");
+            return false;
         }
     }
 }

@@ -51,21 +51,24 @@ public class Reversi extends TileGame {
      * Move must be consistent with the rules of the game, or an exception will be thrown.
      * @param x the x position to place the piece at. 
      * @param y the y position to place the piece at.
+     * @return whether the move was valid and successful.
      */
-    public void placeDisc(int x, int y) {
+    public boolean placeDisc(int x, int y) {
         
-        validateMove(x, y);
+        //Ensure game is running and turn hasn't already been taken.
+        if(!isRunning() || turnTaken()) return false;
+        
+        //Ensure position is in bounds.
+        if(!inBounds(x, y)) return false;
         
         //Ensure pieces are placed onto empty tiles.
-        if(getPiece(x, y).isPresent())
-            throw new IllegalMoveException("Can't place onto another piece.");
+        if(getPiece(x, y).isPresent()) return false;
         
         //Determine which enemy pieces this move would flip.
         Set<Disc> flipped = getFlipped(getCurrentPlayerId(), x, y);
         
         //Ensure each move flips at least one enemy piece.
-        if(flipped.size() == 0)
-            throw new IllegalMoveException("Move must flip at least one piece.");
+        if(flipped.size() == 0) return false;
         
         //Create a new piece at the chosen location.
         new Disc(getCurrentPlayerId(), x, y);
@@ -77,6 +80,7 @@ public class Reversi extends TileGame {
         }
         
         setTurnTaken();
+        return true;
     }
     
     /**
@@ -242,8 +246,9 @@ public class Reversi extends TileGame {
         }
 
         @Override
-        public void movePiece(int x_to, int y_to) {
-            throw new IllegalMoveException("Discs can't be moved.");
+        public boolean movePiece(int x_to, int y_to) {
+            //Pieces can't be moved.
+            return false;
         }
     }
 }

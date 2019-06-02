@@ -54,15 +54,18 @@ public class Chomp extends TileGame {
      * along with all other tiles above and to the right of it.
      * @param x the x position to chomp from.
      * @param y the y position to chomp from.
-     * @throws IllegalMoveException
+     * @return whether the move was valid and successful.
      */
-    public void chompTile(int x, int y) {
+    public boolean chompTile(int x, int y) {
         
-        validateMove(x, y);
+        //Ensure game is running and turn hasn't already been taken.
+        if(!isRunning() || turnTaken()) return false;
+        
+        //Ensure position is in bounds.
+        if(!inBounds(x, y)) return false;
         
         //Ensure chomp location isn't already chomped.
-        if(chomped[x][y])
-            throw new IllegalMoveException("Tile has already been chomped.");
+        if(chomped[x][y]) return false;
         
         //Perform a chomp on all tiles above and to the right of the given location.
         for(int xx = x; xx < getWidth(); xx++) {
@@ -83,6 +86,7 @@ public class Chomp extends TileGame {
             }
         }
         setTurnTaken();
+        return true;
     }
     
     /**
