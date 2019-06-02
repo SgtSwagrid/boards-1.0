@@ -164,11 +164,7 @@ public abstract class Game {
      * To be called by the game after each turn is taken.<br>
      * Implementations of this may wish to verify the turn taken.
      */
-    protected void postTurn() {
-        //Ensure the player completed their turn.
-        if(!turnTaken())
-            throw new IllegalMoveException("Player did not complete turn.");
-    }
+    protected void postTurn() {}
     
     /**
      * To be called upon the completion of each turn to check if any player has won.
@@ -217,18 +213,5 @@ public abstract class Game {
          * @return the player name (defaults to "Bot").
          */
         default String getName() { return "Bot"; }
-    }
-    
-    /**
-     * Exception to be thrown when a player makes a move which isn't valid.
-     * @author Alec Dorrington
-     */
-    public static class IllegalMoveException extends RuntimeException {
-        
-        private static final long serialVersionUID = 7081468376529411598L;
-        
-        public IllegalMoveException() {}
-        
-        public IllegalMoveException(String message) { super(message); }
     }
 }

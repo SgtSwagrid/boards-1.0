@@ -226,12 +226,8 @@ public class Reversi extends TileGame {
         
         @Override
         public void onTileClicked(Reversi game, int playerId, int x, int y) {
-            
             //Place a piece.
-            try {
-                game.placeDisc(x, y);
-            //Invalid moves should be ignored.
-            } catch(IllegalMoveException e) {}
+            game.placeDisc(x, y);
         }
     }
     

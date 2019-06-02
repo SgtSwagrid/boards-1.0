@@ -143,12 +143,8 @@ public class Chomp extends TileGame {
         
         @Override
         public void onTileClicked(Chomp game, int playerId, int x, int y) {
-            
-            try {
-                //Attempt to chomp this tile.
-                game.chompTile(x, y);
-            //Invalid moves should be ignored.
-            } catch(IllegalMoveException e) {}
+            //Attempt to chomp this tile.
+            game.chompTile(x, y);
         }
     }
 }

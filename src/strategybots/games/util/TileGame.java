@@ -19,7 +19,7 @@ import strategybots.graphics.Window;
 public abstract class TileGame extends Game {
     
     /** Colour used for selected pieces. */
-    private static final Colour HIGHLIGHT_COLOUR = Colour.rgb(88, 177, 159);
+    private static final Colour HIGHLIGHT_COLOUR = Colour.rgb(46, 213, 115);
     
     /** The window in which the board resides. */
     private final Window window;
@@ -120,13 +120,6 @@ public abstract class TileGame extends Game {
     }
     
     @Override
-    protected void postTurn() {
-        //Ensure the player completed their turn.
-        if(!turnTaken() && getWindow().isOpen())
-            throw new IllegalMoveException("Player did not complete turn.");
-    }
-    
-    @Override
     protected void onFinish() {
         
         //Display the winner of the game.
@@ -145,7 +138,7 @@ public abstract class TileGame extends Game {
      * @return whether this position is within the bounds of the board.
      */
     protected boolean inBounds(int x, int y) {
-        return x>=0 && y>=0 && x<getWidth() && y<getWidth();
+        return x>=0 && y>=0 && x<getWidth() && y<getHeight();
     }
     
     /**

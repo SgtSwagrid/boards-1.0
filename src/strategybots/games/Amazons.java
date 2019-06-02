@@ -239,14 +239,10 @@ public class Amazons extends TileGame {
             //Move the selected amazon.
             } else if(getSelected().isPresent()) {
                 
-                try {
-                    //Try to move the selected piece to its new tile.
-                    game.moveAmazon(getSelected().get().getCol(),
-                            getSelected().get().getRow(), x, y);
-                    selectPiece(game, getSelected().get());
-                    
-                //Invalid moves should be ignored.
-                } catch(IllegalMoveException e) {}
+                //Try to move the selected piece to its new tile.
+                game.moveAmazon(getSelected().get().getCol(),
+                        getSelected().get().getRow(), x, y);
+                selectPiece(game, getSelected().get());
             }
         }
         
@@ -259,13 +255,10 @@ public class Amazons extends TileGame {
          */
         private void shootArrow(Amazons game, int x, int y) {
             
-            try {
-                //Try to spawn an arrow at this location.
-                game.shootArrow(x, y);
+            //Try to spawn an arrow at this location.
+            if(game.shootArrow(x, y)) {
                 unselectPiece(game);
-                
-            //Invalid moves should be ignored.
-            } catch(IllegalMoveException e) {}
+            }
         }
     }
     
