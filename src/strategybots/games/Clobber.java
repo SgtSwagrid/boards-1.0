@@ -39,7 +39,6 @@ public class Clobber extends TileGame {
     /**
      * Moves your stone at the given position to a new position.<br>
      * Must be called exactly once per turn.<br>
-     * Move must be consistent with the rules of the game, or an exception will be thrown.
      * @param x_from the current x position of the piece.
      * @param y_from the current y position of the piece.
      * @param x_to the new x position of the piece.
@@ -57,13 +56,10 @@ public class Clobber extends TileGame {
         //Ensure there is a piece at the from location.
         if(!getPiece(x_from, y_from).isPresent()) return false;
         
-        //Ensure piece is owned by the current player.
-        if(getPiece(x_from, y_from).get().getOwnerId() != getCurrentPlayerId()) return false;
-        
         //Move the piece, subject to game constraints.
         if(!getPiece(x_from, y_from).get().movePiece(x_to, y_to)) return false;
         
-        setTurnTaken();
+        endTurn();
         return true;
     }
     
@@ -102,14 +98,14 @@ public class Clobber extends TileGame {
         for(Piece piece : getPieces(getCurrentPlayerId() % 2 + 1)) {
             
             //Look at all the surrounding tiles for each opponent piece.
-            for(int x = Math.max(piece.getCol() - 1, 0);
-                    x <= Math.min(piece.getCol() + 1, getWidth() - 1); x++) {
+            for(int x = Math.max(piece.getCol()-1, 0);
+                    x <= Math.min(piece.getCol()+1, getWidth()-1); x++) {
                 
-                for(int y = Math.max(piece.getRow() - 1, 0);
-                        y <= Math.min(piece.getRow() + 1, getHeight() - 1); y++) {
+                for(int y = Math.max(piece.getRow()-1, 0);
+                        y <= Math.min(piece.getRow()+1, getHeight()-1); y++) {
                     
                     //If this piece is adjacent to the opponents piece,
-                    if((x == piece.getCol() ^ y == piece.getRow()) &&
+                    if((x==piece.getCol() ^ y==piece.getRow()) &&
                     //And is itself a friendly piece:
                             getPiece(x, y).isPresent() &&
                             getPiece(x, y).get().getOwnerId() == getCurrentPlayerId()) {
@@ -126,7 +122,7 @@ public class Clobber extends TileGame {
     
     @Override
     protected String getPlayerName(int playerId) {
-        return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
+        return getPlayer(playerId).getName() + " ("+COLOUR_NAMES[playerId-1]+")";
     }
     
     /**
@@ -168,7 +164,7 @@ public class Clobber extends TileGame {
     private class Stone extends Piece {
         
         Stone(int ownerId, int x, int y) {
-            super(ownerId, x, y, STONE_TEXTURES[ownerId - 1]);
+            super(ownerId, x, y, STONE_TEXTURES[ownerId-1]);
         }
 
         @Override

@@ -8,6 +8,8 @@ import strategybots.games.Amazons;
 import strategybots.games.Chess;
 import strategybots.games.Chomp;
 import strategybots.games.Clobber;
+import strategybots.games.Checkers;
+import strategybots.games.Checkers.CheckersController;
 import strategybots.games.Dots;
 import strategybots.games.HyperMNK;
 import strategybots.games.Reversi;
@@ -31,8 +33,9 @@ public class Main {
     private static final int REVERSI = 4;
     private static final int CHESS = 5;
     private static final int DOTS = 6;
+    private static final int CHECKERS =7;
 	
-    private static int game = DOTS;
+    private static int game = CHECKERS;
     
 	public static void main(String[] args) {
 	    
@@ -77,6 +80,10 @@ public class Main {
 	            
 	        case DOTS:
 	            new Dots(6, 6, new DotsController(), new DotsController());
+	            break;
+	            
+	        case CHECKERS:
+	            new Checkers(8, 8, 3, new CheckersController(), new CheckersController());
 	            break;
 	            
 	        case 69:

@@ -80,12 +80,12 @@ public class Chomp extends TileGame {
                     
                     //Recolour the tile to indicate that it was chomped by the current player.
                     getBoard().setColour(xx, yy, (xx + yy) % 2 == 0 ?
-                            PLAYER_COLOURS[getCurrentPlayerId() - 1].lighten(0.1F) :
-                            PLAYER_COLOURS[getCurrentPlayerId() - 1]);
+                            PLAYER_COLOURS[getCurrentPlayerId()-1].lighten(0.1F) :
+                            PLAYER_COLOURS[getCurrentPlayerId()-1]);
                 }
             }
         }
-        setTurnTaken();
+        endTurn();
         return true;
     }
     

@@ -88,7 +88,7 @@ public class Chess extends TileGame {
         //Move the piece, subject to game constraints.
         if(!getPiece(x_from, y_from).get().movePiece(x_to, y_to)) return false;
         
-        setTurnTaken();
+        endTurn();
         return true;
     }
     
@@ -189,6 +189,9 @@ public class Chess extends TileGame {
             //The difference between the current position and the new position.
             int dx = x_to - getCol(), dy = y_to - getRow();
             
+            //Ensure piece is owned by the current player.
+            if(getOwnerId() != getCurrentPlayerId()) return false;
+            
             //Ensure players can't capture their own pieces.
             if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
                     == getPiece(x_to, y_to).get().getOwnerId()) return false;
@@ -261,6 +264,9 @@ public class Chess extends TileGame {
             //The difference between the current position and the new position.
             int dx = x_to - getCol(), dy = y_to - getRow();
             
+            //Ensure piece is owned by the current player.
+            if(getOwnerId() != getCurrentPlayerId()) return false;
+            
             //Ensure players can't capture their own pieces.
             if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
                     == getPiece(x_to, y_to).get().getOwnerId()) return false;
@@ -302,6 +308,9 @@ public class Chess extends TileGame {
             //The difference between the current position and the new position.
             int dx = x_to - getCol(), dy = y_to - getRow();
             
+            //Ensure piece is owned by the current player.
+            if(getOwnerId() != getCurrentPlayerId()) return false;
+            
             //Ensure players can't capture their own pieces.
             if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
                     == getPiece(x_to, y_to).get().getOwnerId()) return false;
@@ -330,6 +339,9 @@ public class Chess extends TileGame {
             
             //The difference between the current position and the new position.
             int dx = x_to - getCol(), dy = y_to - getRow();
+            
+            //Ensure piece is owned by the current player.
+            if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure players can't capture their own pieces.
             if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
@@ -373,6 +385,9 @@ public class Chess extends TileGame {
             
             //The difference between the current position and the new position.
             int dx = x_to - getCol(), dy = y_to - getRow();
+            
+            //Ensure piece is owned by the current player.
+            if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure players can't capture their own pieces.
             if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
@@ -419,6 +434,9 @@ public class Chess extends TileGame {
             
             //The difference between the current position and the new position.
             int dx = x_to - getCol(), dy = y_to - getRow();
+            
+            //Ensure piece is owned by the current player.
+            if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure players can't capture their own pieces.
             if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()

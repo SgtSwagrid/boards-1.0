@@ -79,7 +79,7 @@ public class Reversi extends TileGame {
             new Disc(getCurrentPlayerId(), disc.getCol(), disc.getRow());
         }
         
-        setTurnTaken();
+        endTurn();
         return true;
     }
     
@@ -155,10 +155,10 @@ public class Reversi extends TileGame {
         getBoard().setBackground(Pattern.CHECKER, BOARD_COLOUR1, BOARD_COLOUR2);
         
         //Place the initial pieces on the board.
-        new Disc(1, getWidth() / 2 - 1, getHeight() / 2);
-        new Disc(1, getWidth() / 2, getHeight() / 2 - 1);
-        new Disc(2, getWidth() / 2 - 1, getHeight() / 2 - 1);
-        new Disc(2, getWidth() / 2, getHeight() / 2);
+        new Disc(1, getWidth()/2-1, getHeight()/2);
+        new Disc(1, getWidth()/2, getHeight()/2-1);
+        new Disc(2, getWidth()/2-1, getHeight()/2-1);
+        new Disc(2, getWidth()/2, getHeight()/2);
     }
     
     @Override

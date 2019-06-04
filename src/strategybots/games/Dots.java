@@ -103,7 +103,7 @@ public class Dots extends TileGame {
         //Capture any squares which this move completed.
         //The turn is over when a move is made which captures no squares.
         if(captureSquares(orien, x, y) == 0 || totalScore == WIDTH * HEIGHT)
-            setTurnTaken();
+            endTurn();
         return true;
     }
     

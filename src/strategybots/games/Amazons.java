@@ -104,7 +104,7 @@ public class Amazons extends TileGame {
         boolean success = movedPiece.get().shootArrow(x, y);
         
         if(success) {
-            setTurnTaken();
+            endTurn();
             amazonMoved = false;
         }
         return success;

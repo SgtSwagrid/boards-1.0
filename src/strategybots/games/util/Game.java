@@ -26,10 +26,10 @@ public abstract class Game {
     private int winnerId = -1;
     
     /** Whether the game is currently in progress. */
-    private boolean running = false;
+    private volatile boolean running = false;
     
     /** Indication of the completion of the current players' turn. */
-    private boolean turnTaken;
+    private volatile boolean turnTaken;
     
     /**
      * Constructs a new game with the given players, given in turn order.<br>
@@ -82,7 +82,7 @@ public abstract class Game {
     /**
      * Declare the current turn as having been completed.
      */
-    protected void setTurnTaken() { turnTaken = true; }
+    protected void endTurn() { turnTaken = true; }
     
     /**
      * Skips the next players turn.

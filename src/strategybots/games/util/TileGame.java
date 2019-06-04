@@ -19,7 +19,7 @@ import strategybots.graphics.Window;
 public abstract class TileGame extends Game {
     
     /** Colour used for selected pieces. */
-    private static final Colour HIGHLIGHT_COLOUR = Colour.rgb(46, 213, 115);
+    private static Colour HIGHLIGHT_COLOUR = Colour.rgb(46, 213, 115);
     
     /** The window in which the board resides. */
     private final Window window;
@@ -151,6 +151,14 @@ public abstract class TileGame extends Game {
     }
     
     /**
+     * Changes the background colour given to selected pieces.
+     * @param colour
+     */
+    protected void setHighlightColour(Colour colour) {
+        HIGHLIGHT_COLOUR = colour;
+    }
+    
+    /**
      * Supertype for pieces which are used on a chess board.
      * @author Alec Dorrington
      * @param <G> the game to which this piece belongs.
@@ -208,9 +216,9 @@ public abstract class TileGame extends Game {
             
             //Add the piece to its new board index.
             boardPieces[x][y] = this;
-            playerPieces[getOwnerId() - 1].add(this);
+            playerPieces[getOwnerId()-1].add(this);
             
-            //Set the graphical positon of the piece.
+            //Set the graphical position of the piece.
             board.setPosition(this, x, y);
             
             this.x = x;
