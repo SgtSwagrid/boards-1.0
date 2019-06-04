@@ -173,10 +173,8 @@ public class Checkers extends TileGame {
                 
             //Jump over another piece, capturing it.
             } else {
-                System.out.println("1");
                 //Ensure jump is a valid move.
                 if(!validateCapture(x_to, y_to)) return false;
-                System.out.println("2");
                 
                 //Delete the piece which was jumped over.
                 getPiece(getCol() + dx/2, getRow() + dy/2).get().delete();

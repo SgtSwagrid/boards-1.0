@@ -9,6 +9,7 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 
 import strategybots.event.Event;
+import strategybots.event.InputEvent.KeyboardEvent.KeyPressEvent;
 import strategybots.graphics.Button;
 import strategybots.graphics.Colour;
 import strategybots.graphics.Tile;
@@ -70,6 +71,17 @@ public class Board {
         
         //Tiles should automatically resize/reposition on window resize.
         Event.addHandler(WindowResizeEvent.class, e -> update());
+        
+        Event.addHandler(KeyPressEvent.class, e -> {
+            for(int y = height-1; y >= 0; y--) {
+                for(int x = 0; x < width; x++) {
+                    if(tiles[x][y].piece.isPresent()) System.out.print("#");
+                    else System.out.print("-");
+                }
+                System.out.println();
+            }
+            System.out.println();
+        });
         
         //Create the tiles (grid cells).
         createTiles();
@@ -162,7 +174,17 @@ public class Board {
      * @param y the y position to move the tile to.
      */
     public void setPosition(Tile tile, int x, int y) {
+        
         tiles[x][y].setPiece(tile);
+        
+        //Ensure piece isn't present in another tile.
+        for(int xx = 0; xx < width; xx++) {
+            for(int yy = 0; yy < height; yy++) {
+                if(tiles[xx][yy].piece.orElse(null) == tile) {
+                    tiles[xx][yy].piece = Optional.empty();
+                }
+            }
+        }
     }
     
     /**
