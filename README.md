@@ -8,7 +8,7 @@ This repository is for an ongoing project featuring:
  * [Slick-Util](http://slick.ninjacave.com/slick-util/)
 
 ### Featured games:
-* [Checkers](https://en.wikipedia.org/wiki/Checkers) (Todo)
+* [Checkers/Draughts](https://en.wikipedia.org/wiki/English_draughts)
 * [Chess](https://en.wikipedia.org/wiki/Chess) (In Progress)
 * [Chomp](https://en.wikipedia.org/wiki/Chomp)
 * [Clobber](https://en.wikipedia.org/wiki/Clobber)
