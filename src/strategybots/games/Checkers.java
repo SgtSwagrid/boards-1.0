@@ -78,19 +78,24 @@ public class Checkers extends TileGame {
         if(!getPiece(x_from, y_from).isPresent()) return false;
         
         //Ensure piece is owned by the current player.
-        if(getPiece(x_from, y_from).get().getOwnerId() != getCurrentPlayerId()) return false;
+        if(getPiece(x_from, y_from).get().getOwnerId()
+                != getCurrentPlayerId()) return false;
         
         //Ensure two different pieces aren't moved on the same turn.
-        if(moved.isPresent() && moved.get() != getPiece(x_from, y_from).get()) return false;
+        if(moved.isPresent() && moved.get() != getPiece(
+                x_from, y_from).get()) return false;
         
         //Move the piece, subject to game constraints.
-        if(!getPiece(x_from, y_from).get().movePiece(x_to, y_to)) return false;
+        if(!getPiece(x_from, y_from).get().movePiece(
+                x_to, y_to)) return false;
         
         //End turn if move was not a capture.
-        if(Math.abs(x_to-x_from)==1 && Math.abs(y_to-y_from)==1) endTurn();
+        if(Math.abs(x_to-x_from)==1 && Math.abs(
+                y_to-y_from)==1) endTurn();
         
         //End turn if move was a capture but there are no more possible captures.
-        else if(!((CheckersPiece)getPiece(x_to, y_to).get()).canCapture()) endTurn();
+        else if(!((CheckersPiece)getPiece(x_to, y_to)
+                .get()).canCapture()) endTurn();
         
         return true;
     }
