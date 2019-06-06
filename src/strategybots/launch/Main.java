@@ -35,7 +35,7 @@ public class Main {
     private static final int DOTS = 6;
     private static final int CHECKERS =7;
 	
-    private static int game = CHECKERS;
+    private static int game = REVERSI;
     
 	public static void main(String[] args) {
 	    

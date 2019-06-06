@@ -56,7 +56,7 @@ public class Texture {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, 0);
         
         if(GLContext.getCapabilities().GL_EXT_texture_filter_anisotropic) {
-            float filtering = Math.min(4F, glGetFloat(
+            float filtering = Math.min(16F, glGetFloat(
                     EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT));
             glTexParameterf(GL_TEXTURE_2D,
                     EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, filtering);

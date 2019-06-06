@@ -19,7 +19,7 @@ public class Clobber extends TileGame {
     
     /** Textures used for game pieces. */
     private static final String[] STONE_TEXTURES = new String[] {
-            "res/chess/white_pawn.png", "res/chess/black_pawn.png"};
+            "res/misc/white_dot.png", "res/misc/black_dot.png"};
     
     /** The display name of the colour of each player. */
     private static final String[] COLOUR_NAMES = new String[] {

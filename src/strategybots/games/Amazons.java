@@ -19,13 +19,13 @@ public class Amazons extends TileGame {
     /** Title of the window. */
     private static final String TITLE = "Game of the Amazons";
     
-    /** Textures used for game pieces. */
+    /** Textures used for amazons. */
     private static final String[] AMAZON_TEXTURES = new String[] {
             "res/chess/white_queen.png", "res/chess/black_queen.png"};
     
-    /** Textures used for game pieces. */
+    /** Textures used for arrows. */
     private static final String[] ARROW_TEXTURES = new String[] {
-            "res/chess/white_pawn.png", "res/chess/black_pawn.png"};
+            "res/misc/white_dot.png", "res/misc/black_dot.png"};
     
     /** The display name of the colour of each player. */
     private static final String[] COLOUR_NAMES = new String[] {
