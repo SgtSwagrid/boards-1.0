@@ -180,38 +180,69 @@ public class Checkers extends TileGame {
             if(game.getPiece(x, y).isPresent() &&
                     game.getPiece(x, y).get().getOwnerId() == playerId) {
                 
-                //Determine if there exists one of your pieces which can capture an enemy piece.
-                boolean canCapture = false;
-                for(Piece piece : game.getPieces(playerId)) {
-                    if(((CheckersPiece)piece).canCapture()) canCapture = true;
-                }
+                selectPiece(game, playerId, x, y);
                 
-                //Can't select a piece which can't capture if there exists a piece which can.
-                if(!canCapture || ((CheckersPiece)game.getPiece(x, y).get()).canCapture()) {
-                    
-                    //Select the new piece if no piece has yet been moved.
-                    if(!game.moved.isPresent()) {
-                        selectPiece(game, game.getPiece(x, y).get());
-                    }
-                }
-                
+            //Otherwise, move the piece if there is one selected.
             } else if(getSelected().isPresent()) {
                 
-                //Determine move step size.
-                int dx = Math.abs(x - getSelected().get().getCol());
-                int dy = Math.abs(y - getSelected().get().getRow());
+                movePiece(game, playerId, x, y);
+            }
+        }
+        
+        /**
+         * Attempts to select a piece at the specified location.
+         * @param game the game being played.
+         * @param playerId the ID of the current player.
+         * @param x the x position which was clicked.
+         * @param y the y position which was clicked.
+         */
+        private void selectPiece(Checkers game, int playerId, int x, int y) {
+            
+            //Determine if there exists one of your pieces which can capture an enemy piece.
+            boolean canCapture = false;
+            for(Piece piece : game.getPieces(playerId)) {
+                if(((CheckersPiece)piece).canCapture()) canCapture = true;
+            }
+            
+            //Can't select a piece which can't capture if there exists a piece which can.
+            if(!canCapture || ((CheckersPiece)game.getPiece(x, y).get()).canCapture()) {
                 
-                //Move the selected piece to this location.
-                if(game.movePiece(getSelected().get().getCol(),
-                    getSelected().get().getRow(), x, y)) {
-                    
-                    unselectPiece(game);
-                    
-                    //Reselect the piece if a capture was made and more captures are possible.
-                    if(((CheckersPiece)game.getPiece(x, y).get()).canCapture()
-                            && (dx==2 && dy==2)) {
-                        selectPiece(game, game.getPiece(x, y).get());
-                    }
+                //Select the new piece if no piece has yet been moved.
+                if(!game.moved.isPresent()) {
+                    selectPiece(game, game.getPiece(x, y).get());
+                }
+            }
+        }
+        
+        /**
+         * Attempts to move the selected piece to the specified location.
+         * @param game the game being played.
+         * @param playerId the ID of the current player.
+         * @param x the x position which was clicked.
+         * @param y the y position which was clicked.
+         */
+        private void movePiece(Checkers game, int playerId, int x, int y) {
+            
+            //Determine move step size.
+            int dx = Math.abs(x - getSelected().get().getCol());
+            int dy = Math.abs(y - getSelected().get().getRow());
+            
+            //The piece being moved, before it is moved. Used to check for promotions.
+            CheckersPiece before = (CheckersPiece)getSelected().get();
+            
+            //Move the selected piece to this location.
+            if(game.movePiece(getSelected().get().getCol(),
+                getSelected().get().getRow(), x, y)) {
+                
+                //Whether a piece was crowned on this turn.
+                boolean promoted = (CheckersPiece)game.getPiece(x, y).get() != before;
+                
+                unselectPiece(game);
+                
+                //Reselect the piece if a capture was made and more captures are possible.
+                if(((CheckersPiece)game.getPiece(x, y).get()).canCapture()
+                        && (dx==2 && dy==2) && !promoted) {
+                    selectPiece(game, game.getPiece(x, y).get());
                 }
             }
         }
