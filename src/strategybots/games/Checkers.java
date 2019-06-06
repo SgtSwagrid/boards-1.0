@@ -58,7 +58,7 @@ public class Checkers extends TileGame {
     }
     
     /**
-     * Moves your man at the given position to a new position.<br>
+     * Moves your piece at the given position to a new position.<br>
      * Must be called at least once per turn, as per the rules of the game.<br>
      * @param x_from the current x position of the piece.
      * @param y_from the current y position of the piece.
@@ -66,7 +66,7 @@ public class Checkers extends TileGame {
      * @param y_to the new y position of the piece.
      * @return whether the move was valid and successful.
      */
-    public boolean moveMan(int x_from, int y_from, int x_to, int y_to) {
+    public boolean movePiece(int x_from, int y_from, int x_to, int y_to) {
         
         //Ensure game is running and turn hasn't already been taken.
         if(!isRunning() || turnTaken()) return false;
@@ -86,7 +86,48 @@ public class Checkers extends TileGame {
         //Move the piece, subject to game constraints.
         if(!getPiece(x_from, y_from).get().movePiece(x_to, y_to)) return false;
         
+        //End turn if move was not a capture.
+        if(Math.abs(x_to-x_from)==1 && Math.abs(y_to-y_from)==1) endTurn();
+        
+        //End turn if move was a capture but there are no more possible captures.
+        else if(!((CheckersPiece)getPiece(x_to, y_to).get()).canCapture()) endTurn();
+        
         return true;
+    }
+    
+    /**
+     * Returns the owner of the piece currently at the given position.<br>
+     * <table border="1">
+     * <tr><td>0</td><td>Empty tile.</td></tr>
+     * <tr><td>1</td><td>Piece owned by player 1.</td></tr>
+     * <tr><td>2</td><td>Piece owned by player 2.</td></tr>
+     * </table>
+     * @param x the x position at which to check for a piece.
+     * @param y the y position at which to check for a piece.
+     * @return the piece at (x, y) on the board.
+     */
+    public int getPieceOwner(int x, int y) {
+        return getPiece(x, y).isPresent() ? getPiece(x, y).get().getOwnerId() : 0;
+    }
+    
+    /**
+     * Returns the type of piece currently at the given position.<br>
+     * <table border="1">
+     * <tr><td>0</td><td>Empty tile.</td></tr>
+     * <tr><td>1</td><td>Regular piece.</td></tr>
+     * <tr><td>2</td><td>King (crowned piece).</td></tr>
+     * </table>
+     * @param x the x position at which to check for a piece.
+     * @param y the y position at which to check for a piece.
+     * @return the piece at (x, y) on the board.
+     */
+    public int getPieceType(int x, int y) {
+        //Return 0 for empty tiles.
+        if(!getPiece(x, y).isPresent()) return 0;
+        //Return 1 for regular pieces.
+        else if(getPiece(x, y).get() instanceof Man) return 1;
+        //Return 2 for crowned pieces.
+        else return 2;
     }
     
     @Override
@@ -109,10 +150,23 @@ public class Checkers extends TileGame {
     }
     
     @Override
+    protected void checkWin() {
+        
+        //This player wins if the opponent has no remaining pieces.
+        if(getPieces(getCurrentPlayerId()%2+1).size()==0)
+            endGame(getCurrentPlayerId());
+    }
+    
+    @Override
     protected String getPlayerName(int playerId) {
         return getPlayer(playerId).getName() + " ("+COLOUR_NAMES[playerId-1]+")";
     }
     
+    /**
+     * Implementation of Player<Checkers> for use in inserting a human-controlled player.<br>
+     * Each CheckersController will make moves based on mouse input on the game display window.
+     * @author Alec Dorrington
+     */
     public static class CheckersController extends Controller<Checkers> {
         
         public CheckersController() {}
@@ -125,15 +179,39 @@ public class Checkers extends TileGame {
             //Select the piece if it belongs to this player.
             if(game.getPiece(x, y).isPresent() &&
                     game.getPiece(x, y).get().getOwnerId() == playerId) {
-                selectPiece(game, game.getPiece(x, y).get());
+                
+                //Determine if there exists one of your pieces which can capture an enemy piece.
+                boolean canCapture = false;
+                for(Piece piece : game.getPieces(playerId)) {
+                    if(((CheckersPiece)piece).canCapture()) canCapture = true;
+                }
+                
+                //Can't select a piece which can't capture if there exists a piece which can.
+                if(!canCapture || ((CheckersPiece)game.getPiece(x, y).get()).canCapture()) {
+                    
+                    //Select the new piece if no piece has yet been moved.
+                    if(!game.moved.isPresent()) {
+                        selectPiece(game, game.getPiece(x, y).get());
+                    }
+                }
                 
             } else if(getSelected().isPresent()) {
                 
+                //Determine move step size.
+                int dx = Math.abs(x - getSelected().get().getCol());
+                int dy = Math.abs(y - getSelected().get().getRow());
+                
                 //Move the selected piece to this location.
-                if(game.moveMan(getSelected().get().getCol(),
+                if(game.movePiece(getSelected().get().getCol(),
                     getSelected().get().getRow(), x, y)) {
                     
                     unselectPiece(game);
+                    
+                    //Reselect the piece if a capture was made and more captures are possible.
+                    if(((CheckersPiece)game.getPiece(x, y).get()).canCapture()
+                            && (dx==2 && dy==2)) {
+                        selectPiece(game, game.getPiece(x, y).get());
+                    }
                 }
             }
         }
@@ -167,31 +245,27 @@ public class Checkers extends TileGame {
                 //Can't perform a simple move onto another piece.
                 if(getPiece(x_to, y_to).isPresent()) return false;
                 
+                //Move the piece.
+                setBoardPos(x_to, y_to);
+                
                 //A simple diagonal move must be the only move.
                 if(moved.isPresent()) return false;
-                endTurn();
                 
             //Jump over another piece, capturing it.
             } else {
+                
                 //Ensure jump is a valid move.
                 if(!validateCapture(x_to, y_to)) return false;
                 
                 //Delete the piece which was jumped over.
                 getPiece(getCol() + dx/2, getRow() + dy/2).get().delete();
                 
-                //End the turn if no more jumps are possible.
-                if(!canCapture()) {
-                    moved = Optional.empty();
-                    endTurn();
-                    
-                //Only this piece may be moved if there are more possible captures.
-                } else {
-                    moved = Optional.of(this);
-                }
+                //Move the piece.
+                setBoardPos(x_to, y_to);
+                
+                //Store piece which was moved, used for chained captures.
+                moved = Optional.ofNullable(canCapture() ? this : null);
             }
-            
-            //Move the piece.
-            setBoardPos(x_to, y_to);
             return true;
         }
         
@@ -210,7 +284,7 @@ public class Checkers extends TileGame {
             int dx = x_to - getCol(), dy = y_to - getRow();
             
             //Ensure positions are in bounds.
-            if(!inBounds(getCol(), getRow()) || !inBounds(x_to, y_to)) return false;
+            if(!inBounds(x_to, y_to)) return false;
             
             //Ensure capturing piece moves 2 spaces diagonally.
             if(Math.abs(dx)!=2 || Math.abs(dy)!=2) return false;
@@ -222,8 +296,8 @@ public class Checkers extends TileGame {
             if(getPiece(x_to, y_to).isPresent()) return false;
             
             //Ensure captured piece belongs to the opponent.
-            if(getPiece(getCol() + dx/2, getRow() + dy/2).get().getOwnerId()
-                    != getOwnerId() % 2 + 1) return false;
+            if(getPiece(getCol() + dx/2, getRow() + dy/2).get()
+                    .getOwnerId() == getOwnerId()) return false;
             
             //Capture piece.
             return true;
@@ -249,12 +323,13 @@ public class Checkers extends TileGame {
         public boolean movePiece(int x_to, int y_to) {
             
             //Ensure piece only moves forwards.
-            if(y_to-getRow() != (getOwnerId()==1?-1:1)) return false;
+            if(Math.signum(y_to-getRow()) != (getOwnerId()==1?-1:1)) return false;
             
             if(!super.movePiece(x_to, y_to)) return false;
             
             //If the piece has reached the other end of the board, crown it.
-            if(getOwnerId()==1 ? getRow()==getHeight()-1 : getRow()==0) {
+            if(getOwnerId()==1 ? getRow()==0 : getRow()==Checkers.this.getHeight()-1) {
+                
                 new King(getOwnerId(), getCol(), getRow());
                 //Crowning a piece immediately ends the turn.
                 endTurn();
@@ -267,7 +342,8 @@ public class Checkers extends TileGame {
             
             //Check if the forward diagonal jump in each diagonal is valid.
             for(int xx = -2; xx <= 2; xx += 4) {
-                if(validateCapture(getCol()+xx, getRow() + getOwnerId()==1?-2:2)) return true;
+                if(validateCapture(getCol()+xx, getRow()
+                        + (getOwnerId()==1?-2:2))) return true;
             }
             return false;
         }
