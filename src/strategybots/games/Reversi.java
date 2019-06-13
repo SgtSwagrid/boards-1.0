@@ -22,6 +22,9 @@ public class Reversi extends TileGame {
     /** Title of the window. */
     private static final String TITLE = "Reversi";
     
+    /** Default board dimensions. */
+    private static final int WIDTH = 8, HEIGHT = 8;
+    
     /** Textures used for game pieces. */
     private static final String[] DISC_TEXTURES = new String[] {
             "res/misc/white_dot.png", "res/misc/black_dot.png"};
@@ -43,6 +46,16 @@ public class Reversi extends TileGame {
      */
     public Reversi(int width, int height, Player<Reversi> player1, Player<Reversi> player2) {
         super(width, height, TITLE, player1, player2);
+    }
+    
+    /**
+     * Asynchronously runs a new Reversi instance,
+     * using a default board size of 10x10.
+     * @param player1 the first (white) player to participate.
+     * @param player2 the second (black) player to participate.
+     */
+    public Reversi(Player<Reversi> player1, Player<Reversi> player2) {
+        this(WIDTH, HEIGHT, player1, player2);
     }
     
     /**

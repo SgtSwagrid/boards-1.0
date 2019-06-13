@@ -17,6 +17,9 @@ public class Clobber extends TileGame {
     /** Title of the window. */
     private static final String TITLE = "Clobber";
     
+    /** Default board dimensions. */
+    private static final int WIDTH = 5, HEIGHT = 6;
+    
     /** Textures used for game pieces. */
     private static final String[] STONE_TEXTURES = new String[] {
             "res/misc/white_dot.png", "res/misc/black_dot.png"};
@@ -34,6 +37,16 @@ public class Clobber extends TileGame {
      */
     public Clobber(int width, int height, Player<Clobber> player1, Player<Clobber> player2) {
         super(width, height, TITLE, player1, player2);
+    }
+    
+    /**
+     * Asynchronously runs a new Clobber instance,
+     * using a default board size of 5x6.
+     * @param player1 the first (white) player to participate.
+     * @param player2 the second (black) player to participate.
+     */
+    public Clobber(Player<Clobber> player1, Player<Clobber> player2) {
+        this(WIDTH, HEIGHT, player1, player2);
     }
     
     /**

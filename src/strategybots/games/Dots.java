@@ -69,6 +69,16 @@ public class Dots extends TileGame {
     }
     
     /**
+     * Asynchronously runs a new Dots and Boxes instance,
+     * using a default board size of 6x6 squares.
+     * @param player1 the first (blue) player to participate.
+     * @param player2 the second (red) player to participate.
+     */
+    public Dots(Player<Dots> player1, Player<Dots> player2) {
+        this(6, 6, player1, player2);
+    }
+    
+    /**
      * Draws a new line segment in the given orientation at the given position.<br>
      * The horizontal and vertical lines operate on two independent coordinate systems.<br>
      * Coordinates all start from (0, 0) in the bottom-left corner.<br>

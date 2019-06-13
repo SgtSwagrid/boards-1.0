@@ -32,7 +32,7 @@ public class Board {
             Colour.rgb(248, 239, 186), Colour.rgb(234, 181, 67)};
     
     /** Background colour. */
-    private Colour background = Colour.rgb(112, 111, 211);
+    private Colour background = Colour.rgb(25, 42, 86);
     
     /** The pattern with which the background is created. */
     private Pattern pattern = Pattern.CHECKER;

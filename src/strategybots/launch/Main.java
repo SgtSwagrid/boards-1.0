@@ -59,19 +59,19 @@ public class Main {
 	            break;
 	            
 	        case AMAZONS:
-	            new Amazons(10, 10, new AmazonsController(), new AmazonsController());
+	            new Amazons(new AmazonsController(), new AmazonsController());
 	            break;
 	            
 	        case CHOMP:
-	            new Chomp(6, 6, new ChompController(), new ChompController());
+	            new Chomp(new ChompController(), new ChompController());
 	            break;
 	            
 	        case CLOBBER:
-	            new Clobber(5, 6, new ClobberController(), new ClobberController());
+	            new Clobber(new ClobberController(), new ClobberController());
 	            break;
 	            
 	        case REVERSI:
-	            new Reversi(8, 8, new ReversiController(), new ReversiController());
+	            new Reversi(new ReversiController(), new ReversiController());
 	            break;
 	            
 	        case CHESS:
@@ -79,11 +79,11 @@ public class Main {
 	            break;
 	            
 	        case DOTS:
-	            new Dots(6, 6, new DotsController(), new DotsController());
+	            new Dots(new DotsController(), new DotsController());
 	            break;
 	            
 	        case CHECKERS:
-	            new Checkers(8, 8, 3, new CheckersController(), new CheckersController());
+	            new Checkers(new CheckersController(), new CheckersController());
 	            break;
 	            
 	        case 69:

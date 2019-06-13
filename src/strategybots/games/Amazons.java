@@ -19,6 +19,9 @@ public class Amazons extends TileGame {
     /** Title of the window. */
     private static final String TITLE = "Game of the Amazons";
     
+    /** Default board dimensions. */
+    private static final int WIDTH = 10, HEIGHT = 10;
+    
     /** Textures used for amazons. */
     private static final String[] AMAZON_TEXTURES = new String[] {
             "res/chess/white_queen.png", "res/chess/black_queen.png"};
@@ -45,6 +48,16 @@ public class Amazons extends TileGame {
      */
     public Amazons(int width, int height, Player<Amazons> player1, Player<Amazons> player2) {
         super(width, height, TITLE, player1, player2);
+    }
+    
+    /**
+     * Asynchronously runs a new Game of the Amazons instance,
+     * using a default board size of 10x10.
+     * @param player1 the first (white) player to participate.
+     * @param player2 the second (black) player to participate.
+     */
+    public Amazons(Player<Amazons> player1, Player<Amazons> player2) {
+        this(WIDTH, HEIGHT, player1, player2);
     }
     
     /**

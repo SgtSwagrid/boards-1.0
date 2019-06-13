@@ -21,13 +21,16 @@ public class Chomp extends TileGame {
     /** Title of the window. */
     private static final String TITLE = "Chomp";
     
+    /** Default board dimensions. */
+    private static final int WIDTH = 6, HEIGHT = 4;
+    
     /** Colours of the chomped tiles of each player. */
     private static final Colour[] PLAYER_COLOURS = new Colour[] {
-            Colour.rgb(87, 95, 207), Colour.rgb(5, 196, 107)};
+            Colour.rgb(197, 108, 240), Colour.rgb(236, 204, 104)};
     
     /** The display name of the colour of each player. */
     private static final String[] COLOUR_NAMES = new String[] {
-            "Blue", "Green"};
+            "Purple", "Yellow"};
     
     /** Background tile colours. */
     private static final Colour BOARD_COLOUR1 = Colour.rgb(141, 110, 99);
@@ -42,11 +45,21 @@ public class Chomp extends TileGame {
      * Asynchronously runs a new Chomp instance.
      * @param width the width of the board.
      * @param height the height of the board.
-     * @param player1 the first (blue) player to participate.
-     * @param player2 the second (green) player to participate.
+     * @param player1 the first (purple) player to participate.
+     * @param player2 the second (yellow) player to participate.
      */
     public Chomp(int width, int height, Player<Chomp> player1, Player<Chomp> player2) {
         super(width, height, TITLE, player1, player2);
+    }
+    
+    /**
+     * Asynchronously runs a new Chomp instance,
+     * using a default board size of 6x4.
+     * @param player1 the first (purple) player to participate.
+     * @param player2 the second (yellow) player to participate.
+     */
+    public Chomp(Player<Chomp> player1, Player<Chomp> player2) {
+        this(WIDTH, HEIGHT, player1, player2);
     }
     
     /**
@@ -80,7 +93,7 @@ public class Chomp extends TileGame {
                     
                     //Recolour the tile to indicate that it was chomped by the current player.
                     getBoard().setColour(xx, yy, (xx + yy) % 2 == 0 ?
-                            PLAYER_COLOURS[getCurrentPlayerId()-1].lighten(0.1F) :
+                            PLAYER_COLOURS[getCurrentPlayerId()-1].lighten(0.05F) :
                             PLAYER_COLOURS[getCurrentPlayerId()-1]);
                 }
             }

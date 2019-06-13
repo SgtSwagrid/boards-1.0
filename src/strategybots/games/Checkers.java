@@ -21,6 +21,9 @@ public class Checkers extends TileGame {
     /** Title of the window. */
     private static final String TITLE = "Checkers";
     
+    /** Default board settings. */
+    private static final int WIDTH = 8, HEIGHT = 8, NUM_ROWS = 3;
+    
     /** Textures used for basic game pieces. */
     private static final String[] MAN_TEXTURES = new String[] {
             "res/draughts/red_draught.png", "res/draughts/white_draught.png"};
@@ -38,7 +41,7 @@ public class Checkers extends TileGame {
     private static final Colour BOARD_COLOUR2 = Colour.rgb(248, 239, 186);
     
     /** The number of rows on each end to be filled with pieces. */
-    private final float pieceRows;
+    private final float numRows;
     
     /** The piece that was/is being moved on this turn. */
     private volatile Optional<Piece> moved = Optional.empty();
@@ -54,7 +57,17 @@ public class Checkers extends TileGame {
     public Checkers(int width, int height, int pieceRows,
             Player<Checkers> player1, Player<Checkers> player2) {
         super(width, height, TITLE, player1, player2);
-        this.pieceRows = pieceRows;
+        this.numRows = pieceRows;
+    }
+    
+    /**
+     * Asynchronously runs a new Checkers instance,
+     * using the default 8x8 board with 3 rows of pieces.
+     * @param player1 the first (red) player to participate.
+     * @param player2 the second (white) player to participate.
+     */
+    public Checkers(Player<Checkers> player1, Player<Checkers> player2) {
+        this(WIDTH, HEIGHT, NUM_ROWS, player1, player2);
     }
     
     /**
@@ -144,7 +157,7 @@ public class Checkers extends TileGame {
         
         //Place the initial pieces.
         for(int x = 0; x < getWidth(); x++) {
-            for(int y = 0; y < pieceRows; y++) {
+            for(int y = 0; y < numRows; y++) {
                 
                 //Player one's pieces (red).
                 if((x+getHeight()-y-1)%2==0) new Man(1, x, getHeight()-y-1);
