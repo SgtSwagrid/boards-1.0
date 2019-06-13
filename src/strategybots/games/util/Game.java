@@ -75,7 +75,7 @@ public abstract class Game {
      * Set the amount of time allocated for each player per turn.<br>
      * Use a value of -1 to disable time limits (default).<br>
      * Should the time limit expire, the game will be forfeit.
-     * @param millis the allocated per-turn time, in milliseconds.
+     * @param timeLimit the allocated per-turn time, in milliseconds.
      */
     public void setTimeLimit(long timeLimit) { this.timeLimit = timeLimit; }
     
