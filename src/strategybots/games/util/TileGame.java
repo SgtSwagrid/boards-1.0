@@ -330,7 +330,7 @@ public abstract class TileGame extends Game {
         public void takeTurn(G game, int playerId) {
             //Wait until the turn is complete before returning control to the game.
             //Actual logic is handled asynchronously by listeners set up in init().
-            while(!game.turnTaken() && game.getWindow().isOpen()) {}
+            while(!game.turnDone() && game.getWindow().isOpen()) {}
         }
         
         /**

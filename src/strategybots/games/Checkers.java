@@ -69,7 +69,7 @@ public class Checkers extends TileGame {
     public boolean movePiece(int x_from, int y_from, int x_to, int y_to) {
         
         //Ensure game is running and turn hasn't already been taken.
-        if(!isRunning() || turnTaken()) return false;
+        if(!isRunning() || turnDone()) return false;
         
         //Ensure positions are in bounds.
         if(!inBounds(x_from, y_from) || !inBounds(x_to, y_to)) return false;
@@ -228,25 +228,14 @@ public class Checkers extends TileGame {
          */
         private void movePiece(Checkers game, int playerId, int x, int y) {
             
-            //Determine move step size.
-            int dx = Math.abs(x - getSelected().get().getCol());
-            int dy = Math.abs(y - getSelected().get().getRow());
-            
-            //The piece being moved, before it is moved. Used to check for promotions.
-            CheckersPiece before = (CheckersPiece)getSelected().get();
-            
             //Move the selected piece to this location.
             if(game.movePiece(getSelected().get().getCol(),
                 getSelected().get().getRow(), x, y)) {
                 
-                //Whether a piece was crowned on this turn.
-                boolean promoted = (CheckersPiece)game.getPiece(x, y).get() != before;
-                
                 unselectPiece(game);
                 
                 //Reselect the piece if a capture was made and more captures are possible.
-                if(((CheckersPiece)game.getPiece(x, y).get()).canCapture()
-                        && (dx==2 && dy==2) && !promoted) {
+                if(!game.turnDone() && game.getCurrentPlayerId()==playerId) {
                     selectPiece(game, game.getPiece(x, y).get());
                 }
             }

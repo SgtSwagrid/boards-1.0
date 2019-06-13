@@ -81,7 +81,7 @@ public class Dots extends TileGame {
     public boolean drawLine(Orien orien, int x, int y) {
         
         //Ensure game is running and turn hasn't already been taken.
-        if(!isRunning() || turnTaken()) return false;
+        if(!isRunning() || turnDone()) return false;
         
         //Determine which set of lines to modify based on the orientation.
         boolean[][] lines = orien == Orien.HORZ ? h_lines : v_lines;

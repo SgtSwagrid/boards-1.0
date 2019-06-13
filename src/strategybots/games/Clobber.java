@@ -48,7 +48,7 @@ public class Clobber extends TileGame {
     public boolean moveStone(int x_from, int y_from, int x_to, int y_to) {
         
         //Ensure game is running and turn hasn't already been taken.
-        if(!isRunning() || turnTaken()) return false;
+        if(!isRunning() || turnDone()) return false;
         
         //Ensure positions are in bounds.
         if(!inBounds(x_from, y_from) || !inBounds(x_to, y_to)) return false;

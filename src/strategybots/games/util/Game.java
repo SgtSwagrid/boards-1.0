@@ -29,7 +29,7 @@ public abstract class Game {
     private volatile boolean running = false;
     
     /** Indication of the completion of the current players' turn. */
-    private volatile boolean turnTaken;
+    private volatile boolean turnDone;
     
     /**
      * Constructs a new game with the given players, given in turn order.<br>
@@ -64,6 +64,16 @@ public abstract class Game {
     public boolean isRunning() { return running; }
     
     /**
+     * @return whether the current turn has yet been completed.
+     */
+    public boolean turnDone() { return turnDone; }
+    
+    /**
+     * Declare the current turn as having been completed.
+     */
+    protected void endTurn() { turnDone = true; }
+    
+    /**
      * @param playerId the ID of the player to get (starting at 1).
      * @return the player of the given ID.
      */
@@ -73,16 +83,6 @@ public abstract class Game {
      * @return the player whose turn it currently is.
      */
     protected Player getCurrentPlayer() { return currentPlayer; }
-    
-    /**
-     * @return whether the current turn has yet been completed.
-     */
-    protected boolean turnTaken() { return turnTaken; }
-    
-    /**
-     * Declare the current turn as having been completed.
-     */
-    protected void endTurn() { turnTaken = true; }
     
     /**
      * Skips the next players turn.
@@ -129,10 +129,10 @@ public abstract class Game {
                     currentPlayer = players[currentPlayerId - 1];
                     
                     //Have the current player take their turn.
-                    turnTaken = false;
+                    turnDone = false;
                     preTurn();
                     
-                    while(!turnTaken && isRunning())
+                    while(!turnDone && isRunning())
                         currentPlayer.takeTurn(Game.this, currentPlayerId);
                     
                     postTurn();

@@ -77,7 +77,7 @@ public class Chess extends TileGame {
     public boolean movePiece(int x_from, int y_from, int x_to, int y_to) {
         
         //Ensure game is running and turn hasn't already been taken.
-        if(!isRunning() || turnTaken()) return false;
+        if(!isRunning() || turnDone()) return false;
         
         //Ensure positions are in bounds.
         if(!inBounds(x_from, y_from) || !inBounds(x_to, y_to)) return false;
@@ -95,7 +95,7 @@ public class Chess extends TileGame {
     public boolean promotePawn(Chessman newType) {
         
         //Ensure game is running and turn hasn't already been taken.
-        if(!isRunning() || turnTaken()) return false;
+        if(!isRunning() || turnDone()) return false;
         
         //Ensure there is a piece ready to be promoted.
         if(!promotion.isPresent()) return false;

@@ -56,7 +56,7 @@ public class Reversi extends TileGame {
     public boolean placeDisc(int x, int y) {
         
         //Ensure game is running and turn hasn't already been taken.
-        if(!isRunning() || turnTaken()) return false;
+        if(!isRunning() || turnDone()) return false;
         
         //Ensure position is in bounds.
         if(!inBounds(x, y)) return false;
