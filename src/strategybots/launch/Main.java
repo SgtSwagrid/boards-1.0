@@ -1,7 +1,5 @@
 package strategybots.launch;
 
-import strategybots.bots.C4_MCTS;
-import strategybots.bots.Swagmax;
 import strategybots.bots.SwagmaxC4;
 import strategybots.bots.legacy.SwagConnectBot;
 import strategybots.games.Amazons;

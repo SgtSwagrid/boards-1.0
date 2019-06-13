@@ -31,6 +31,9 @@ public abstract class Game {
     /** Indication of the completion of the current players' turn. */
     private volatile boolean turnDone;
     
+    /** The maximum amount of time allocated per turn, in milliseconds. */
+    private volatile long timeLimit = -1;
+    
     /**
      * Constructs a new game with the given players, given in turn order.<br>
      * Must subsequently call 'start()' to begin the game.
@@ -67,6 +70,14 @@ public abstract class Game {
      * @return whether the current turn has yet been completed.
      */
     public boolean turnDone() { return turnDone; }
+    
+    /**
+     * Set the amount of time allocated for each player per turn.<br>
+     * Use a value of -1 to disable time limits (default).<br>
+     * Should the time limit expire, the game will be forfeit.
+     * @param millis the allocated per-turn time, in milliseconds.
+     */
+    public void setTimeLimit(long timeLimit) { this.timeLimit = timeLimit; }
     
     /**
      * Declare the current turn as having been completed.
@@ -132,8 +143,27 @@ public abstract class Game {
                     turnDone = false;
                     preTurn();
                     
-                    while(!turnDone && isRunning())
-                        currentPlayer.takeTurn(Game.this, currentPlayerId);
+                    //Record the time at which the turn began.
+                    long startTime = System.currentTimeMillis();
+                    
+                    //Prompt the player to take a turn, in a new thread.
+                    new Thread("Player") {
+                        @Override public void run() {
+                            
+                            //Continue to call takeTurn() until the turn is complete.
+                            while(!turnDone && isRunning()) {
+                                currentPlayer.takeTurn(Game.this, currentPlayerId);
+                            }
+                        }
+                    }.start();
+                    
+                    //Wait for the turn to be completed.
+                    while(!turnDone && isRunning()) {
+                        //Forfeit the game if the time runs out.
+                        if(timeLimit > 0 && System.currentTimeMillis()-startTime > timeLimit) {
+                            endGame(getCurrentPlayerId()%2+1);
+                        }
+                    }
                     
                     postTurn();
                     checkWin();
