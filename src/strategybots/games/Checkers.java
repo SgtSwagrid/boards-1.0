@@ -270,11 +270,11 @@ public class Checkers extends TileGame {
                 //Can't perform a simple move onto another piece.
                 if(getPiece(x_to, y_to).isPresent()) return false;
                 
-                //Move the piece.
-                setBoardPos(x_to, y_to);
-                
                 //A simple diagonal move must be the only move.
                 if(moved.isPresent()) return false;
+                
+                //Move the piece.
+                setBoardPos(x_to, y_to);
                 
             //Jump over another piece, capturing it.
             } else {
