@@ -1,7 +1,6 @@
 package strategybots.launch;
 
 import strategybots.bots.SwagmaxC4;
-import strategybots.bots.legacy.SwagConnectBot;
 import strategybots.games.Amazons;
 import strategybots.games.Chess;
 import strategybots.games.Chomp;
@@ -19,8 +18,6 @@ import strategybots.games.Dots.DotsController;
 import strategybots.games.HyperMNK.Gravity;
 import strategybots.games.HyperMNK.HyperMNKController;
 import strategybots.games.Reversi.ReversiController;
-import strategybots.games.legacy.ConnectFour;
-import strategybots.games.legacy.ConnectFour.ConnectFourController;
 
 public class Main {
     
@@ -33,11 +30,11 @@ public class Main {
     private static final int DOTS = 6;
     private static final int CHECKERS =7;
 	
-    private static int game = CHECKERS;
+    private static final int GAME = CHECKERS;
     
 	public static void main(String[] args) {
 	    
-	    switch(game) {
+	    switch(GAME) {
 	        
 	        case HYPER_MNK:
 	            HyperMNK.create()
@@ -56,37 +53,13 @@ public class Main {
     	            .start();
 	            break;
 	            
-	        case AMAZONS:
-	            new Amazons(new AmazonsController(), new AmazonsController());
-	            break;
-	            
-	        case CHOMP:
-	            new Chomp(new ChompController(), new ChompController());
-	            break;
-	            
-	        case CLOBBER:
-	            new Clobber(new ClobberController(), new ClobberController());
-	            break;
-	            
-	        case REVERSI:
-	            new Reversi(new ReversiController(), new ReversiController());
-	            break;
-	            
-	        case CHESS:
-	            new Chess(new ChessController(), new ChessController());
-	            break;
-	            
-	        case DOTS:
-	            new Dots(new DotsController(), new DotsController());
-	            break;
-	            
-	        case CHECKERS:
-	            new Checkers(new CheckersController(), new CheckersController());
-	            break;
-	            
-	        case 69:
-	            new ConnectFour(new SwagConnectBot(3000), new ConnectFourController());
-	            break;
+	        case AMAZONS: new Amazons(new AmazonsController(), new AmazonsController()); break;
+            case CHECKERS: new Checkers(new CheckersController(), new CheckersController()); break;
+            case CHESS: new Chess(new ChessController(), new ChessController()); break;
+	        case CHOMP: new Chomp(new ChompController(), new ChompController()); break;
+	        case CLOBBER: new Clobber(new ClobberController(), new ClobberController()); break;
+            case DOTS: new Dots(new DotsController(), new DotsController()); break;
+	        case REVERSI: new Reversi(new ReversiController(), new ReversiController()); break;
 	    }
 	}
 }

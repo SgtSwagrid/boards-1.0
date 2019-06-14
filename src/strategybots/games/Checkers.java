@@ -81,6 +81,33 @@ public class Checkers extends TileGame {
      */
     public boolean movePiece(int x_from, int y_from, int x_to, int y_to) {
         
+        //Ensure move is valid.
+        if(!validateMove(x_from, y_from, x_to, y_to)) return false;
+        
+        //Move the piece.
+        getPiece(x_from, y_from).get().movePiece(x_to, y_to);
+        
+        //End turn if move was not a capture.
+        if(Math.abs(x_to-x_from)==1 && Math.abs(
+                y_to-y_from)==1) endTurn();
+        
+        //End turn if move was a capture but there are no more possible captures.
+        else if(!((CheckersPiece)getPiece(x_to, y_to)
+                .get()).canCapture()) endTurn();
+        
+        return true;
+    }
+    
+    /**
+     * Determine whether a move is valid.
+     * @param x_from the current x position of the piece.
+     * @param y_from the current y position of the piece.
+     * @param x_to the new x position of the piece.
+     * @param y_to the new y position of the piece.
+     * @return whether the given move is valid.
+     */
+    public boolean validateMove(int x_from, int y_from, int x_to, int y_to) {
+        
         //Ensure game is running and turn hasn't already been taken.
         if(!isRunning() || turnDone()) return false;
         
@@ -98,17 +125,9 @@ public class Checkers extends TileGame {
         if(moved.isPresent() && moved.get() != getPiece(
                 x_from, y_from).get()) return false;
         
-        //Move the piece, subject to game constraints.
-        if(!getPiece(x_from, y_from).get().movePiece(
+        //Ensure movement is consistent with game rules.
+        if(!getPiece(x_from, y_from).get().validateMove(
                 x_to, y_to)) return false;
-        
-        //End turn if move was not a capture.
-        if(Math.abs(x_to-x_from)==1 && Math.abs(
-                y_to-y_from)==1) endTurn();
-        
-        //End turn if move was a capture but there are no more possible captures.
-        else if(!((CheckersPiece)getPiece(x_to, y_to)
-                .get()).canCapture()) endTurn();
         
         return true;
     }
@@ -198,37 +217,15 @@ public class Checkers extends TileGame {
             if(game.getPiece(x, y).isPresent() &&
                     game.getPiece(x, y).get().getOwnerId() == playerId) {
                 
-                selectPiece(game, playerId, x, y);
+                //Select the new piece if no piece has yet been moved.
+                if(!game.moved.isPresent()) {
+                    selectPiece(game, game.getPiece(x, y).get());
+                }
                 
             //Otherwise, move the piece if there is one selected.
             } else if(getSelected().isPresent()) {
                 
                 movePiece(game, playerId, x, y);
-            }
-        }
-        
-        /**
-         * Attempts to select a piece at the specified location.
-         * @param game the game being played.
-         * @param playerId the ID of the current player.
-         * @param x the x position which was clicked.
-         * @param y the y position which was clicked.
-         */
-        private void selectPiece(Checkers game, int playerId, int x, int y) {
-            
-            //Determine if there exists one of your pieces which can capture an enemy piece.
-            boolean canCapture = false;
-            for(Piece piece : game.getPieces(playerId)) {
-                if(((CheckersPiece)piece).canCapture()) canCapture = true;
-            }
-            
-            //Can't select a piece which can't capture if there exists a piece which can.
-            if(!canCapture || ((CheckersPiece)game.getPiece(x, y).get()).canCapture()) {
-                
-                //Select the new piece if no piece has yet been moved.
-                if(!game.moved.isPresent()) {
-                    selectPiece(game, game.getPiece(x, y).get());
-                }
             }
         }
         
@@ -269,59 +266,76 @@ public class Checkers extends TileGame {
         @Override
         public boolean movePiece(int x_to, int y_to) {
             
-            //The difference between the current position and the new position.
-            int dx = x_to - getCol(), dy = y_to - getRow();
-            
             //Move one space diagonally.
-            if(Math.abs(dx)==1 && Math.abs(dy)==1) {
-                
-                //Can't perform a simple move if a jump is available.
-                for(Piece piece : getPieces(getOwnerId())) {
-                    if(((CheckersPiece)piece).canCapture()) return false;
-                }
-                
-                //Can't perform a simple move onto another piece.
-                if(getPiece(x_to, y_to).isPresent()) return false;
-                
-                //A simple diagonal move must be the only move.
-                if(moved.isPresent()) return false;
+            if(validateSimple(x_to, y_to)) {
                 
                 //Move the piece.
                 setBoardPos(x_to, y_to);
+                return true;
                 
             //Jump over another piece, capturing it.
-            } else {
-                
-                //Ensure jump is a valid move.
-                if(!validateCapture(x_to, y_to)) return false;
+            } else if(validateJump(x_to, y_to)) {
                 
                 //Delete the piece which was jumped over.
-                getPiece(getCol() + dx/2, getRow() + dy/2).get().delete();
-                
+                getPiece(getCol() + (x_to-getCol())/2, getRow()
+                        + (y_to-getRow())/2).get().delete();
                 //Move the piece.
                 setBoardPos(x_to, y_to);
-                
                 //Store piece which was moved, used for chained captures.
                 moved = Optional.ofNullable(canCapture() ? this : null);
-            }
-            return true;
+                return true;
+            
+            } else return false;
+        }
+        
+        @Override
+        public boolean validateMove(int x_to, int y_to) {
+            return validateSimple(x_to, y_to) || validateJump(x_to, y_to);
         }
         
         /**
-         * Ensures a move is a valid jump. <br>
+         * Determines whether a move is (a) a simple move and (b) valid.<br>
          * Does not perform a check to ensure piece moves forward.<br>
          * Does not perform a check to ensure turn is active.<br>
          * Does not actually perform any moves.
          * @param x_to the x position to which the piece is to move.
          * @param y_to the y position to which the piece is to move.
-         * @return whether the move is value.
+         * @return true if a move is both simple and valid.
          */
-        boolean validateCapture(int x_to, int y_to) {
+        boolean validateSimple(int x_to, int y_to) {
+            
+            //Ensure piece moved one space diagonally.
+            if(Math.abs(x_to-getCol())!=1 || Math.abs(y_to-getRow())!=1) return false;
+            
+            //Can't perform a simple move if a jump is available.
+            for(Piece piece : getPieces(getOwnerId())) {
+                if(((CheckersPiece)piece).canCapture()) return false;
+            }
+            
+            //Can't perform a simple move onto another piece.
+            if(getPiece(x_to, y_to).isPresent()) return false;
+            
+            //A simple diagonal move must be the only move.
+            if(moved.isPresent()) return false;
+            
+            return true;
+        }
+        
+        /**
+         * Determines whether a move is (a) a jump/capture and (b) valid.<br>
+         * Does not perform a check to ensure piece moves forward.<br>
+         * Does not perform a check to ensure turn is active.<br>
+         * Does not actually perform any moves.
+         * @param x_to the x position to which the piece is to move.
+         * @param y_to the y position to which the piece is to move.
+         * @return true if a move is both a jump and valid.
+         */
+        boolean validateJump(int x_to, int y_to) {
             
             //The difference between the current position and the new position.
             int dx = x_to - getCol(), dy = y_to - getRow();
             
-            //Ensure positions are in bounds.
+            //Ensure position is in bounds.
             if(!inBounds(x_to, y_to)) return false;
             
             //Ensure capturing piece moves 2 spaces diagonally.
@@ -337,7 +351,6 @@ public class Checkers extends TileGame {
             if(getPiece(getCol() + dx/2, getRow() + dy/2).get()
                     .getOwnerId() == getOwnerId()) return false;
             
-            //Capture piece.
             return true;
         }
         
@@ -380,7 +393,7 @@ public class Checkers extends TileGame {
             
             //Check if the forward diagonal jump in each diagonal is valid.
             for(int xx = -2; xx <= 2; xx += 4) {
-                if(validateCapture(getCol()+xx, getRow()
+                if(validateJump(getCol()+xx, getRow()
                         + (getOwnerId()==1?-2:2))) return true;
             }
             return false;
@@ -403,7 +416,7 @@ public class Checkers extends TileGame {
             //Check if the diagonal jump in each diagonal is valid.
             for(int xx = -2; xx <= 2; xx += 4) {
                 for(int yy = -2; yy <= 2; yy += 4) {
-                    if(validateCapture(getCol()+xx, getRow()+yy)) return true;
+                    if(validateJump(getCol()+xx, getRow()+yy)) return true;
                 }
             }
             return false;

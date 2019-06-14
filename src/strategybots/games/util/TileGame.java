@@ -270,12 +270,19 @@ public abstract class TileGame extends Game {
         /**
          * Called by the game to move a piece to a particular position.<br>
          * Implementations of this method should provide their own move validation.<br>
-         * An exception may be thrown if a move is invalid.
          * @param x_to the x position to move to.
          * @param y_to the y position to move to.
-         * @throws IllegalMoveException
+         * @return whether the move was valid and successful.
          */
         public abstract boolean movePiece(int x_to, int y_to);
+        
+        /**
+         * Determines whether such a move would be valid.<br>
+         * @param x_to the x position to move to.
+         * @param y_to the y position to move to.
+         * @return whether the move is valid.
+         */
+        public boolean validateMove(int x_to, int y_to) { return false; }
     }
     
     /**
