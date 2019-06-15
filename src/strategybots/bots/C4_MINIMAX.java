@@ -17,8 +17,8 @@ import java.util.Random;
 import dk.brics.automaton.MinimizationOperations;
 import strategybots.bots.visual.VisualC4;
 import strategybots.bots.zobrist.Zobrist;
-import strategybots.games.HyperMNK;
-import strategybots.games.HyperMNK.HyperMNKPlayer;
+import strategybots.games.legacy.HyperMNK;
+import strategybots.games.legacy.HyperMNK.HyperMNKPlayer;
 
 /**
  * 

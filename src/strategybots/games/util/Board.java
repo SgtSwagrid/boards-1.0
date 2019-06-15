@@ -397,7 +397,7 @@ public class Board {
         @Override
         protected void onLeftClick() {
             //When this tile is clicked, trigger all of its listeners.
-            listeners.forEach(Action::run);
+            listeners.parallelStream().forEach(Action::run);
         }
         
         @Override

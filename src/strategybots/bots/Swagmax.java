@@ -5,8 +5,8 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
-import strategybots.games.HyperMNK;
-import strategybots.games.HyperMNK.HyperMNKPlayer;
+import strategybots.games.legacy.HyperMNK;
+import strategybots.games.legacy.HyperMNK.HyperMNKPlayer;
 
 public class Swagmax implements HyperMNKPlayer {
     

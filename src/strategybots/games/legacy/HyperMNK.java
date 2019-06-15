@@ -1,4 +1,4 @@
-package strategybots.games;
+package strategybots.games.legacy;
 
 import java.awt.Color;
 import java.awt.Font;

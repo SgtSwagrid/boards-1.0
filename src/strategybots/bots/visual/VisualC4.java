@@ -18,8 +18,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 
-import strategybots.games.HyperMNK;
-import strategybots.games.HyperMNK.HyperMNKPlayer;
+import strategybots.games.legacy.HyperMNK;
+import strategybots.games.legacy.HyperMNK.HyperMNKPlayer;
 
 public class VisualC4 implements Serializable {
     

@@ -61,7 +61,7 @@ public class Reversi extends TileGame {
     /**
      * Places a new disc at the given position.<br>
      * Must be called exactly once per turn.<br>
-     * Move must be consistent with the rules of the game, or an exception will be thrown.
+     * Move must be consistent with the rules of the game.
      * @param x the x position to place the piece at. 
      * @param y the y position to place the piece at.
      * @return whether the move was valid and successful.
@@ -113,7 +113,8 @@ public class Reversi extends TileGame {
     
     /**
      * Determines which discs are to be captured if a disc
-     * is placed at the given position by the current player.
+     * is placed at the given position by the given player.
+     * @param playerId the ID of the player making the move.
      * @param x the x position the disc is placed at.
      * @param y the y position the disc is placed at.
      * @return a set of all the opponent discs which are captured, if any.

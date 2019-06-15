@@ -7,18 +7,21 @@ import strategybots.games.Chomp;
 import strategybots.games.Clobber;
 import strategybots.games.Checkers;
 import strategybots.games.Checkers.CheckersController;
-import strategybots.games.Dots;
-import strategybots.games.HyperMNK;
+import strategybots.games.DotsAndBoxes;
 import strategybots.games.Reversi;
 import strategybots.games.Amazons.AmazonsController;
 import strategybots.games.Chess.ChessController;
 import strategybots.games.Chomp.ChompController;
 import strategybots.games.Clobber.ClobberController;
-import strategybots.games.Dots.DotsController;
-import strategybots.games.HyperMNK.Gravity;
-import strategybots.games.HyperMNK.HyperMNKController;
+import strategybots.games.ConnectFour;
+import strategybots.games.ConnectFour.ConnectFourController;
+import strategybots.games.DotsAndBoxes.DotsController;
 import strategybots.games.Reversi.ReversiController;
+import strategybots.games.legacy.HyperMNK;
+import strategybots.games.legacy.HyperMNK.Gravity;
+import strategybots.games.legacy.HyperMNK.HyperMNKController;
 import strategybots.games.TicTacToe;
+import strategybots.games.TicTacToe.TicTacToeController;;
 
 public class Main {
     
@@ -31,8 +34,9 @@ public class Main {
     private static final int DOTS = 6;
     private static final int CHECKERS = 7;
     private static final int TICTACTOE = 8;
+    private static final int CONNECTFOUR = 9;
 	
-    private static final int GAME = TICTACTOE;
+    private static final int GAME = CONNECTFOUR;
     
 	public static void main(String[] args) {
 	    
@@ -60,9 +64,10 @@ public class Main {
             case CHESS: new Chess(new ChessController(), new ChessController()); break;
 	        case CHOMP: new Chomp(new ChompController(), new ChompController()); break;
 	        case CLOBBER: new Clobber(new ClobberController(), new ClobberController()); break;
-            case DOTS: new Dots(new DotsController(), new DotsController()); break;
+            case DOTS: new DotsAndBoxes(new DotsController(), new DotsController()); break;
 	        case REVERSI: new Reversi(new ReversiController(), new ReversiController()); break;
-	        case TICTACTOE: new TicTacToe(7, 7, 5, null, null); break;
+	        case TICTACTOE: new TicTacToe(new TicTacToeController(), new TicTacToeController()); break;
+	        case CONNECTFOUR: new ConnectFour(new ConnectFourController(), new ConnectFourController()); break;
 	    }
 	}
 }

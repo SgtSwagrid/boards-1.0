@@ -14,7 +14,7 @@ import strategybots.graphics.Colour;
  * 
  * @author Alec Dorrington
  */
-public class Dots extends TileGame {
+public class DotsAndBoxes extends TileGame {
     
     /** Represents an orientation, horizontal or vertical. */
     public enum Orien { HORZ, VERT }
@@ -24,6 +24,9 @@ public class Dots extends TileGame {
     
     /** Title of the window. */
     private static final String TITLE = "Dots and Boxes";
+    
+    /** Default board dimensions. */
+    private static final int WIDTH = 10, HEIGHT = 10;
     
     /** Colours of the chomped tiles of each player. */
     private static final Colour[] PLAYER_COLOURS = new Colour[] {
@@ -42,7 +45,7 @@ public class Dots extends TileGame {
     private static final int SQUARE_WIDTH = 3;
     
     /** The size of the board, in number of squares. */
-    private final int WIDTH, HEIGHT;
+    private final int width, height;
     
     /** The current state of the board regarding line placements.
      *  True for each location at which a horizontal or
@@ -62,10 +65,10 @@ public class Dots extends TileGame {
      * @param player1 the first (blue) player to participate.
      * @param player2 the second (red) player to participate.
      */
-    public Dots(int width, int height, Player<Dots> player1, Player<Dots> player2) {
+    public DotsAndBoxes(int width, int height, Player<DotsAndBoxes> player1, Player<DotsAndBoxes> player2) {
         super(2 * width + 1, 2 * height + 1, TITLE, player1, player2);
-        WIDTH = width;
-        HEIGHT = height;
+        this.width = width;
+        this.height = height;
     }
     
     /**
@@ -74,8 +77,8 @@ public class Dots extends TileGame {
      * @param player1 the first (blue) player to participate.
      * @param player2 the second (red) player to participate.
      */
-    public Dots(Player<Dots> player1, Player<Dots> player2) {
-        this(6, 6, player1, player2);
+    public DotsAndBoxes(Player<DotsAndBoxes> player1, Player<DotsAndBoxes> player2) {
+        this(WIDTH, HEIGHT, player1, player2);
     }
     
     /**
@@ -112,7 +115,7 @@ public class Dots extends TileGame {
         
         //Capture any squares which this move completed.
         //The turn is over when a move is made which captures no squares.
-        if(captureSquares(orien, x, y) == 0 || totalScore == WIDTH * HEIGHT)
+        if(captureSquares(orien, x, y) == 0 || totalScore == width * height)
             endTurn();
         return true;
     }
@@ -178,10 +181,10 @@ public class Dots extends TileGame {
     }
     
     @Override
-    public int getWidth() { return WIDTH; }
+    public int getWidth() { return width; }
     
     @Override
-    public int getHeight() { return HEIGHT; }
+    public int getHeight() { return height; }
     
     /**
      * Checks for captures on the squares adjacent to a placed line.
@@ -209,7 +212,7 @@ public class Dots extends TileGame {
         }
         
         //Check the square on the positive side of the line.
-        if(x<WIDTH && y<HEIGHT && ++numSides[x][y] == 4) {
+        if(x<width && y<height && ++numSides[x][y] == 4) {
             score++; totalScore++;
             getBoard().setColour(2*x+1, 2*y+1, colour);
         }
@@ -234,10 +237,10 @@ public class Dots extends TileGame {
         }
         
         //Create boolean arrays for storing lines.
-        h_lines = new boolean[WIDTH][HEIGHT+1];
-        v_lines = new boolean[WIDTH+1][HEIGHT];
+        h_lines = new boolean[width][height+1];
+        v_lines = new boolean[width+1][height];
         
-        numSides = new int[WIDTH][HEIGHT];
+        numSides = new int[width][height];
         scores = new int[getNumPlayers()];
     }
     
@@ -261,7 +264,7 @@ public class Dots extends TileGame {
         }
         
         //If all possible squares are claimed.
-        if(totalScore == WIDTH * HEIGHT) {
+        if(totalScore == width * height) {
             
             //The player with the highest score wins.
             endGame(winner);
@@ -278,14 +281,14 @@ public class Dots extends TileGame {
      * Each DotsController will make moves based on mouse input on the game display window.
      * @author Alec Dorrington
      */
-    public static final class DotsController extends Controller<Dots> {
+    public static final class DotsController extends Controller<DotsAndBoxes> {
         
         public DotsController() {}
         
         public DotsController(String name) { super(name); }
         
         @Override
-        public void onTileClicked(Dots game, int playerId, int x, int y) {
+        public void onTileClicked(DotsAndBoxes game, int playerId, int x, int y) {
             
             //Draw a line segment at the clicked position.
             if(x % 2 == 1 && y % 2 == 0) game.drawLine(Orien.HORZ, x/2, y/2);

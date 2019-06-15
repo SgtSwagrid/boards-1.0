@@ -35,7 +35,7 @@ public abstract class TileGame extends Game {
     private final int width, height;
     
     /** Title of the window. */
-    private final String title;
+    private String title;
     
     /**
      * Constructs a new grid game of the given dimensions and players.
@@ -53,6 +53,15 @@ public abstract class TileGame extends Game {
         board = new Board(width, height, title);
         boardPieces = new Piece[width][height];
         window = board.getWindow();
+        
+        //Setup click listeners on board for controllers.
+        getBoard().addListenerToAll((x, y) -> {
+            if(getCurrentPlayer() instanceof Controller && isRunning()) {
+                //Trigger the click listener for the current player.
+                ((Controller)getCurrentPlayer()).onTileClicked(
+                        TileGame.this, getCurrentPlayerId(), x, y);
+            }
+        });
         
         playerPieces = new Set[players.length];
         for(int i = 0; i < players.length; i++) {
@@ -156,6 +165,14 @@ public abstract class TileGame extends Game {
      */
     protected void setHighlightColour(Colour colour) {
         HIGHLIGHT_COLOUR = colour;
+    }
+    
+    /**
+     * @param title the new title of the window.
+     */
+    protected void setTitle(String title) {
+        window.setTitle(title);
+        this.title = title;
     }
     
     /**
@@ -308,20 +325,6 @@ public abstract class TileGame extends Game {
          * @param name the display name of this controller.
          */
         public Controller(String name) { this.name = name; }
-        
-        @Override
-        public void init(G game, int playerId) {
-            
-            game.getBoard().addListenerToAll((x, y) -> {
-                
-                //Listeners should only be active on your own turn.
-                if(playerId != game.getCurrentPlayerId() || !game.isRunning())
-                    return;
-                
-                //Call the game-specific method to deal with tile clicks.
-                onTileClicked(game, playerId, x, y);
-            });
-        }
         
         /**
          * Called once each time the board is left clicked by the mouse.<br>

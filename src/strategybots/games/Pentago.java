@@ -10,6 +10,10 @@ package strategybots.games;
  * 
  * @author Alec Dorrington
  */
-public class Pentago {
-    
+public class Pentago extends TicTacToe {
+
+    public Pentago(int width, int height, int target,
+            Player<TicTacToe> player1, Player<TicTacToe> player2) {
+        super(width, height, target, player1, player2);
+    }
 }

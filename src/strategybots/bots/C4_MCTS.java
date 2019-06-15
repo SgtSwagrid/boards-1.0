@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Random;
 
 import strategybots.bots.zobrist.Zobrist;
-import strategybots.games.HyperMNK;
-import strategybots.games.HyperMNK.HyperMNKPlayer;
+import strategybots.games.legacy.HyperMNK;
+import strategybots.games.legacy.HyperMNK.HyperMNKPlayer;
 
 /**
  * 

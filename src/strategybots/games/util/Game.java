@@ -96,6 +96,11 @@ public abstract class Game {
     protected Player getCurrentPlayer() { return currentPlayer; }
     
     /**
+     * @return the array of players (no copy is made).
+     */
+    protected Player[] getPlayers() { return players; }
+    
+    /**
      * Skips the next players turn.
      */
     protected final void skipTurn() {
