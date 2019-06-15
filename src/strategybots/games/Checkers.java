@@ -37,8 +37,8 @@ public class Checkers extends TileGame {
             "Red", "White"};
     
     /** Background tile colours. */
-    private static final Colour BOARD_COLOUR1 = Colour.rgb(123, 237, 159);
-    private static final Colour BOARD_COLOUR2 = Colour.rgb(248, 239, 186);
+    private static final Colour[] BOARD_COLOURS = new Colour[] {
+            Colour.rgb(123, 237, 159), Colour.rgb(248, 239, 186)};
     
     /** The number of rows on each end to be filled with pieces. */
     private final float numRows;
@@ -171,7 +171,7 @@ public class Checkers extends TileGame {
     protected void init() {
         
         //Set the board colours.
-        getBoard().setBackground(Pattern.CHECKER, BOARD_COLOUR1, BOARD_COLOUR2);
+        getBoard().setBackground(Pattern.CHECKER, BOARD_COLOURS);
         setHighlightColour(Colour.rgb(74, 105, 189));
         
         //Place the initial pieces.

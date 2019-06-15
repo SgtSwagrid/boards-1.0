@@ -18,6 +18,7 @@ import strategybots.games.Dots.DotsController;
 import strategybots.games.HyperMNK.Gravity;
 import strategybots.games.HyperMNK.HyperMNKController;
 import strategybots.games.Reversi.ReversiController;
+import strategybots.games.TicTacToe;
 
 public class Main {
     
@@ -28,9 +29,10 @@ public class Main {
     private static final int REVERSI = 4;
     private static final int CHESS = 5;
     private static final int DOTS = 6;
-    private static final int CHECKERS =7;
+    private static final int CHECKERS = 7;
+    private static final int TICTACTOE = 8;
 	
-    private static final int GAME = CHECKERS;
+    private static final int GAME = TICTACTOE;
     
 	public static void main(String[] args) {
 	    
@@ -60,6 +62,7 @@ public class Main {
 	        case CLOBBER: new Clobber(new ClobberController(), new ClobberController()); break;
             case DOTS: new Dots(new DotsController(), new DotsController()); break;
 	        case REVERSI: new Reversi(new ReversiController(), new ReversiController()); break;
+	        case TICTACTOE: new TicTacToe(7, 7, 5, null, null); break;
 	    }
 	}
 }

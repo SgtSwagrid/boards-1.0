@@ -8,7 +8,7 @@ import strategybots.games.util.Board.Pattern;
 import strategybots.graphics.Colour;
 
 /**
- * <b>Reversi implementation.</b><br>
+ * <b>Reversi/Othello implementation.</b><br>
  * <br>
  * Rules: <a href="https://en.wikipedia.org/wiki/Reversi">Wikipedia</a><br>
  * <br>
