@@ -16,6 +16,8 @@ import strategybots.games.Clobber.ClobberController;
 import strategybots.games.ConnectFour;
 import strategybots.games.ConnectFour.ConnectFourController;
 import strategybots.games.DotsAndBoxes.DotsController;
+import strategybots.games.Pentago;
+import strategybots.games.Pentago.PentagoController;
 import strategybots.games.Reversi.ReversiController;
 import strategybots.games.legacy.HyperMNK;
 import strategybots.games.legacy.HyperMNK.Gravity;
@@ -35,8 +37,9 @@ public class Main {
     private static final int CHECKERS = 7;
     private static final int TICTACTOE = 8;
     private static final int CONNECTFOUR = 9;
+    private static final int PENTAGO = 10;
 	
-    private static final int GAME = TICTACTOE;
+    private static final int GAME = PENTAGO;
     
 	public static void main(String[] args) {
 	    
@@ -68,6 +71,7 @@ public class Main {
 	        case REVERSI: new Reversi(new ReversiController(), new ReversiController()); break;
 	        case TICTACTOE: new TicTacToe(new TicTacToeController(), new TicTacToeController()); break;
 	        case CONNECTFOUR: new ConnectFour(new ConnectFourController(), new ConnectFourController()); break;
+	        case PENTAGO: new Pentago(new PentagoController(), new PentagoController()); break;
 	    }
 	}
 }
