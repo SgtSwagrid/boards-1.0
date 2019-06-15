@@ -36,7 +36,7 @@ public class Main {
     private static final int TICTACTOE = 8;
     private static final int CONNECTFOUR = 9;
 	
-    private static final int GAME = CONNECTFOUR;
+    private static final int GAME = TICTACTOE;
     
 	public static void main(String[] args) {
 	    

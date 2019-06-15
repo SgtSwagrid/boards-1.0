@@ -67,10 +67,10 @@ public class Clobber extends TileGame {
         if(!inBounds(x_from, y_from) || !inBounds(x_to, y_to)) return false;
         
         //Ensure there is a piece at the from location.
-        if(!getPiece(x_from, y_from).isPresent()) return false;
+        if(!getPieceInst(x_from, y_from).isPresent()) return false;
         
         //Move the piece, subject to game constraints.
-        if(!getPiece(x_from, y_from).get().movePiece(x_to, y_to)) return false;
+        if(!getPieceInst(x_from, y_from).get().movePiece(x_to, y_to)) return false;
         
         endTurn();
         return true;
@@ -88,7 +88,7 @@ public class Clobber extends TileGame {
      * @return the piece at (x, y) on the board.
      */
     public int getStone(int x, int y) {
-        return getPiece(x, y).isPresent() ? getPiece(x, y).get().getOwnerId() : 0;
+        return getPieceInst(x, y).isPresent() ? getPieceInst(x, y).get().getOwnerId() : 0;
     }
     
     @Override
@@ -120,8 +120,8 @@ public class Clobber extends TileGame {
                     //If this piece is adjacent to the opponents piece,
                     if((x==piece.getCol() ^ y==piece.getRow()) &&
                     //And is itself a friendly piece:
-                            getPiece(x, y).isPresent() &&
-                            getPiece(x, y).get().getOwnerId() == getCurrentPlayerId()) {
+                            getPieceInst(x, y).isPresent() &&
+                            getPieceInst(x, y).get().getOwnerId() == getCurrentPlayerId()) {
                         
                         //Then there is a piece left for the opponent to clobber.
                         //Thus, you haven't yet won.
@@ -152,11 +152,11 @@ public class Clobber extends TileGame {
         @Override
         public void onTileClicked(Clobber game, int playerId, int x, int y) {
             
-            if(game.getPiece(x, y).isPresent()) {
+            if(game.getPieceInst(x, y).isPresent()) {
                 
                 //Select the piece if it belongs to this player.
-                if(game.getPiece(x, y).get().getOwnerId() == playerId) {
-                    selectPiece(game, game.getPiece(x, y).get());
+                if(game.getPieceInst(x, y).get().getOwnerId() == playerId) {
+                    selectPiece(game, game.getPieceInst(x, y).get());
                     
                 } else if(getSelected().isPresent()) {
                     
@@ -187,7 +187,7 @@ public class Clobber extends TileGame {
             if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure piece moves on top of an opponent piece.
-            if(!getPiece(x_to, y_to).isPresent() || getPiece(x_to, y_to).get().getOwnerId()
+            if(!getPieceInst(x_to, y_to).isPresent() || getPieceInst(x_to, y_to).get().getOwnerId()
                     == getCurrentPlayerId()) return false;
             
             //Ensure piece moves to an adjacent piece.

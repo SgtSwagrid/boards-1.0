@@ -83,10 +83,10 @@ public class Chess extends TileGame {
         if(!inBounds(x_from, y_from) || !inBounds(x_to, y_to)) return false;
         
         //Ensure there is a piece at the from location.
-        if(!getPiece(x_from, y_from).isPresent()) return false;
+        if(!getPieceInst(x_from, y_from).isPresent()) return false;
         
         //Move the piece, subject to game constraints.
-        if(!getPiece(x_from, y_from).get().movePiece(x_to, y_to)) return false;
+        if(!getPieceInst(x_from, y_from).get().movePiece(x_to, y_to)) return false;
         
         endTurn();
         return true;
@@ -147,11 +147,11 @@ public class Chess extends TileGame {
         protected void onTileClicked(Chess game, int playerId, int x, int y) {
             
             //If the piece clicked belongs to the current player.
-            if(game.getPiece(x, y).isPresent() &&
-                    game.getPiece(x, y).get().getOwnerId() == playerId) {
+            if(game.getPieceInst(x, y).isPresent() &&
+                    game.getPieceInst(x, y).get().getOwnerId() == playerId) {
                 
                 //Select this piece.
-                selectPiece(game, game.getPiece(x, y).get());
+                selectPiece(game, game.getPieceInst(x, y).get());
                 
             //If the current player has a piece selected.
             } else if(getSelected().isPresent()) {
@@ -193,8 +193,8 @@ public class Chess extends TileGame {
             if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure players can't capture their own pieces.
-            if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
-                    == getPiece(x_to, y_to).get().getOwnerId()) return false;
+            if(getPieceInst(x_to, y_to).isPresent() && getPieceInst(getCol(), getRow()).get().getOwnerId()
+                    == getPieceInst(x_to, y_to).get().getOwnerId()) return false;
             
             //Ensure pawns move forward the correct number of spaces.
             if(Math.abs(dy) < 1 || Math.abs(dy) > 2) return false;
@@ -206,7 +206,7 @@ public class Chess extends TileGame {
             if(dy * dir < 0) return false;
             
             //Ensure pawns can't jump over other pieces.
-            if(Math.abs(dy) == 2 && getPiece(getCol(), getRow() + dir).isPresent()) return false;
+            if(Math.abs(dy) == 2 && getPieceInst(getCol(), getRow() + dir).isPresent()) return false;
             
             //Ensure pawns don't move sideways more than 1 space.
             if(Math.abs(dx) > 1) return false;
@@ -215,27 +215,27 @@ public class Chess extends TileGame {
             if(Math.abs(dx) == 1 && Math.abs(dy) == 2) return false;
             
             //Ensure pawns can't capture when moving straight.
-            if(Math.abs(dx) == 0 && getPiece(x_to, y_to).isPresent()) return false;
+            if(Math.abs(dx) == 0 && getPieceInst(x_to, y_to).isPresent()) return false;
             
             //Ensure pawns can't move diagonally without capturing.
-            if(Math.abs(dx) == 1 && !getPiece(x_to, y_to).isPresent()) {
+            if(Math.abs(dx) == 1 && !getPieceInst(x_to, y_to).isPresent()) {
                 
                 //If no piece is directly captured, an en passant capture must have been made.
                 
                 //Ensure piece captured by en passant exsits.
-                if(!getPiece(x_to, y_to-dy).isPresent()) return false;
+                if(!getPieceInst(x_to, y_to-dy).isPresent()) return false;
                 
                 //Ensure piece captured by en passant is a pawn.
-                if(!(getPiece(x_to, y_to-dy).get() instanceof Pawn)) return false;
+                if(!(getPieceInst(x_to, y_to-dy).get() instanceof Pawn)) return false;
                 
                 //Ensure piece captured by en passant moved forward 2 spaces.
-                if(!((Pawn)getPiece(x_to, y_to-dy).get()).movedDouble) return false;
+                if(!((Pawn)getPieceInst(x_to, y_to-dy).get()).movedDouble) return false;
                 
                 //Ensure piece captured by en passant isn't your own piece.
-                if(getPiece(x_to, y_to-dy).get().getOwnerId() == getOwnerId()) return false;
+                if(getPieceInst(x_to, y_to-dy).get().getOwnerId() == getOwnerId()) return false;
                 
                 //Remove a piece captured by en passant.
-                getPiece(x_to, y_to-dy).get().delete();
+                getPieceInst(x_to, y_to-dy).get().delete();
             }
             
             //Move the pawn.
@@ -268,8 +268,8 @@ public class Chess extends TileGame {
             if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure players can't capture their own pieces.
-            if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
-                    == getPiece(x_to, y_to).get().getOwnerId()) return false;
+            if(getPieceInst(x_to, y_to).isPresent() && getPieceInst(getCol(), getRow()).get().getOwnerId()
+                    == getPieceInst(x_to, y_to).get().getOwnerId()) return false;
             
             //Ensure rooks move at least one space along only one dimension.
             if(dx==0 ^ dy!=0) return false;
@@ -281,7 +281,7 @@ public class Chess extends TileGame {
             while(xx != x_to || yy != y_to) {
                 
                 //Ensure rooks can't jump over other pieces.
-                if(getPiece(xx, yy).isPresent()) return false;
+                if(getPieceInst(xx, yy).isPresent()) return false;
                 
                 xx += Math.signum(dx);
                 yy += Math.signum(dy);
@@ -312,8 +312,8 @@ public class Chess extends TileGame {
             if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure players can't capture their own pieces.
-            if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
-                    == getPiece(x_to, y_to).get().getOwnerId()) return false;
+            if(getPieceInst(x_to, y_to).isPresent() && getPieceInst(getCol(), getRow()).get().getOwnerId()
+                    == getPieceInst(x_to, y_to).get().getOwnerId()) return false;
             
             //Ensure knights move 1 square in one direction and 2 squares in the other.
             if(!(Math.abs(dx) == 1 && Math.abs(dy) == 2) &&
@@ -344,8 +344,8 @@ public class Chess extends TileGame {
             if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure players can't capture their own pieces.
-            if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
-                    == getPiece(x_to, y_to).get().getOwnerId()) return false;
+            if(getPieceInst(x_to, y_to).isPresent() && getPieceInst(getCol(), getRow()).get().getOwnerId()
+                    == getPieceInst(x_to, y_to).get().getOwnerId()) return false;
             
             //Ensure bishops move diagonally.
             if(Math.abs(dx) != Math.abs(dy)) return false;
@@ -360,7 +360,7 @@ public class Chess extends TileGame {
             while(xx != x_to || yy != y_to) {
                 
                 //Ensure bishops can't jump over other pieces.
-                if(getPiece(xx, yy).isPresent()) return false;
+                if(getPieceInst(xx, yy).isPresent()) return false;
                 
                 xx += Math.signum(dx);
                 yy += Math.signum(dy);
@@ -390,8 +390,8 @@ public class Chess extends TileGame {
             if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure players can't capture their own pieces.
-            if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
-                    == getPiece(x_to, y_to).get().getOwnerId()) return false;
+            if(getPieceInst(x_to, y_to).isPresent() && getPieceInst(getCol(), getRow()).get().getOwnerId()
+                    == getPieceInst(x_to, y_to).get().getOwnerId()) return false;
             
             //Ensure queens move straight or diagonally.
             if(Math.abs(dx) != Math.abs(dy) && dx==0 ^ dy!=0) return false;
@@ -406,7 +406,7 @@ public class Chess extends TileGame {
             while(xx != x_to && yy != y_to) {
                 
                 //Ensure queens can't jump over other pieces.
-                if(getPiece(xx, yy).isPresent()) return false;
+                if(getPieceInst(xx, yy).isPresent()) return false;
                 
                 xx += Math.signum(dx);
                 yy += Math.signum(dy);
@@ -439,8 +439,8 @@ public class Chess extends TileGame {
             if(getOwnerId() != getCurrentPlayerId()) return false;
             
             //Ensure players can't capture their own pieces.
-            if(getPiece(x_to, y_to).isPresent() && getPiece(getCol(), getRow()).get().getOwnerId()
-                    == getPiece(x_to, y_to).get().getOwnerId()) return false;
+            if(getPieceInst(x_to, y_to).isPresent() && getPieceInst(getCol(), getRow()).get().getOwnerId()
+                    == getPieceInst(x_to, y_to).get().getOwnerId()) return false;
             
             //A move can't have a piece remain still.
             if(dx == 0 && dy == 0) return false;
@@ -452,21 +452,21 @@ public class Chess extends TileGame {
                 if(moved) return false;
                 
                 //Ensure piece exists at the expected location for castling.
-                if(!getPiece(dx<0?0:7, getRow()).isPresent()) return false;
+                if(!getPieceInst(dx<0?0:7, getRow()).isPresent()) return false;
                 
                 //Ensure other piece used for castling is a rook.
-                if(!(getPiece(dx<0?0:7, getRow()).get() instanceof Rook)) return false;
+                if(!(getPieceInst(dx<0?0:7, getRow()).get() instanceof Rook)) return false;
                 
                 //Ensure the rook hasn't been moved.
-                if(((Rook)getPiece(dx<0?0:7, getRow()).get()).moved) return false;
+                if(((Rook)getPieceInst(dx<0?0:7, getRow()).get()).moved) return false;
                 
                 //Ensure space between king and rook is empty.
                 for(int xx = getCol() + dx/2; xx>0 && xx<7; xx += dx/2) {
-                    if(getPiece(xx, getRow()).isPresent()) return false;
+                    if(getPieceInst(xx, getRow()).isPresent()) return false;
                 }
                 
                 //Move the rook to the position over which the king jumped.
-                getPiece(dx<0?0:7, getRow()).get().setBoardPos(getCol() + dx/2, getRow());
+                getPieceInst(dx<0?0:7, getRow()).get().setBoardPos(getCol() + dx/2, getRow());
                 
             //Ensure a king can't move further than one space.
             } else if(Math.abs(dx)>1 || Math.abs(dy)>1) return false;

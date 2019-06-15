@@ -80,7 +80,7 @@ public class ConnectFour extends TicTacToe {
         
         for(int y = 0; y < getHeight(); y++) {
             
-            if(!getPiece(x, y).isPresent()) return y;
+            if(!getPieceInst(x, y).isPresent()) return y;
         }
         return getHeight();
     }
@@ -92,7 +92,7 @@ public class ConnectFour extends TicTacToe {
         if(!super.validateMove(x, y)) return false;
         
         //Ensure piece isn't floating.
-        if(y!=0 && !getPiece(x, y-1).isPresent()) return false;
+        if(y!=0 && !getPieceInst(x, y-1).isPresent()) return false;
         
         return true;
     }

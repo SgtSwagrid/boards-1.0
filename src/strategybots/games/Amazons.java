@@ -79,16 +79,16 @@ public class Amazons extends TileGame {
         if(!inBounds(x_from, y_from) || !inBounds(x_to, y_to)) return false;
         
         //Ensure there is a piece at the from location.
-        if(!getPiece(x_from, y_from).isPresent()) return false;
+        if(!getPieceInst(x_from, y_from).isPresent()) return false;
         
         //Ensure amazon hasn't already been moved.
         if(amazonMoved) return false;
         
         //Move the piece, subject to game constraints.
-        if(!getPiece(x_from, y_from).get().movePiece(x_to, y_to)) return false;
+        if(!getPieceInst(x_from, y_from).get().movePiece(x_to, y_to)) return false;
         
         //Remember the piece which was moved, for the arrow-shooting phase.
-        movedPiece = Optional.of((Amazon) getPiece(x_to, y_to).get());
+        movedPiece = Optional.of((Amazon) getPieceInst(x_to, y_to).get());
         amazonMoved = true;
         return true;
     }
@@ -124,38 +124,24 @@ public class Amazons extends TileGame {
     }
     
     /**
-     * Returns the current state of the board.<br>
-     * Each array index represents the piece currently at that position.<br>
+     * Returns the piece currently at the given position.<br>
      * <table border="1">
      * <tr><td>-1</td><td>Empty tile.</td></tr>
      * <tr><td>0</td><td>Arrow.</td></tr>
      * <tr><td>1</td><td>Amazon owned by player 1.</td></tr>
      * <tr><td>2</td><td>Amazon owned by player 2.</td></tr>
      * </table>
-     * @return the game state.
+     * @param x the x position at which to check for a piece.
+     * @param y the y position at which to check for a piece.
+     * @return the piece at (x, y) on the board.
      */
-    public int[][] getState() {
-        
-        int[][] board = new int[getWidth()][getHeight()];
-        
-        //For each grid cell.
-        for(int x = 0; x < getWidth(); x++) {
-            for(int y = 0; y < getHeight(); y++) {
-                
-                //Determine index of piece on this tile.
-                //Empty tile: '-1'.
-                if(!getPiece(x, y).isPresent())
-                    board[x][y] = -1;
-                
-                //Arrow: '0'.
-                else if(getPiece(x, y).get() instanceof Arrow)
-                    board[x][y] = 0;
-                
-                //Amazon: ID of owner.
-                else board[x][y] = getPiece(x, y).get().getOwnerId();
-            }
-        }
-        return board;
+    public int getPiece(int x, int y) {
+        //Empty tile: '-1'.
+        if(!getPieceInst(x, y).isPresent()) return -1;
+        //Arrow: '0'.
+        else if(getPieceInst(x, y).get() instanceof Arrow) return 0;
+        //Amazon: ID of owner.
+        else return getPieceInst(x, y).get().getOwnerId();
     }
     
     @Override
@@ -194,7 +180,7 @@ public class Amazons extends TileGame {
                         y <= Math.min(piece.getRow() + 1, getHeight() - 1); y++) {
                     
                     //Player hasn't won if the opponent has somewhere to move.
-                    if(!getPiece(x, y).isPresent()) {
+                    if(!getPieceInst(x, y).isPresent()) {
                         return;
                     }
                 }
@@ -243,11 +229,11 @@ public class Amazons extends TileGame {
         private void moveAmazon(Amazons game, int x, int y) {
             
             //Select a amazon.
-            if(game.getPiece(x, y).isPresent()
-                    && game.getPiece(x, y).get() instanceof Amazon
-                    && game.getPiece(x, y).get().getOwnerId() == game.getCurrentPlayerId()) {
+            if(game.getPieceInst(x, y).isPresent()
+                    && game.getPieceInst(x, y).get() instanceof Amazon
+                    && game.getPieceInst(x, y).get().getOwnerId() == game.getCurrentPlayerId()) {
                 
-                selectPiece(game, game.getPiece(x, y).get());
+                selectPiece(game, game.getPieceInst(x, y).get());
                 
             //Move the selected amazon.
             } else if(getSelected().isPresent()) {
@@ -328,7 +314,7 @@ public class Amazons extends TileGame {
             if(x_to == x_from && y_to == y_from) return false;
             
             //Ensure piece doesn't move on top of another piece.
-            if(getPiece(x_to, y_to).isPresent()) return false;
+            if(getPieceInst(x_to, y_to).isPresent()) return false;
             
             //Ensure piece moves in a straight line (incl. diagonally).
             if(Math.abs(x_to - x_from) != Math.abs(y_to - y_from)
@@ -344,7 +330,7 @@ public class Amazons extends TileGame {
             //Ensure piece doesn't jump over any other pieces.
             while(xx != x_to || yy != y_to) {
                 
-                if(getPiece(xx, yy).isPresent()) return false;
+                if(getPieceInst(xx, yy).isPresent()) return false;
                 
                 xx += x_sign;
                 yy += y_sign;

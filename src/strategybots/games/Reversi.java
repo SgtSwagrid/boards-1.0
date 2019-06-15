@@ -75,7 +75,7 @@ public class Reversi extends TileGame {
         if(!inBounds(x, y)) return false;
         
         //Ensure pieces are placed onto empty tiles.
-        if(getPiece(x, y).isPresent()) return false;
+        if(getPieceInst(x, y).isPresent()) return false;
         
         //Determine which enemy pieces this move would flip.
         Set<Disc> flipped = getFlipped(getCurrentPlayerId(), x, y);
@@ -108,7 +108,7 @@ public class Reversi extends TileGame {
      * @return the piece at (x, y) on the board.
      */
     public int getDisc(int x, int y) {
-        return getPiece(x, y).isPresent() ? getPiece(x, y).get().getOwnerId() : 0;
+        return getPieceInst(x, y).isPresent() ? getPieceInst(x, y).get().getOwnerId() : 0;
     }
     
     /**
@@ -141,12 +141,12 @@ public class Reversi extends TileGame {
                     
                     //If this tile is in bounds and not empty.
                     if(xx >= 0 && xx < getWidth() && yy >= 0 && yy < getHeight()
-                            && getPiece(xx, yy).isPresent()) {
+                            && getPieceInst(xx, yy).isPresent()) {
                         
                         //If this tile is occupied by the opponent player.
-                        if(getPiece(xx, yy).get().getOwnerId() != playerId) {
+                        if(getPieceInst(xx, yy).get().getOwnerId() != playerId) {
                             //Add the disc to the set of discs which MIGHT be added.
-                            pending.add((Disc) getPiece(xx, yy).get());
+                            pending.add((Disc) getPieceInst(xx, yy).get());
                             
                         //If this tile is occupied by the current player.
                         } else {
@@ -184,7 +184,7 @@ public class Reversi extends TileGame {
             for(int x = 0; x < getWidth(); x++) {
                 for(int y = 0; y < getHeight(); y++) {
                     
-                    if(!getPiece(x, y).isPresent()) {
+                    if(!getPieceInst(x, y).isPresent()) {
                         
                         //There exists a legal move. Don't skip the turn.
                         if(getFlipped(getCurrentPlayerId() % getNumPlayers()

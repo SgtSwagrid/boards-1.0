@@ -108,7 +108,7 @@ public class TicTacToe extends TileGame {
         if(x<0 || y<0 || x>=getWidth() || y>=getHeight()) return false;
         
         //Ensure specified location is empty.
-        if(getPiece(x, y).isPresent()) return false;
+        if(getPieceInst(x, y).isPresent()) return false;
         
         return true;
     }
@@ -125,7 +125,7 @@ public class TicTacToe extends TileGame {
      * @return the piece at (x, y) on the board.
      */
     public int getStone(int x, int y) {
-        return getPiece(x, y).isPresent() ? getPiece(x, y).get().getOwnerId() : 0;
+        return getPieceInst(x, y).isPresent() ? getPieceInst(x, y).get().getOwnerId() : 0;
     }
     
     @Override
@@ -159,10 +159,10 @@ public class TicTacToe extends TileGame {
                     
                     //Skip if there exists a tile in the streak kernel which doesn't
                     //contain a piece belonging to the current player.
-                    if(!getPiece(x+xx*i, y+yy*i).isPresent()) continue yy_loop;
-                    if(getPiece(x+xx*i, y+yy*i).get().getOwnerId()!=playerId) continue yy_loop;
+                    if(!getPieceInst(x+xx*i, y+yy*i).isPresent()) continue yy_loop;
+                    if(getPieceInst(x+xx*i, y+yy*i).get().getOwnerId()!=playerId) continue yy_loop;
                     
-                    streak.add((Stone)getPiece(x+xx*i, y+yy*i).get());
+                    streak.add((Stone)getPieceInst(x+xx*i, y+yy*i).get());
                 }
                 //A winning streak has been found. This player is the winner.
                 endGame(playerId);

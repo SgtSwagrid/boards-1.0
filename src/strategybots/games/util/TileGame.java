@@ -104,7 +104,7 @@ public abstract class TileGame extends Game {
      * @param y the y position to check.
      * @return the piece at the given position, if there is one.
      */
-    protected Optional<Piece> getPiece(int x, int y) {
+    protected Optional<Piece> getPieceInst(int x, int y) {
         return Optional.ofNullable(boardPieces[x][y]);
     }
     
@@ -224,8 +224,8 @@ public abstract class TileGame extends Game {
         public void setBoardPos(int x, int y) {
             
             //Capture a piece if this piece is moving on top of it.
-            if(getPiece(x, y).isPresent())
-                getPiece(x, y).get().delete();
+            if(getPieceInst(x, y).isPresent())
+                getPieceInst(x, y).get().delete();
             
             //Remove the piece from its previous board index.
             if(boardPieces[getCol()][getRow()] == this)
