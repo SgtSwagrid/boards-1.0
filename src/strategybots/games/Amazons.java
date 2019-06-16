@@ -37,7 +37,7 @@ public class Amazons extends TileGame {
     /** The piece which was moved on this turn. */
     private Optional<Amazon> movedPiece = Optional.empty();
     /** Whether a amazon has yet been moved on this turn. */
-    private boolean amazonMoved = false;
+    private volatile boolean amazonMoved = false;
     
     /**
      * Asynchronously runs a new Game of the Amazons instance.
@@ -116,10 +116,7 @@ public class Amazons extends TileGame {
         //Fire the arrow, subject to game constraints.
         boolean success = movedPiece.get().shootArrow(x, y);
         
-        if(success) {
-            endTurn();
-            amazonMoved = false;
-        }
+        if(success) endTurn();
         return success;
     }
     
@@ -161,6 +158,12 @@ public class Amazons extends TileGame {
         new Amazon(2, h_indent, getHeight() - 1);
         new Amazon(2, getWidth() - 1 - h_indent, getHeight() - 1);
         new Amazon(2, getWidth() - 1, getHeight() - 1 - v_indent);
+    }
+    
+    @Override
+    protected void preTurn() {
+        super.preTurn();
+        amazonMoved = false;
     }
     
     @Override

@@ -65,7 +65,7 @@ public class ConnectFour extends TicTacToe {
     public boolean placeStone(int x) {
         
         //Ensure x is in bounds and columns isn't full.
-        if(!validateMove(x)) return false;
+        if(!validatePlacement(x)) return false;
         
         //Place the piece at the top of this column.
         return placeStone(x, getStackSize(x));
@@ -86,10 +86,10 @@ public class ConnectFour extends TicTacToe {
     }
     
     @Override
-    public boolean validateMove(int x, int y) {
+    public boolean validatePlacement(int x, int y) {
         
         //Ensure move is a valid Tic-Tac-Toe move.
-        if(!super.validateMove(x, y)) return false;
+        if(!super.validatePlacement(x, y)) return false;
         
         //Ensure piece isn't floating.
         if(y!=0 && !getPieceInst(x, y-1).isPresent()) return false;
@@ -102,7 +102,7 @@ public class ConnectFour extends TicTacToe {
      * @param x the x position to check.
      * @return whether the given move is valid.
      */
-    public boolean validateMove(int x) {
+    public boolean validatePlacement(int x) {
         //Ensure x is in bounds and column isn't full.
         return x>=0 && x<getWidth() && getStackSize(x)<getHeight();
     }

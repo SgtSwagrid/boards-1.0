@@ -113,6 +113,7 @@ public abstract class Game {
      * @param winnerId the ID of the winner of the game.
      */
     protected final void endGame(int winnerId) {
+        endTurn();
         if(winnerId > 0 && winnerId <= players.length) {
             this.winnerId = winnerId;
             winner = Optional.of(players[winnerId - 1]);

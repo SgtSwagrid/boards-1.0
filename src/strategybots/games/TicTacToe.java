@@ -83,7 +83,7 @@ public class TicTacToe extends TileGame {
     public boolean placeStone(int x, int y) {
         
         //Ensure move is valid.
-        if(!validateMove(x, y)) return false;
+        if(!validatePlacement(x, y)) return false;
         
         //Place a new stone at the specified location.
         new Stone(getCurrentPlayerId(), x, y);
@@ -99,7 +99,7 @@ public class TicTacToe extends TileGame {
      * @param y the y position to check.
      * @return whether the given move is valid.
      */
-    public boolean validateMove(int x, int y) {
+    public boolean validatePlacement(int x, int y) {
         
         //Ensure game is running and turn hasn't already been taken.
         if(!isRunning() || turnDone()) return false;
@@ -133,13 +133,26 @@ public class TicTacToe extends TileGame {
         getBoard().setBackground(Pattern.CHECKER, BOARD_COLOURS);
     }
     
+    @Override
+    protected void checkWin() {
+        
+        //Check win in each tile on board.
+        for(int x = 0; x < getWidth(); x++) {
+            for(int y = 0; y < getHeight(); y++) {
+                if(checkWin(getCurrentPlayerId(), x, y)) return;
+            }
+        }
+    }
+    
     /**
      * Determines if the piece placed at the given position has caused a win.<br>
      * End the game and highlight the streak if this is the case.
+     * @param playerId the ID of the player to check for a win.
      * @param x the x position to check for a win.
      * @param y the y position to check for a win.
+     * @return whether a win has occurred.
      */
-    private void checkWin(int playerId, int x, int y) {
+    protected boolean checkWin(int playerId, int x, int y) {
         
         //For each possible streak direction.
         for(int xx = -1; xx <= 1; xx++) {
@@ -173,8 +186,10 @@ public class TicTacToe extends TileGame {
                             (piece.getCol()+piece.getRow())%2==0 ?
                             HIGHLIGHT_COLOUR : HIGHLIGHT_COLOUR.darken(0.05F));
                 }
+                return true;
             }
         }
+        return false;
     }
     
     @Override
