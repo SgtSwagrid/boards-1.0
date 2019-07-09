@@ -5,11 +5,9 @@ import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import org.lwjgl.opengl.Display;
@@ -20,7 +18,7 @@ public class TileRenderer extends Renderer {
     private static final String VERTEX_SHADER   = "/strategybots/graphics/tile_vertex.shdr",
                                 FRAGMENT_SHADER = "/strategybots/graphics/tile_fragment.shdr";
     
-    private Map<Optional<Texture>, Set<Tile>> tiles = new HashMap<>();
+    private List<Tile> tiles = new LinkedList<>();
     
     private Semaphore lock = new Semaphore(1);
     
@@ -51,14 +49,10 @@ public class TileRenderer extends Renderer {
         
         loadMesh(Mesh.SQUARE);
         
-        for(Optional<Texture> texture : tiles.keySet()) {
+        for(Tile tile:tiles) {
             
-            loadTexture(texture);
-            
-            for(Tile tile : tiles.get(texture)) {
-                
-                renderTile(tile);
-            }
+            loadTexture(tile.getTexture());
+            renderTile(tile);
         }
         unloadMesh();
         
@@ -69,6 +63,7 @@ public class TileRenderer extends Renderer {
         
         setUniform("position", new Vector2f(t.getX(), t.getY()));
         setUniform("size", new Vector2f(t.getWidth(), t.getHeight()));
+        setUniform("angle", t.getAngle());
         setUniform("depth", t.getDepth());
         setUniform("colour", t.getColour().asVector());
         setUniform("hasTexture", t.getTexture().isPresent());
@@ -108,22 +103,17 @@ public class TileRenderer extends Renderer {
     public void addTile(Tile tile) {
         
         acquireLock();
-        
-        if(!tiles.containsKey(tile.getTexture()))
-            tiles.put(tile.getTexture(), new HashSet<>());
-        
-        tiles.get(tile.getTexture()).add(tile);
-        
+        if(!tiles.contains(tile)) {
+            tiles.add(tile);
+            tiles.sort((t1, t2) -> Float.compare(t1.getDepth(), t2.getDepth()));
+        }
         lock.release();
     }
     
     public void removeTile(Tile tile) {
         
         acquireLock();
-        
-        if(tiles.containsKey(tile.getTexture()))
-            tiles.get(tile.getTexture()).remove(tile);
-        
+        tiles.remove(tile);
         lock.release();
     }
     

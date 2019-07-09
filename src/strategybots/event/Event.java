@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
@@ -20,7 +22,11 @@ public abstract class Event {
     private static Map<Class<?>, Set<EventHandler>>
             events = new HashMap<>();
     
+    /** Mutex for accessing list of events. */
     private static Semaphore eventsLock = new Semaphore(1);
+    
+    /** Pool of threads for executing event handlers. */
+    private static ExecutorService threadPool = Executors.newCachedThreadPool();
     
     /**
      * Register an EventHandler. This EventHandler will be triggered
@@ -104,7 +110,8 @@ public abstract class Event {
                 
                 if(!handler.condition.isPresent() || checkCondition(handler.condition.get())) {
                     
-                    handler.action.accept(this);
+                    threadPool.execute(() ->
+                        handler.action.accept(Event.this));
                 }
             }
         }

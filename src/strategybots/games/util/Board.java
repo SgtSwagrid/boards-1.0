@@ -51,6 +51,9 @@ public class Board {
     /** Cumulative size of columns/rows. */
     private int[] cumWidth, cumHeight;
     
+    /** Whether tile clicks are to be registered. */
+    private boolean inputEnabled = true;
+    
     /**
      * Constructs a new chessboard with the given dimensions and title.<br>
      * Automatically opens a window for the chessboard in the process.
@@ -240,9 +243,41 @@ public class Board {
     public int getHeight() { return height; }
     
     /**
+     * @return the current side length of the grid squares, in pixels.
+     */
+    public int getTileSize() { return getBoardWidth() / height; }
+    
+    /**
      * @return the window in which this chessboard resides.
      */
     public Window getWindow() { return window; }
+    
+    /**
+     * @param inputEnabled whether tile clicks are to be registered.
+     */
+    public void setInputEnabled(boolean inputEnabled) {
+        this.inputEnabled = inputEnabled;
+    }
+    
+    /**
+     * Calculates the required board width to match the window size,
+     * subject to maintaining proper aspect ratios.
+     * @return the width of the board itself, in pixels.
+     */
+    public int getBoardWidth() {
+        return Math.min(window.getWidth(), window.getHeight()
+                * cumWidth[width-1]/cumHeight[height-1]);
+    }
+    
+    /**
+     * Calculates the required board height to match the window size,
+     * subject to maintaining proper aspect ratios.
+     * @return the height of the board itself, in pixels.
+     */
+    public int getBoardHeight() {
+        return Math.min(window.getHeight(), window.getWidth()
+                * cumHeight[height-1]/cumWidth[width-1]);
+    }
     
     /**
      * Creates the tiles (grid cells) for the board.
@@ -290,26 +325,6 @@ public class Board {
                 tiles[x][y].update();
             }
         }
-    }
-    
-    /**
-     * Calculates the required board width to match the window size,
-     * subject to maintaining proper aspect ratios.
-     * @return the width of the board itself, in pixels.
-     */
-    private int getBoardWidth() {
-        return Math.min(window.getWidth(), window.getHeight()
-                * cumWidth[width-1]/cumHeight[height-1]);
-    }
-    
-    /**
-     * Calculates the required board height to match the window size,
-     * subject to maintaining proper aspect ratios.
-     * @return the height of the board itself, in pixels.
-     */
-    private int getBoardHeight() {
-        return Math.min(window.getHeight(), window.getWidth()
-                * cumHeight[height-1]/cumWidth[width-1]);
     }
     
     /**
@@ -395,9 +410,11 @@ public class Board {
         }
         
         @Override
-        protected void onLeftClick() {
+        protected void onLeftClick(int rx, int ry) {
             //When this tile is clicked, trigger all of its listeners.
-            listeners.parallelStream().forEach(Action::run);
+            if(inputEnabled) {
+                listeners.parallelStream().forEach(Action::run);
+            }
         }
         
         @Override
@@ -405,17 +422,20 @@ public class Board {
             
             Colour colour = super.getColour();
             
-            //If the cursor is over this button.
-            if(checkBounds(Mouse.getX() - Display.getWidth() / 2,
-                    Mouse.getY() - Display.getHeight() / 2)) {
-               
-               //Darken the tile slightly.
-               colour = colour.darken(0.1F);
-               
-               //If the left click button is pressed.
-               if(Mouse.isButtonDown(0)) {
-                   //Darken the tile further.
+            if(inputEnabled) {
+                
+                //If the cursor is over this button.
+                if(checkBounds(Mouse.getX() - Display.getWidth() / 2,
+                        Mouse.getY() - Display.getHeight() / 2)) {
+                   
+                   //Darken the tile slightly.
                    colour = colour.darken(0.1F);
+                   
+                   //If the left click button is pressed.
+                   if(Mouse.isButtonDown(0)) {
+                       //Darken the tile further.
+                       colour = colour.darken(0.1F);
+                   }
                }
            }
            return colour;

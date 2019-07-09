@@ -12,6 +12,4 @@ void main(void) {
 	
 	pixel = colour;
 	if(hasTexture) pixel *= texture(sampler, texmap_);
-	
-	if(pixel.a < 0.5) discard;
 }

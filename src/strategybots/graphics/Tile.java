@@ -9,7 +9,7 @@ public class Tile {
     protected final Window window;
     protected final TileRenderer renderer;
     
-    private int x, y, width, height;
+    private int x, y, width, height, angle;
     
     private float depth = 0.1F;
     
@@ -19,10 +19,13 @@ public class Tile {
     protected Optional<Tile> parent = Optional.empty();
     protected List<Tile> children = new LinkedList<>();
     
+    private volatile boolean deleted = false;
+    
     public Tile(Window window) {
         this.window = window;
         renderer = window.getRenderer();
         renderer.addTile(this);
+        
     }
     
     public int getX() { return x; }
@@ -65,6 +68,13 @@ public class Tile {
         return this;
     }
     
+    public int getAngle() { return angle; }
+    
+    public Tile setAngle(int angle) {
+        this.angle = angle;
+        return this;
+    }
+    
     public float getDepth() { return depth; }
     
     public Tile setDepth(float depth) {
@@ -75,9 +85,11 @@ public class Tile {
     public Optional<Texture> getTexture() { return texture; }
     
     public Tile setTexture(Texture texture) {
-        renderer.removeTile(this);
-        this.texture = Optional.ofNullable(texture);
-        renderer.addTile(this);
+        if(!deleted) {
+            renderer.removeTile(this);
+            this.texture = Optional.ofNullable(texture);
+            renderer.addTile(this);
+        }
         return this;
     }
     
@@ -91,12 +103,13 @@ public class Tile {
     public Window getWindow() { return window; }
     
     public void setVisible(boolean visible) {
-        if(visible) renderer.addTile(this);
+        if(visible && !deleted) renderer.addTile(this);
         else renderer.removeTile(this);
     }
     
     public void delete() {
         renderer.removeTile(this);
+        deleted = true;
     }
     
     @Override

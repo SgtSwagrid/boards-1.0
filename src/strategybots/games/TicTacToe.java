@@ -47,6 +47,9 @@ public class TicTacToe extends TileGame {
     /** Number of pieces in a row required to win. */
     private int target;
     
+    /** The current number of pieces on the board. */
+    private volatile int numPieces = 0;
+    
     /**
      * Asynchronously runs a new Tic-Tac-Toe instance.
      * @param width the width of the board.
@@ -89,7 +92,7 @@ public class TicTacToe extends TileGame {
         new Stone(getCurrentPlayerId(), x, y);
         
         endTurn();
-        checkWin(getCurrentPlayerId(), x, y);
+        numPieces++;
         return true;
     }
     
@@ -142,6 +145,8 @@ public class TicTacToe extends TileGame {
                 if(checkWin(getCurrentPlayerId(), x, y)) return;
             }
         }
+        //The game is a draw if the board is full.
+        if(numPieces == getWidth() * getHeight()) endGame(0);
     }
     
     /**

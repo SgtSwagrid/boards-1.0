@@ -1,13 +1,11 @@
 package strategybots.games;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import strategybots.event.Event;
 import strategybots.games.util.Board.Pattern;
 import strategybots.graphics.Button;
 import strategybots.graphics.Colour;
-import strategybots.graphics.Tile;
-import strategybots.graphics.Window;
+import strategybots.graphics.Texture;
+import strategybots.graphics.Window.WindowResizeEvent;
 
 /**
  * <b>Pentago implementation.</b><br>
@@ -30,6 +28,13 @@ public class Pentago extends TicTacToe {
     /** Textures used for game pieces. */
     private static final String[] STONE_TEXTURES = new String[] {
             "res/misc/white_dot.png", "res/misc/black_dot.png"};
+    
+    /** Texture used for rotation arrows. */
+    private static final String ARROW_TEXTURE = "res/misc/rotation_arrows.png";
+    /** Texture used for rotation arrows with clockwise highlighted. */
+    private static final String CLOCKWISE_ARROW_TEXTURE = "res/misc/rotation_arrows_clockwise.png";
+    /** Texture used for rotation arrows with anticlockwise highlighted. */
+    private static final String ANTICLOCKWISE_ARROW_TEXTURE = "res/misc/rotation_arrows_anticlockwise.png";
     
     /** The display name of the colour of each player. */
     private static final String[] COLOUR_NAMES = new String[] {
@@ -90,7 +95,7 @@ public class Pentago extends TicTacToe {
                 int ownerId = getStone(x*QUADRANT_SIZE+xx, y*QUADRANT_SIZE+yy);
                 
                 //Add the piece to the pieces array, rotated by 90 degrees.
-                pieces[clockwise?y:QUADRANT_SIZE-y-1][clockwise?QUADRANT_SIZE-x-1:x] = ownerId;
+                pieces[clockwise?yy:QUADRANT_SIZE-yy-1][clockwise?QUADRANT_SIZE-xx-1:xx] = ownerId;
                 
                 //Delete the piece.
                 if(ownerId != 0) {
@@ -98,13 +103,14 @@ public class Pentago extends TicTacToe {
                 }
             }
         }
+        
         //For each square in the quadrant.
         for(int xx = 0; xx < QUADRANT_SIZE; xx++) {
             for(int yy = 0; yy < QUADRANT_SIZE; yy++) {
                 
                 if(pieces[xx][yy] != 0) {
                     //Move each piece to its new rotated position.
-                    new Stone(getCurrentPlayerId(),
+                    new Stone(pieces[xx][yy],
                             x*QUADRANT_SIZE+xx, y*QUADRANT_SIZE+yy);
                 }
             }
@@ -186,22 +192,96 @@ public class Pentago extends TicTacToe {
         public void onTileClicked(Pentago game, int playerId, int x, int y) {
             
             //Place a piece.
-            if(game.placeStone(x, y)) {
-                
-                Set<Tile> rotateArrows = new HashSet<>();
-                
-                
+            if(!game.piecePlaced && game.placeStone(x, y) && game.isRunning()) {
+                //Show rotation panel.
+                new RotationPanel(game);
             }
         }
     }
     
-    private class RotateArrow extends Button {
-
-        public RotateArrow(Window window, int x, int y) {
-            super(window);
-            //setSize();
+    private static class RotationPanel {
+        
+        Pentago game;
+        
+        Button[] buttons = new RotationButton[4];
+        
+        RotationPanel(Pentago game) {
+            
+            this.game = game;
+            
+            for(int i=0; i<4; i++) {
+                buttons[i] = new RotationButton(i%2, i/2);
+            }
         }
         
+        void delete() {
+            for(Button button:buttons) {
+                button.delete();
+            }
+        }
         
+        private class RotationButton extends Button {
+            
+            int x, y;
+            
+            RotationButton(int x, int y) {
+                
+                super(game.getBoard().getWindow());
+                game.getBoard().setInputEnabled(false);
+                
+                this.x=x;
+                this.y=y;
+                
+                setSize();
+                Event.addHandler(WindowResizeEvent.class, e -> setSize());
+                
+                setAngle(x==0 ? (y==0?180:270) : (y==0?90:0));
+                setDepth(1.0F);
+                
+                setColour(Colour.WHITE.withAlpha(180));
+                setTexture(Texture.getTexture(ARROW_TEXTURE));
+            }
+            
+            @Override
+            protected void onLeftClick(int rx, int ry) {
+                
+                if(game.rotateQuadrant(x, y, isClockwise(rx, ry))) {
+                    RotationPanel.this.delete();
+                    game.getBoard().setInputEnabled(true);
+                }
+            }
+            
+            @Override
+            protected void onMouseOver(int rx, int ry) {
+                setTexture(Texture.getTexture(isClockwise(rx, ry) ?
+                        CLOCKWISE_ARROW_TEXTURE : ANTICLOCKWISE_ARROW_TEXTURE));
+            }
+            
+            @Override
+            protected void onMouseLeave(int rx, int ry) {
+                setTexture(Texture.getTexture(ARROW_TEXTURE));
+            }
+            
+            private boolean isClockwise(int rx, int ry) {
+                
+                if(rx==0) return false;
+                
+                return x==0 ?
+                    (y==0 ?
+                        ry/rx > getHeight()/getWidth() :
+                        (float)ry/getHeight() + (float)rx/getWidth() > 1.0F) :
+                    (y==0 ?
+                        (float)ry/getHeight() + (float)rx/getWidth() < 1.0F :
+                        ry/rx < getHeight()/getWidth());
+            }
+            
+            private void setSize() {
+                
+                int size = 2*game.getBoard().getTileSize();
+                setSize(size, size);
+                setPosition((x*2-1)*game.getBoard().getBoardWidth()/4,
+                        (y*2-1)*game.getBoard().getBoardHeight()/4);
+            }
+        }
     }
 }

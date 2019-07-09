@@ -153,15 +153,12 @@ public abstract class Game {
                     long startTime = System.currentTimeMillis();
                     
                     //Prompt the player to take a turn, in a new thread.
-                    new Thread("Player") {
-                        @Override public void run() {
-                            
-                            //Continue to call takeTurn() until the turn is complete.
-                            while(!turnDone && isRunning()) {
-                                currentPlayer.takeTurn(Game.this, currentPlayerId);
-                            }
+                    new Thread(() -> {
+                        //Continue to call takeTurn() until the turn is complete.
+                        while(!turnDone && isRunning()) {
+                            currentPlayer.takeTurn(Game.this, currentPlayerId);
                         }
-                    }.start();
+                    }, "game").start();
                     
                     //Wait for the turn to be completed.
                     while(!turnDone && isRunning()) {
@@ -179,7 +176,7 @@ public abstract class Game {
                 }
                 onFinish();
                 for(int i = 0; i < players.length; i++) {
-                    players[i].gameEnd(Game.this, i, winnerId);
+                    players[i].gameEnd(Game.this, i+1, winnerId);
                 }
             }
         }.start();

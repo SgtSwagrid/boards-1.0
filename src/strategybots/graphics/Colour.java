@@ -161,6 +161,10 @@ public class Colour {
         return new Colour(R + amount, G + amount, B + amount, A);
     }
     
+    public Colour withAlpha(int a) {
+        return new Colour(R, G, B, a / 255.0F);
+    }
+    
     /**
      * Returns a vector representation of this colour for shader compatibility.
      * r, g, b and a map to x, y, z and w respectively.
