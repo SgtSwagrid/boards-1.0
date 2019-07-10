@@ -41,8 +41,8 @@ public class DotsAndBoxes extends TileGame {
     private static final Colour LINE_COLOUR = Colour.rgb(220, 221, 225);
     private static final Colour DOT_COLOUR = Colour.rgb(255, 177, 66);
     
-    /** Square:Line width ratio. */
-    private static final int SQUARE_WIDTH = 3;
+    /** Square:Line width ratio (x10). */
+    private static final int SQUARE_WIDTH = 30;
     
     /** The size of the board, in number of squares. */
     private final int width, height;

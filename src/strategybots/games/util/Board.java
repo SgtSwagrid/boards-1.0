@@ -25,7 +25,11 @@ import strategybots.graphics.Window.WindowResizeEvent;
  */
 public class Board {
     
+    /** Patterns for use in determining how to colour the board. */
     public enum Pattern { CHECKER, TABLE, GINGHAM, SOLID }
+    
+    /** Default relative tile size. */
+    private static final int REL_TILE_SIZE = 10;
     
     /** Tile colours. */
     private Colour[] tileColours = new Colour[] {
@@ -48,6 +52,8 @@ public class Board {
     
     /** Relative size ratio of each column/row. */
     private int[] colSize, rowSize;
+    /** Relative size of each border between columns/rows. */
+    private int[] vBorderWidth, hBorderHeight;
     /** Cumulative size of columns/rows. */
     private int[] cumWidth, cumHeight;
     
@@ -92,7 +98,7 @@ public class Board {
         int delta = width - colSize[col];
         colSize[col] = width;
         //Update cumulative width for all subsequent columns.
-        for(int x = col; x < this.width; x++) {
+        for(int x = 2*col+1; x <= 2*this.width; x++) {
             cumWidth[x] += delta;
         }
         update();
@@ -105,11 +111,45 @@ public class Board {
      */
     public void setRowHeight(int row, int height) {
         
-        //Determine different between old and new heights.
+        //Determine difference between old and new heights.
         int delta = height - rowSize[row];
         rowSize[row] = height;
         //Update cumulative height for all subsequent rows.
-        for(int y = row; y < this.height; y++) {
+        for(int y = 2*row+1; y <= 2*this.height; y++) {
+            cumHeight[y] += delta;
+        }
+        update();
+    }
+    
+    /**
+     * Sets the relative width of the nth vertical border.
+     * @param n the index of the border to be changed.
+     * @param width the new relative width.
+     */
+    public void setVBorderWidth(int n, int width) {
+        
+        //Determine difference between old and new widths.
+        int delta = width - vBorderWidth[n];
+        vBorderWidth[n] = width;
+        //Update cumulative width for all subsequent rows.
+        for(int x = 2*n; x <= 2*this.width; x++) {
+            cumWidth[x] += delta;
+        }
+        update();
+    }
+    
+    /**
+     * Sets the relative height of the nth horizontal border.
+     * @param n the index of the border to be changed.
+     * @param height the new relative height.
+     */
+    public void setHBorderHeight(int n, int height) {
+        
+        //Determine difference between old and new widths.
+        int delta = height - hBorderHeight[n];
+        hBorderHeight[n] = height;
+        //Update cumulative width for all subsequent rows.
+        for(int y = 2*n; y <= 2*this.height; y++) {
             cumHeight[y] += delta;
         }
         update();
@@ -266,7 +306,7 @@ public class Board {
      */
     public int getBoardWidth() {
         return Math.min(window.getWidth(), window.getHeight()
-                * cumWidth[width-1]/cumHeight[height-1]);
+                * cumWidth[2*width]/cumHeight[2*height]);
     }
     
     /**
@@ -276,7 +316,7 @@ public class Board {
      */
     public int getBoardHeight() {
         return Math.min(window.getHeight(), window.getWidth()
-                * cumHeight[height-1]/cumWidth[width-1]);
+                * cumHeight[2*height]/cumWidth[2*width]);
     }
     
     /**
@@ -291,19 +331,26 @@ public class Board {
         colSize = new int[width];
         rowSize = new int[height];
         
-        cumWidth = new int[width];
-        cumHeight = new int[height];
+        vBorderWidth = new int[width+1];
+        hBorderHeight = new int[height+1];
+        
+        cumWidth = new int[2*width+1];
+        cumHeight = new int[2*height+1];
         
         //Set all columns to be of equal width.
+        cumWidth[0] = 0;
         for(int x = 0; x < width; x++) {
-            colSize[x] = 1;
-            cumWidth[x] = x+1;
+            colSize[x] = REL_TILE_SIZE;
+            cumWidth[2*x+1] = (x+1)*REL_TILE_SIZE;
+            cumWidth[2*x+2] = (x+1)*REL_TILE_SIZE;
         }
         
         //Set all rows to be of equal height.
+        cumHeight[0] = 0;
         for(int y = 0; y < height; y++) {
-            rowSize[y] = 1;
-            cumHeight[y] = y+1;
+            rowSize[y] = REL_TILE_SIZE;
+            cumHeight[2*y+1] = (y+1)*REL_TILE_SIZE;
+            cumHeight[2*y+2] = (y+1)*REL_TILE_SIZE;
         }
         
         //For each grid cell.
@@ -385,19 +432,19 @@ public class Board {
         void moveTile(Tile tile) {
             
             //Calculate the position (in relative coordinates) to which the tile should be moved.
-            int xx = (x != 0 ? 2*cumWidth[x-1] : 0) + colSize[x];
-            int yy = (y != 0 ? 2*cumHeight[y-1] : 0) + rowSize[y];
+            int xx = 2*cumWidth[2*x] + colSize[x];
+            int yy = 2*cumHeight[2*y] + rowSize[y];
             
             //Convert the position to pixel space.
-            xx = -getBoardWidth()/2 + xx * getBoardWidth()/cumWidth[width-1]/2;
-            yy = -getBoardHeight()/2 + yy * getBoardHeight()/cumHeight[height-1]/2;
+            xx = -getBoardWidth()/2 + xx * getBoardWidth()/cumWidth[2*width]/2;
+            yy = -getBoardHeight()/2 + yy * getBoardHeight()/cumHeight[2*height]/2;
             
             //Move the tile to its new position.
             tile.setPosition(xx, yy);
             
             //Determine the appropriate size in pixels given relative column/row sizes.
-            tile.setWidth(colSize[x] * getBoardWidth()/cumWidth[width - 1] + 1);
-            tile.setHeight(rowSize[y] * getBoardHeight()/cumHeight[height - 1] + 1);
+            tile.setWidth(colSize[x] * getBoardWidth()/cumWidth[2*width] + 1);
+            tile.setHeight(rowSize[y] * getBoardHeight()/cumHeight[2*height] + 1);
         }
         
         /**

@@ -163,8 +163,13 @@ public class Pentago extends TicTacToe {
     
     @Override
     protected void init() {
+        
         setTitle(TITLE);
         getBoard().setBackground(Pattern.CHECKER, BOARD_COLOURS);
+        
+        //Add visual separation between quadrants.
+        getBoard().setVBorderWidth(getWidth()/2, 1);
+        getBoard().setHBorderHeight(getHeight()/2, 1);
     }
     
     @Override
