@@ -19,8 +19,6 @@ public class Tile {
     protected Optional<Tile> parent = Optional.empty();
     protected List<Tile> children = new LinkedList<>();
     
-    private volatile boolean deleted = false;
-    
     public Tile(Window window) {
         this.window = window;
         renderer = window.getRenderer();
@@ -85,11 +83,7 @@ public class Tile {
     public Optional<Texture> getTexture() { return texture; }
     
     public Tile setTexture(Texture texture) {
-        if(!deleted) {
-            renderer.removeTile(this);
-            this.texture = Optional.ofNullable(texture);
-            renderer.addTile(this);
-        }
+        this.texture = Optional.ofNullable(texture);
         return this;
     }
     
@@ -103,13 +97,12 @@ public class Tile {
     public Window getWindow() { return window; }
     
     public void setVisible(boolean visible) {
-        if(visible && !deleted) renderer.addTile(this);
+        if(visible) renderer.addTile(this);
         else renderer.removeTile(this);
     }
     
     public void delete() {
         renderer.removeTile(this);
-        deleted = true;
     }
     
     @Override
