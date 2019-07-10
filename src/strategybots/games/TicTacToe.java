@@ -48,7 +48,7 @@ public class TicTacToe extends TileGame {
     private int target;
     
     /** The current number of pieces on the board. */
-    private volatile int numPieces = 0;
+    protected volatile int numPieces = 0;
     
     /**
      * Asynchronously runs a new Tic-Tac-Toe instance.
@@ -136,19 +136,6 @@ public class TicTacToe extends TileGame {
         getBoard().setBackground(Pattern.CHECKER, BOARD_COLOURS);
     }
     
-    @Override
-    protected void checkWin() {
-        
-        //Check win in each tile on board.
-        for(int x = 0; x < getWidth(); x++) {
-            for(int y = 0; y < getHeight(); y++) {
-                if(checkWin(getCurrentPlayerId(), x, y)) return;
-            }
-        }
-        //The game is a draw if the board is full.
-        if(numPieces == getWidth() * getHeight()) endGame(0);
-    }
-    
     /**
      * Determines if the piece placed at the given position has caused a win.<br>
      * End the game and highlight the streak if this is the case.
@@ -157,7 +144,7 @@ public class TicTacToe extends TileGame {
      * @param y the y position to check for a win.
      * @return whether a win has occurred.
      */
-    protected boolean checkWin(int playerId, int x, int y) {
+    protected boolean checkWinAtPiece(int playerId, int x, int y) {
         
         //For each possible streak direction.
         for(int xx = -1; xx <= 1; xx++) {

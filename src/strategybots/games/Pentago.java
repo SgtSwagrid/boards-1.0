@@ -30,11 +30,14 @@ public class Pentago extends TicTacToe {
             "res/misc/white_dot.png", "res/misc/black_dot.png"};
     
     /** Texture used for rotation arrows. */
-    private static final String ARROW_TEXTURE = "res/misc/rotation_arrows.png";
+    private static final String ARROW_TEXTURE =
+            "res/misc/rotation_arrows.png";
     /** Texture used for rotation arrows with clockwise highlighted. */
-    private static final String CLOCKWISE_ARROW_TEXTURE = "res/misc/rotation_arrows_clockwise.png";
+    private static final String CLOCKWISE_ARROW_TEXTURE =
+            "res/misc/rotation_arrows_clockwise.png";
     /** Texture used for rotation arrows with anticlockwise highlighted. */
-    private static final String ANTICLOCKWISE_ARROW_TEXTURE = "res/misc/rotation_arrows_anticlockwise.png";
+    private static final String ANTICLOCKWISE_ARROW_TEXTURE =
+            "res/misc/rotation_arrows_anticlockwise.png";
     
     /** The display name of the colour of each player. */
     private static final String[] COLOUR_NAMES = new String[] {
@@ -44,6 +47,7 @@ public class Pentago extends TicTacToe {
     private static final Colour[] BOARD_COLOURS = new Colour[] {
             Colour.rgb(248, 239, 186), Colour.rgb(234, 181, 67)};
     
+    /** Whether a piece has yet been placed on this turn. */
     private volatile boolean piecePlaced = false;
     
     /**
@@ -68,7 +72,8 @@ public class Pentago extends TicTacToe {
         new Stone(getCurrentPlayerId(), x, y);
         
         piecePlaced = true;
-        checkWin(getCurrentPlayerId(), x, y);
+        checkWinAtPiece(getCurrentPlayerId(), x, y);
+        numPieces++;
         return true;
     }
     
@@ -160,6 +165,22 @@ public class Pentago extends TicTacToe {
     protected void preTurn() {
         super.preTurn();
         piecePlaced = false;
+    }
+    
+    @Override
+    protected void checkWin() {
+        
+        //Check win in each tile on board.
+        for(int x = 0; x < getWidth(); x++) {
+            for(int y = 0; y < getHeight(); y++) {
+                if(checkWinAtPiece(getCurrentPlayerId(), x, y)) {
+                    endGame(getCurrentPlayerId());
+                    return;
+                }
+            }
+        }
+        //The game is a draw if the board is full.
+        if(numPieces == getWidth() * getHeight()) endGame(0);
     }
     
     @Override
