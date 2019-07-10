@@ -1,6 +1,7 @@
 package strategybots.games;
 
 import strategybots.event.Event;
+import strategybots.event.Event.EventHandler;
 import strategybots.games.util.Board.Pattern;
 import strategybots.graphics.Button;
 import strategybots.graphics.Colour;
@@ -35,7 +36,7 @@ public class Pentago extends TicTacToe {
     /** Texture used for rotation arrows with clockwise highlighted. */
     private static final String CLOCKWISE_ARROW_TEXTURE =
             "res/misc/rotation_arrows_clockwise.png";
-    /** Texture used for rotation arrows with anticlockwise highlighted. */
+    /** Texture used for rotation arrows with anti-clockwise highlighted. */
     private static final String ANTICLOCKWISE_ARROW_TEXTURE =
             "res/misc/rotation_arrows_anticlockwise.png";
     
@@ -46,6 +47,11 @@ public class Pentago extends TicTacToe {
     /** Background tile colours. */
     private static final Colour[] BOARD_COLOURS = new Colour[] {
             Colour.rgb(248, 239, 186), Colour.rgb(234, 181, 67)};
+    
+    /** The size of each rotation arrow, in number of tiles. */
+    private static final int ARROW_SIZE = 2;
+    /** Opacity of rotation arrows. */
+    private static final int ARROW_OPACITY = 180;
     
     /** Whether a piece has yet been placed on this turn. */
     private volatile boolean piecePlaced = false;
@@ -220,72 +226,108 @@ public class Pentago extends TicTacToe {
         }
     }
     
+    /**
+     * Represents set of arrows to be shown when rotation input is expected from human player.
+     * @author Alec Dorrington
+     */
     private static class RotationPanel {
         
+        /** The Pentago instance to which this panel should interface. */
         Pentago game;
         
+        /** The arrow buttons displayed for rotating each quadrant. */
         Button[] buttons = new RotationButton[4];
         
         RotationPanel(Pentago game) {
             
             this.game = game;
             
+            //Create 4 arrow pairs, 1 for each quadrant.
             for(int i=0; i<4; i++) {
                 buttons[i] = new RotationButton(i%2, i/2);
             }
         }
         
-        void delete() {
-            for(Button button:buttons) {
-                button.delete();
-            }
-        }
-        
+        /**
+         * Represents an arrow pair for a single quadrant.<br>
+         * There should be four such pairs associated with a rotation panel instance.
+         * @author Alec Dorrington
+         */
         private class RotationButton extends Button {
             
+            /** The coordinates of the quadrant to which this button belongs. */
             int x, y;
+            
+            /** Event handler for automatically resizing the arrow upon window resize. */
+            EventHandler h;
             
             RotationButton(int x, int y) {
                 
                 super(game.getBoard().getWindow());
+                //Disable input to board itself until an arrow is pressed.
                 game.getBoard().setInputEnabled(false);
                 
+                //Set the quadrant to which this arrow belongs.
                 this.x=x;
                 this.y=y;
                 
+                //The the arrow size/position, initially and after every window resize.
                 setSize();
-                Event.addHandler(WindowResizeEvent.class, e -> setSize());
+                h = Event.addHandler(WindowResizeEvent.class, e -> setSize());
                 
+                //Rotate arrows based on quadrant to which they belong.
                 setAngle(x==0 ? (y==0?180:270) : (y==0?90:0));
+                //Ensure arrows remain above other tiles.
                 setDepth(1.0F);
                 
-                setColour(Colour.WHITE.withAlpha(180));
+                //Assign arrow texture/colouring to button.
+                setColour(Colour.WHITE.withAlpha(ARROW_OPACITY));
                 setTexture(Texture.getTexture(ARROW_TEXTURE));
             }
             
             @Override
             protected void onLeftClick(int rx, int ry) {
                 
+                //Attempt to rotate this quadrant.
                 if(game.rotateQuadrant(x, y, isClockwise(rx, ry))) {
-                    RotationPanel.this.delete();
+                    //If rotation is successful, delete the arrows and re-enable board input.
+                    for(Button button:buttons) button.delete();
                     game.getBoard().setInputEnabled(true);
                 }
             }
             
             @Override
             protected void onMouseOver(int rx, int ry) {
+                //Highlight arrow when cursor is over.
                 setTexture(Texture.getTexture(isClockwise(rx, ry) ?
                         CLOCKWISE_ARROW_TEXTURE : ANTICLOCKWISE_ARROW_TEXTURE));
             }
             
             @Override
             protected void onMouseLeave(int rx, int ry) {
+                //Unhighlight arrow when cursor is moved away.
                 setTexture(Texture.getTexture(ARROW_TEXTURE));
             }
             
+            @Override
+            public void delete() {
+                super.delete();
+                Event.removeHandler(h);
+            }
+            
+            /**
+             * Determines whether a click is intended for a clockwise or anti-clockwise rotation,
+             * based on the relative position of the cursor within the button.
+             * @param rx the x coordinate of the cursor from the bottom-left of the button.
+             * @param ry the y coordinate of the cursor from the bottom-left of the button.
+             * @return true for clockwise, false for anti-clockwise.
+             */
             private boolean isClockwise(int rx, int ry) {
                 
                 if(rx==0) return false;
+                
+                //Separate into clockwise/anti-clockwise based on a diagonal through each button.
+                //Orientation depends on quadrant to which the button belongs.
                 
                 return x==0 ?
                     (y==0 ?
@@ -296,10 +338,16 @@ public class Pentago extends TicTacToe {
                         ry/rx < getHeight()/getWidth());
             }
             
+            /**
+             * Calculates and sets the size and position of
+             * the button based on the current board size.
+             */
             private void setSize() {
                 
-                int size = 2*game.getBoard().getTileSize();
+                //Scale the arrow size by the current board size.
+                int size = ARROW_SIZE*game.getBoard().getTileSize();
                 setSize(size, size);
+                //Centre the arrow buttons on each quadrant.
                 setPosition((x*2-1)*game.getBoard().getBoardWidth()/4,
                         (y*2-1)*game.getBoard().getBoardHeight()/4);
             }
