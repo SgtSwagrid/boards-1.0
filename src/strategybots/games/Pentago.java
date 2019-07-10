@@ -268,7 +268,7 @@ public class Pentago extends TicTacToe {
                 
                 return x==0 ?
                     (y==0 ?
-                        ry/rx > getHeight()/getWidth() :
+                        ry/rx >= getHeight()/getWidth() :
                         (float)ry/getHeight() + (float)rx/getWidth() > 1.0F) :
                     (y==0 ?
                         (float)ry/getHeight() + (float)rx/getWidth() < 1.0F :
