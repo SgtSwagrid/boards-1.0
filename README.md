@@ -18,4 +18,4 @@ This repository is for an ongoing project featuring:
 * [Go](https://en.wikipedia.org/wiki/Go_(game)) (Todo)
 * [Pentago](https://en.wikipedia.org/wiki/Pentago)
 * [Reversi/Othello](https://en.wikipedia.org/wiki/Reversi)
-* [Tic Tac Toe](https://en.wikipedia.org/wiki/M,n,k-game)
+* [Tic-Tac-Toe](https://en.wikipedia.org/wiki/M,n,k-game)
