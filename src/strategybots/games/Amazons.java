@@ -70,7 +70,7 @@ public class Amazons extends TileGame {
      * @param y_to the new y position of the amazon.
      * @return whether the move was valid and successful.
      */
-    public boolean moveAmazon(int x_from, int y_from, int x_to, int y_to) {
+    public synchronized boolean moveAmazon(int x_from, int y_from, int x_to, int y_to) {
         
         //Ensure game is running and turn hasn't already been taken.
         if(!isRunning() || turnDone()) return false;
@@ -102,7 +102,7 @@ public class Amazons extends TileGame {
      * @param y the destination y position of the arrow.
      * @return whether the move was valid and successful.
      */
-    public boolean shootArrow(int x, int y) {
+    public synchronized boolean shootArrow(int x, int y) {
         
         //Ensure game is running and turn hasn't already been taken.
         if(!isRunning() || turnDone()) return false;
@@ -167,7 +167,7 @@ public class Amazons extends TileGame {
     }
     
     @Override
-    protected void checkWin() {
+    protected void checkEnd() {
         
         //Check if any of the opponents pieces are free to move.
         for(Piece piece : getPieces(getCurrentPlayerId() % 2 + 1)) {

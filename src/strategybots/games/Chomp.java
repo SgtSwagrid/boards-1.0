@@ -69,7 +69,7 @@ public class Chomp extends TileGame {
      * @param y the y position to chomp from.
      * @return whether the move was valid and successful.
      */
-    public boolean chompTile(int x, int y) {
+    public synchronized boolean chompTile(int x, int y) {
         
         //Ensure game is running and turn hasn't already been taken.
         if(!isRunning() || turnDone()) return false;
@@ -126,7 +126,7 @@ public class Chomp extends TileGame {
     }
     
     @Override
-    protected void checkWin() {
+    protected void checkEnd() {
         
         //The player loses if they chomp the poison tile.
         if(chomped[0][0]) {

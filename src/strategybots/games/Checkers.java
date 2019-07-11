@@ -79,7 +79,7 @@ public class Checkers extends TileGame {
      * @param y_to the new y position of the piece.
      * @return whether the move was valid and successful.
      */
-    public boolean movePiece(int x_from, int y_from, int x_to, int y_to) {
+    public synchronized boolean movePiece(int x_from, int y_from, int x_to, int y_to) {
         
         //Ensure move is valid.
         if(!validateMove(x_from, y_from, x_to, y_to)) return false;
@@ -187,7 +187,7 @@ public class Checkers extends TileGame {
     }
     
     @Override
-    protected void checkWin() {
+    protected void checkEnd() {
         
         //This player wins if the opponent has no remaining pieces.
         if(getPieces(getCurrentPlayerId()%2+1).size()==0)

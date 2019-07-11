@@ -66,7 +66,7 @@ public class Reversi extends TileGame {
      * @param y the y position to place the piece at.
      * @return whether the move was valid and successful.
      */
-    public boolean placeDisc(int x, int y) {
+    public synchronized boolean placeDisc(int x, int y) {
         
         //Ensure game is running and turn hasn't already been taken.
         if(!isRunning() || turnDone()) return false;
@@ -176,7 +176,7 @@ public class Reversi extends TileGame {
     }
     
     @Override
-    protected void checkWin() {
+    protected void checkEnd() {
         
         for(int i = 0; i < getNumPlayers(); i++) {
             

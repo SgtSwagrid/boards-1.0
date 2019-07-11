@@ -69,7 +69,7 @@ public class Pentago extends TicTacToe {
     }
     
     @Override
-    public boolean placeStone(int x, int y) {
+    public synchronized boolean placeStone(int x, int y) {
         
         //Ensure move is valid.
         if(!validatePlacement(x, y)) return false;
@@ -79,7 +79,6 @@ public class Pentago extends TicTacToe {
         
         piecePlaced = true;
         checkWinAtPiece(getCurrentPlayerId(), x, y);
-        numPieces++;
         return true;
     }
     
@@ -91,7 +90,7 @@ public class Pentago extends TicTacToe {
      * @param clockwise true=clockwise, false=anticlockwise.
      * @return whether the move was valid and successful.
      */
-    public boolean rotateQuadrant(int x, int y, boolean clockwise) {
+    public synchronized boolean rotateQuadrant(int x, int y, boolean clockwise) {
         
         //Ensure rotation is valid.
         if(!validateRotation(x, y, clockwise)) return false;
@@ -179,19 +178,16 @@ public class Pentago extends TicTacToe {
     }
     
     @Override
-    protected void checkWin() {
+    protected void checkEnd() {
+        
+        super.checkEnd();
         
         //Check win in each tile on board.
         for(int x = 0; x < getWidth(); x++) {
             for(int y = 0; y < getHeight(); y++) {
-                if(checkWinAtPiece(getCurrentPlayerId(), x, y)) {
-                    endGame(getCurrentPlayerId());
-                    return;
-                }
+                checkWinAtPiece(getCurrentPlayerId(), x, y);
             }
         }
-        //The game is a draw if the board is full.
-        if(numPieces == getWidth() * getHeight()) endGame(0);
     }
     
     @Override

@@ -48,7 +48,7 @@ public class TicTacToe extends TileGame {
     private int target;
     
     /** The current number of pieces on the board. */
-    protected volatile int numPieces = 0;
+    private volatile int numPieces = 0;
     
     /**
      * Asynchronously runs a new Tic-Tac-Toe instance.
@@ -83,7 +83,7 @@ public class TicTacToe extends TileGame {
      * @param y the y position to place the piece at.
      * @return whether the move was valid and successful.
      */
-    public boolean placeStone(int x, int y) {
+    public synchronized boolean placeStone(int x, int y) {
         
         //Ensure move is valid.
         if(!validatePlacement(x, y)) return false;
@@ -91,8 +91,9 @@ public class TicTacToe extends TileGame {
         //Place a new stone at the specified location.
         new Stone(getCurrentPlayerId(), x, y);
         
+        checkWinAtPiece(getCurrentPlayerId(), x, y);
+        
         endTurn();
-        numPieces++;
         return true;
     }
     
@@ -136,6 +137,13 @@ public class TicTacToe extends TileGame {
         getBoard().setBackground(Pattern.CHECKER, BOARD_COLOURS);
     }
     
+    @Override
+    protected void checkEnd() {
+        
+        //The game is a draw if the board is full.
+        if(numPieces == getWidth() * getHeight()) endGame(0);
+    }
+    
     /**
      * Determines if the piece placed at the given position has caused a win.<br>
      * End the game and highlight the streak if this is the case.
@@ -144,44 +152,64 @@ public class TicTacToe extends TileGame {
      * @param y the y position to check for a win.
      * @return whether a win has occurred.
      */
-    protected boolean checkWinAtPiece(int playerId, int x, int y) {
+    protected void checkWinAtPiece(int playerId, int x, int y) {
         
-        //For each possible streak direction.
-        for(int xx = -1; xx <= 1; xx++) {
-            yy_loop: for(int yy = -1; yy <= 1; yy++) {
+        if(getStone(x, y) != playerId) return;
+        
+        //For each of the four directions in which a streak could occur.
+        for(int dir = 0; dir < 4; dir++) {
+            
+            //The x and y components of this direction.
+            int x_dir = dir<2 ? 1 : dir==2 ? 0:-1;
+            int y_dir = dir==0 ? 0:1;
+            
+            //The set of pieces in the streak in this orientation.
+            Set<Piece> streak = new HashSet<>();
+            streak.add(getPieceInst(x, y).get());
+            
+            //For each sub-streak on the 2 sides of the piece.
+            for(int sign = -1; sign <= 1; sign += 2) {
                 
-                //(0, 0) is not a valid streak direction.
-                if(xx == 0 && yy == 0) continue yy_loop;
-                
-                //Skip this direction if no streak can possibly fit in the bounds of the board.
-                if(x+xx*(target-1)<0 || y+yy*(target-1)<0 || x+xx*(target-1)>=getWidth()
-                        || y+yy*(target-1)>=getHeight()) continue yy_loop;
-                
-                Set<Stone> streak = new HashSet<>();
-                
-                //For each tile in the streak kernel.
-                for(int i = 0; i < target; i++) {
+                //Keep searching until the end of the streak is found.
+                for(int i = 1;; i++) {
                     
-                    //Skip if there exists a tile in the streak kernel which doesn't
-                    //contain a piece belonging to the current player.
-                    if(!getPieceInst(x+xx*i, y+yy*i).isPresent()) continue yy_loop;
-                    if(getPieceInst(x+xx*i, y+yy*i).get().getOwnerId()!=playerId) continue yy_loop;
+                    //The position currently being checked for a piece.
+                    int xx = x + i*x_dir*sign;
+                    int yy = y + i*y_dir*sign;
                     
-                    streak.add((Stone)getPieceInst(x+xx*i, y+yy*i).get());
+                    //The streak has ended if the edge of the board is reached.
+                    if(!inBounds(xx, yy)) break;
+                    //The streak has ended if an enemy piece or empty square has been reached.
+                    if(getStone(xx, yy) != playerId) break;
+                    
+                    streak.add(getPieceInst(xx, yy).get());
                 }
-                //A winning streak has been found. This player is the winner.
+            }
+            
+            //If this streak is sufficient in size to win the game.
+            if(streak.size() >= target) {
                 endGame(playerId);
-                
-                //Highlight the pieces in the winning streak.
-                for(Stone piece : streak) {
-                    getBoard().setColour(piece.getCol(), piece.getRow(),
-                            (piece.getCol()+piece.getRow())%2==0 ?
-                            HIGHLIGHT_COLOUR : HIGHLIGHT_COLOUR.darken(0.05F));
-                }
-                return true;
+                highlightStreak(streak);
             }
         }
-        return false;
+    }
+    
+    /**
+     * Highlights the given set of pieces on the board.
+     * For use in providing visual indication of winning streaks.
+     * @param streak the set of pieces to highlight.
+     */
+    private void highlightStreak(Set<Piece> streak) {
+        
+        for(Piece piece : streak) {
+            
+            //Alternate colour slightly according to checkerboard pattern.
+            Colour colour = (piece.getCol()+piece.getRow())%2==0 ?
+                    HIGHLIGHT_COLOUR : HIGHLIGHT_COLOUR.darken(0.05F);
+            
+            //Highlight board square on which the piece resides.
+            getBoard().setColour(piece.getCol(), piece.getRow(), colour);
+        }
     }
     
     @Override
@@ -232,9 +260,16 @@ public class TicTacToe extends TileGame {
         Stone(int ownerId, int x, int y) {
             super(ownerId, x, y, getStoneTexture(ownerId));
             setColour(getStoneColour(ownerId));
+            numPieces++;
         }
 
         @Override
         public boolean movePiece(int x_to, int y_to) { return false; }
+        
+        @Override
+        public void delete() {
+            super.delete();
+            numPieces--;
+        }
     }
 }

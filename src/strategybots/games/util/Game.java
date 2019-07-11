@@ -169,7 +169,7 @@ public abstract class Game {
                     }
                     
                     postTurn();
-                    checkWin();
+                    checkEnd();
                     
                     //Increment the current player.
                     currentPlayerId = currentPlayerId % players.length + 1;
@@ -202,7 +202,7 @@ public abstract class Game {
     /**
      * To be called upon the completion of each turn to check if any player has won.
      */
-    protected void checkWin() {}
+    protected void checkEnd() {}
     
     /**
      * To be called by the game after the game has finished.<br>

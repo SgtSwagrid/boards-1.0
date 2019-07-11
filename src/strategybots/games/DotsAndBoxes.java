@@ -91,7 +91,7 @@ public class DotsAndBoxes extends TileGame {
      * @param y the y position of the line to draw.
      * @return whether the move was valid and successful.
      */
-    public boolean drawLine(Orien orien, int x, int y) {
+    public synchronized boolean drawLine(Orien orien, int x, int y) {
         
         //Ensure game is running and turn hasn't already been taken.
         if(!isRunning() || turnDone()) return false;
@@ -129,7 +129,7 @@ public class DotsAndBoxes extends TileGame {
      * @param y the y position of the square next to which a line is drawn.
      * @return whether the move was valid and successful.
      */
-    public boolean drawLine(Side side, int x, int y) {
+    public synchronized boolean drawLine(Side side, int x, int y) {
         
         switch(side) {
             
@@ -245,7 +245,7 @@ public class DotsAndBoxes extends TileGame {
     }
     
     @Override
-    protected void checkWin() {
+    protected void checkEnd() {
         
         int maxScore = 0, winner = 0;
         

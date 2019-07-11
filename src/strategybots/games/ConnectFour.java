@@ -62,7 +62,7 @@ public class ConnectFour extends TicTacToe {
         super(WIDTH, HEIGHT, TARGET, player1, player2);
     }
     
-    public boolean placeStone(int x) {
+    public synchronized boolean placeStone(int x) {
         
         //Ensure x is in bounds and columns isn't full.
         if(!validatePlacement(x)) return false;
