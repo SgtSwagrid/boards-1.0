@@ -127,59 +127,57 @@ public abstract class Game {
     protected void start() {
         
         //Run the game in a new thread.
-        new Thread("Game") {
-            @Override public void run() {
-                
-                //Initialise the game.
-                init();
-                
-                //Initialise the players.
-                for(int i = 0; i < players.length; i++) {
-                    players[i].init(Game.this, i + 1);
-                }
-                
-                //While the game is running (hasn't been finished or quit).
-                running = true;
-                while(isRunning()) {
-                    
-                    //Determine who the current player is.
-                    currentPlayer = players[currentPlayerId - 1];
-                    
-                    //Have the current player take their turn.
-                    turnDone = false;
-                    preTurn();
-                    
-                    //Record the time at which the turn began.
-                    long startTime = System.currentTimeMillis();
-                    
-                    //Prompt the player to take a turn, in a new thread.
-                    new Thread(() -> {
-                        //Continue to call takeTurn() until the turn is complete.
-                        while(!turnDone && isRunning()) {
-                            currentPlayer.takeTurn(Game.this, currentPlayerId);
-                        }
-                    }, "game").start();
-                    
-                    //Wait for the turn to be completed.
-                    while(!turnDone && isRunning()) {
-                        //Forfeit the game if the time runs out.
-                        if(timeLimit > 0 && System.currentTimeMillis()-startTime > timeLimit) {
-                            endGame(getCurrentPlayerId()%2+1);
-                        }
-                    }
-                    
-                    postTurn();
-                    checkEnd();
-                    
-                    //Increment the current player.
-                    currentPlayerId = currentPlayerId % players.length + 1;
-                }
-                onFinish();
-                for(int i = 0; i < players.length; i++) {
-                    players[i].gameEnd(Game.this, i+1, winnerId);
-                }
+        new Thread(() -> {
+            
+            //Initialise the game.
+            init();
+            
+            //Initialise the players.
+            for(int i = 0; i < players.length; i++) {
+                players[i].init(Game.this, i + 1);
             }
-        }.start();
+            
+            //While the game is running (hasn't been finished or quit).
+            running = true;
+            while(isRunning()) {
+                
+                //Determine who the current player is.
+                currentPlayer = players[currentPlayerId - 1];
+                
+                //Have the current player take their turn.
+                turnDone = false;
+                preTurn();
+                
+                //Record the time at which the turn began.
+                long startTime = System.currentTimeMillis();
+                
+                //Prompt the player to take a turn, in a new thread.
+                new Thread(() -> {
+                    //Continue to call takeTurn() until the turn is complete.
+                    while(!turnDone && isRunning()) {
+                        currentPlayer.takeTurn(Game.this, currentPlayerId);
+                    }
+                }, currentPlayer.getName() + "-Turn").start();
+                
+                //Wait for the turn to be completed.
+                while(!turnDone && isRunning()) {
+                    //Forfeit the game if the time runs out.
+                    if(timeLimit > 0 && System.currentTimeMillis()-startTime > timeLimit) {
+                        endGame(getCurrentPlayerId()%2+1);
+                    }
+                }
+                
+                postTurn();
+                checkEnd();
+                
+                //Increment the current player.
+                currentPlayerId = currentPlayerId % players.length + 1;
+            }
+            onFinish();
+            for(int i = 0; i < players.length; i++) {
+                players[i].gameEnd(Game.this, i+1, winnerId);
+            }
+        }, "Game").start();
     }
     
     /**
