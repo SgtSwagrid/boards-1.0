@@ -153,11 +153,20 @@ public abstract class Game {
                 
                 //Prompt the player to take a turn, in a new thread.
                 new Thread(() -> {
-                    //Continue to call takeTurn() until the turn is complete.
+                    
+                    //Wait for the turn to be completed.
                     while(!turnDone && isRunning()) {
-                        currentPlayer.takeTurn(Game.this, currentPlayerId);
+                        //Forfeit the game if the time runs out.
+                        if(timeLimit > 0 && System.currentTimeMillis()-startTime > timeLimit) {
+                            endGame(getCurrentPlayerId()%2+1);
+                        }
                     }
-                }, currentPlayer.getName() + "-Turn").start();
+                }, "Timer").start();
+                
+                //Continue to call takeTurn() until the turn is complete.
+                while(!turnDone && isRunning()) {
+                    currentPlayer.takeTurn(Game.this, currentPlayerId);
+                }
                 
                 //Wait for the turn to be completed.
                 while(!turnDone && isRunning()) {
