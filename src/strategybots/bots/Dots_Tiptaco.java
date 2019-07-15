@@ -4,9 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import strategybots.bots.C4_Tiptaco.Board;
+import strategybots.bots.C4_Tiptaco.Minimax;
 import strategybots.games.ConnectFour;
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Orien;
@@ -15,11 +20,11 @@ import strategybots.graphics.Colour;
 
 public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 
-	public static final int THREADS = 4, DEPTH = 5;
+	public static final int THREADS = 4, DEPTH = 5, BREADTH = 10;
 	public static final int TIME = 1000;
 	public static final int VERT = 0, HORZ = 1;
 	
-	private Executor ex;
+	private ExecutorService ex;
 	private State state;
 	private int width, height;
 	
@@ -27,6 +32,8 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 	public void init(DotsAndBoxes game, int playerId) {
 		width = game.getWidth();
 		height = game.getHeight();
+		
+		ex = Executors.newFixedThreadPool(THREADS);
 		
 		state = new State(game, playerId);
 	}
@@ -37,8 +44,7 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		
 		state = updateBoard(game, playerId);
 		
-		Minimax mm = new Minimax(state, playerId, playerId);
-		
+		/*
 		try {
 			Thread.sleep(50);
 		} catch (InterruptedException e) {
@@ -48,10 +54,7 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		
 		ArrayList<Move> moves = new ArrayList<Move>();
 		moves = mm.validMoves(state, 3);
-		
-		Random rand = new Random();
-		Orien o = rand.nextInt(2) == 0 ? Orien.VERT : Orien.HORZ;
-		
+				
 		if (moves.size() == 0)
 		{
 			moves = mm.validMoves(state, 0);
@@ -60,24 +63,95 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		if (moves.size() == 0)
 		{
 			moves = mm.validMoves(state, 1);
-		}
+		}*/
 	
+		Random rand = new Random();
+		Orien o = rand.nextInt(2) == 0 ? Orien.VERT : Orien.HORZ;
+		Move theMove = bestMove(game, playerId);
 		
-		if (moves.size() == 0) {
+		System.out.println("Help my move was null");
+		
+		if (theMove == null) {
 			int dx = 0, dy = 0;
 			
 			do
 			{
 				dx = rand.nextInt(width);
 				dy = rand.nextInt(height);
-			} while (state.getNumSides()[dx][dy] == 4 || state.getNumSides()[dx][dy] == 2);
+			} while ((state.getNumSides()[dx][dy] == 4));
 			
 			System.out.println("Placing " + dx + " "  + dy);
 			
 			game.drawLine(o, dx, dy);
 		} else {
-			game.drawLine(moves.get(0).o, moves.get(0).x, moves.get(0).y);
+			game.drawLine(theMove.o, theMove.x, theMove.y);
 		}
+	}
+	
+	private ArrayList<Move> possibleMoves(DotsAndBoxes game, State state, int playerId)
+	{
+		ArrayList<Move> moves = new ArrayList<Move>();
+		Minimax mm = new Minimax(state, playerId, playerId, false);
+		
+		moves.addAll(mm.validMoves(state, 3));
+		moves.addAll(mm.validMoves(state, 1));
+		
+		for (int kk = 0 ; kk < 2; kk++)
+		{
+			for (int xx = 0 ; xx < state.lines[kk].length; xx++)
+			{
+				for (int yy = 0; yy < state.lines[kk][xx].length; yy++)
+				{
+					Orien o = kk == VERT ? Orien.VERT : Orien.HORZ;
+					
+					if (state.lines[kk][xx][yy] == false)
+					{
+						moves.add(new Move(o, xx, yy));
+					}
+				}
+			}
+		}
+		
+		return moves;
+	}
+	
+	private Move bestMove(DotsAndBoxes game, int playerId)
+	{
+		List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
+		List<Move> moves = new ArrayList<Move>();
+		
+		moves = possibleMoves(game, state, playerId).subList(0, BREADTH);
+		
+		//if (moves.size() == 0) System.out.println("Help moves size is 0");
+		
+		for (Move m : moves)
+		{
+			State successor = new State(state);
+			int completedBoxes = successor.placeSide(m.o, m.x, m.y);
+			
+			futures.add(ex.submit(new Minimax(successor, playerId, DEPTH, completedBoxes != 0)));
+		}
+		
+		int bestScore = Integer.MIN_VALUE;
+		Move bestMove = null;
+		
+		for (int ii = 0 ; ii < futures.size(); ii++)
+		{
+			try {	
+				System.out.println("Future:" + ii + " has value " + futures.get(ii).get());
+				if (futures.get(ii).get() > bestScore)
+				{
+					bestScore = futures.get(ii).get();
+					bestMove = moves.get(ii);
+					System.out.println(bestMove.toString());
+				}
+			} catch (InterruptedException | ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		return bestMove;
 	}
 	
 	private State updateBoard(DotsAndBoxes game, int playerId)
@@ -167,6 +241,61 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 			// todo add completed boxes
 		}
 		
+	    public int[][] getNumSides()
+	    {
+	    	return numSides;
+	    }
+	    
+	    public int[] getPlayerScore()
+	    {
+	    	return playerScore;
+	    }
+	    
+	    public int getPlayer()
+	    {
+	    	return currentPlayer;
+	    }
+	    
+		public boolean[][][] getBoard()
+		{
+			return lines;
+		}
+		
+		public int placeSide(Orien o, int x, int y)
+		{
+			// todo
+			int kk = o == Orien.VERT ? 0 : 1;
+			
+			lines[kk][x][y] = true;
+			
+			int filledSquares = 0;
+			
+			for (int xx = 0; xx < width ; xx++)
+			{
+				for (int yy = 0  ; yy < height ; yy++)
+				{
+					if (numSides[xx][yy] == 4) filledSquares++;
+				}
+			}
+			
+			int caps = captureSquares(o, x, y);
+			
+			if (caps == 0)
+			{
+				currentPlayer = currentPlayer % 2 + 1;
+			}
+			
+			if (filledSquares == width * height)
+			{
+				terminal = true;
+				//System.out.println("Win");
+			}
+			
+			return caps;
+			//setPiece(x, y);
+			//terminal = checkWin(x, y);
+		}
+		
 	    private int captureSquares(Orien orien, int x, int y) {
 	           
 	        //Increment the number of sides for each adjacent square.
@@ -190,37 +319,6 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 	        playerScore[currentPlayer-1] += score;
 	        return score;
 	    }
-		
-	    public int[][] getNumSides()
-	    {
-	    	return numSides;
-	    }
-	    
-	    public int[] getPlayerScore()
-	    {
-	    	return playerScore;
-	    }
-	    
-	    public int getPlayer()
-	    {
-	    	return currentPlayer;
-	    }
-	    
-		public boolean[][][] getBoard()
-		{
-			return lines;
-		}
-		
-		public void placeSide(Orien o, int x, int y)
-		{
-			// todo
-			int kk = o == Orien.VERT ? 0 : 1;
-			
-			lines[kk][x][y] = true;
-			
-			//setPiece(x, y);
-			//terminal = checkWin(x, y);
-		}
 		
 		public boolean[][][] getLines()
 		{
@@ -294,32 +392,37 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		private State st;
 		private int myId;
 		private int depth;
+		boolean max = false;
 		
-		public Minimax(State st, int myId, int depth)
+		public Minimax(State st, int myId, int depth, boolean maximize)
 		{
 			this.st = st;
 			this.myId = myId;
 			this.depth = depth;
+			max = maximize;
 		}
 		
 		private int evalWinner(State state)
 		{
 			if (state.isTerminal())
 			{
-				if (state.getPlayer() == myId) return 1;
-				else return -1;
+				if (state.getPlayer() == myId) return state.getPlayerScore()[myId - 1];
+				else return state.getPlayerScore()[myId == 1 ? 0 : 1];
 			}
 			else
 			{
-				return 0;
+				if (state.getPlayer() == myId) return state.getPlayerScore()[myId - 1];
+				else return state.getPlayerScore()[myId == 1 ? 0 : 1];
+				
+				//return 0;
 			}
 		}
 		
 		private int minimax(State state, int depth, boolean maximizingPlayer) {
 			if ( depth == 0 || state.isTerminal())
 			{
-				int score = evalWinner(state) * (depth + 1);
-				System.out.println(state.isTerminal() + " " + score);
+				int score = evalWinner(state);
+				//System.out.println(state.isTerminal() + " " + score);
 				
 				return score;
 			}
@@ -328,14 +431,18 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 			{
 				int value = Integer.MIN_VALUE;
 				
-				 List<Move> validMoves = validMoves(state, 3);
+				 List<Move> validMoves = possibleMoves(state.getGame(), state, state.currentPlayer).subList(0, BREADTH);
 				
 				 for (Move move : validMoves)
 				 {
 					 State successor = new State(state);
+					 int completedBoxes = successor.placeSide(move.o, move.x, move.y);
 					// successor.placePiece(move, getStackSize(state, move));
-					 
-					 value = Math.max(value,  minimax(successor, depth - 1, false));
+					 if (completedBoxes == 0) //swap
+						 value = Math.max(value,  minimax(successor, depth - 1, false));
+					 else
+						 value = Math.max(value,  minimax(successor, depth - 1, true));
+
 				 }
 				 
 				 return value;
@@ -344,14 +451,17 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 			{
 				int value = Integer.MAX_VALUE;
 				
-				 List<Move> validMoves = validMoves(state, 3);
+				 List<Move> validMoves = possibleMoves(state.getGame(), state, state.currentPlayer).subList(0, BREADTH);
 				
 				 for (Move move : validMoves)
 				 {
 					 State successor = new State(state);
+					 int completedBoxes = successor.placeSide(move.o, move.x, move.y);
 					// successor.placePiece(move, getStackSize(state, move));
-					 
-					 value = Math.min(value, minimax(successor, depth - 1, true));
+					 if (completedBoxes == 0) //swap
+						 value = Math.min(value,  minimax(successor, depth - 1, true));
+					 else
+						 value = Math.min(value,  minimax(successor, depth - 1, false));
 				 }
 				 
 				 return value;
@@ -387,7 +497,7 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		
 		@Override
 		public Integer call() throws Exception {
-			return minimax(st, depth, false);
+			return minimax(st, depth, max);
 		}
 		
 	}
