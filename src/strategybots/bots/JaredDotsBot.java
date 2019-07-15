@@ -37,14 +37,22 @@ public class JaredDotsBot implements Player<DotsAndBoxes> {
 
     public void makeMove(DotsAndBoxes game)
     {
+        int horz = 0, vert = 1;
+        boolean win = false;
         int i = 0, j = 0;
         while(i < 10)
         {
             j = 0;
             while(j < 10)
             {
-                canWin(i, j, game);
+                win = false;
+                win = canWin(i, j, game);
                 j++;
+                if(win == true)
+                {
+                    j = 0;
+                    i = 0;
+                }
             }
             i++;
         }
@@ -57,21 +65,9 @@ public class JaredDotsBot implements Player<DotsAndBoxes> {
             do
             {
                 tempR = (int)(Math.random()*10);
-                tempC = (int)(Math.random()*10);
-                counter++;
-                if(counter > 1000)
-                {
-                    keep = false;
-                    break;
-                }           
-            }while(game.hasLine(Orien.VERT, tempC, tempR) && !willWin(tempR, tempC, game)); 
-            
-            if(keep == true)
-                game.drawLine(Orien.VERT, tempC, tempR);
-            else
-            {
-           //     findNext(game);
-            }
+                tempC = (int)(Math.random()*10);          
+            }while(game.hasLine(Orien.VERT, tempC, tempR) && !willWin(tempR, tempC, game));
+            game.drawLine(Orien.VERT, tempR, tempC);
         }
         else
         {
@@ -79,74 +75,47 @@ public class JaredDotsBot implements Player<DotsAndBoxes> {
             {
                 tempR = (int)(Math.random()*10);
                 tempC = (int)(Math.random()*10);
-                counter++;
-                if(counter > 1000)
-                {
-                    keep = false;
-                    break;
-                }
             }while(game.hasLine(Orien.HORZ, tempC, tempR) && !willWin(tempR, tempC, game)); 
-            
-            if(keep == true)
-                game.drawLine(Orien.HORZ, tempC, tempR);
-            else
-            {
-             //   findNext(game);
-            }
-        }
-
-    }
-    
-    public void findNext(DotsAndBoxes game)
-    {
-        for(int i = 0; i <= 10; i++)
-        {
-            for(int j = 0; j <= 10; j++)
-            {
-                if(!game.hasLine(Orien.HORZ, i + 1, j))
-                {
-                    game.drawLine(Orien.HORZ, i + 1, j);
-                    break;
-                }
-                if(!game.hasLine(Orien.HORZ, i, j))
-                {
-                    game.drawLine(Orien.HORZ, i, j);
-                    break;
-                }
-                if(!game.hasLine(Orien.VERT, i, j))
-                {
-                    game.drawLine(Orien.VERT, i, j);
-                    break;
-                }
-                if(!game.hasLine(Orien.HORZ, i, j + 1))
-                {
-                    game.drawLine(Orien.VERT, i, j + 1);
-                    break;
-                }
-            }
+            game.drawLine(Orien.HORZ, tempC, tempR);
         }
     }
     
     public boolean willWin(int c, int r, DotsAndBoxes game)
-    {
-        boolean win = false;
-        int count = 1;
+    {      
+        int count = 0;
 
         if(game.hasLine(Orien.VERT, c + 1, r))
             count++;
-        if(game.hasLine(Orien.VERT, c, r))
+        if(c < 9 && r < 9 && game.hasLine(Orien.VERT, c + 1, r + 1))
             count++;
-        if(game.hasLine(Orien.HORZ, c, r))
+        if(c < 9 && r < 9 && game.hasLine(Orien.HORZ, c + 1, r + 1))
             count++;
         if(game.hasLine(Orien.HORZ, c, r + 1))
             count++;
-
         if(count == 2)
         {
-            win = true;
+            return true;
         }
-        return win;
+                 
+        count = 0;
+
+        if(c > 0 && game.hasLine(Orien.VERT, c - 1, r))
+            count++;
+        if(c > 0 && r > 0 && game.hasLine(Orien.VERT, c - 1, r - 1))
+            count++;
+        if(c > 0 && r > 0 && game.hasLine(Orien.HORZ, c - 1, r - 1))
+            count++;
+        if(r > 0 && game.hasLine(Orien.HORZ, c, r - 1))
+            count++;
+        if(count == 2)
+        {    
+            return true;
+        }
+        
+        return false;
     }
+    
+    
 
     public boolean canWin(int r, int c, DotsAndBoxes game)
     {

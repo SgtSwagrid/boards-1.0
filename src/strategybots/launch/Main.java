@@ -48,7 +48,7 @@ public class Main {
             case CHOMP: new Chomp(new ChompController(), new ChompController()); break;
             case CLOBBER: new Clobber(new ClobberController(), new ClobberController()); break;
             case CONNECTFOUR: new ConnectFour(new ConnectFourController(), new ConnectFourController()); break;
-            case DOTSANDBOXES: new DotsAndBoxes(new JaredDotsBot(), new JaredDotsBot()); break;
+            case DOTSANDBOXES: new DotsAndBoxes(new DotsController(), new JaredDotsBot()); break;
             case PENTAGO: new Pentago(new PentagoController(), new PentagoController()); break;
             case REVERSI: new Reversi(new ReversiController(), new ReversiController()); break;
             case TICTACTOE: new TicTacToe(new TicTacToeController(), new TicTacToeController()); break;
