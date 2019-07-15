@@ -20,8 +20,9 @@ import strategybots.graphics.Colour;
 
 public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 
+	// Threads is number of threads in the pool, Depth is minimax depth, breadth is minimax depth
 	public static final int THREADS = 4, DEPTH = 5, BREADTH = 10;
-	public static final int TIME = 1000;
+	
 	public static final int VERT = 0, HORZ = 1;
 	
 	private ExecutorService ex;
@@ -33,6 +34,7 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		width = game.getWidth();
 		height = game.getHeight();
 		
+		// create the threadpool for minimax to use later
 		ex = Executors.newFixedThreadPool(THREADS);
 		
 		state = new State(game, playerId);
@@ -40,11 +42,11 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 	
 	@Override
 	public void takeTurn(DotsAndBoxes game, int playerId) {
-		// TODO Auto-generated method stub
+	
+		// Do the minimax in the threadpool, saving the best move if there was one.
+		//Move theMove = bestMove(game, playerId);
+
 		
-		state = updateBoard(game, playerId);
-		
-		/*
 		try {
 			Thread.sleep(50);
 		} catch (InterruptedException e) {
@@ -52,46 +54,85 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 			e.printStackTrace();
 		}
 		
-		ArrayList<Move> moves = new ArrayList<Move>();
-		moves = mm.validMoves(state, 3);
-				
-		if (moves.size() == 0)
-		{
-			moves = mm.validMoves(state, 0);
-		}
+		// Take Turn Rewrite as pseudocoded from my workbook
 		
-		if (moves.size() == 0)
-		{
-			moves = mm.validMoves(state, 1);
-		}*/
-	
+		// 0) Update the board state
+		state = updateBoard(game, playerId);
 		Random rand = new Random();
 		Orien o = rand.nextInt(2) == 0 ? Orien.VERT : Orien.HORZ;
-		Move theMove = bestMove(game, playerId);
 		
-		System.out.println("Help my move was null");
-		
-		if (theMove == null) {
-			int dx = 0, dy = 0;
+		// 1) Loop until all the 3's are taken
+		ArrayList<Move> move3 = state.validMoves(state, 3);
+		while (move3.size() > 0) {
 			
-			do
-			{
+			Move m = move3.get(0);
+			game.drawLine(m.o, m.x, m.y);
+			state.placeSide(m.o, m.x, m.y);
+			move3 = state.validMoves(state, 3);
+		}
+		
+		// 2) Try to place where a 3 wont be made
+		State successor = new State(state);
+		int tries = 0; 
+		int dx = 0, dy = 0;
+		do {
+			
+			do {
 				dx = rand.nextInt(width);
 				dy = rand.nextInt(height);
 			} while ((state.getNumSides()[dx][dy] == 4));
 			
-			System.out.println("Placing " + dx + " "  + dy);
-			
+			successor = new State(state);
+			successor.placeSide(o, dx, dy);
+			tries++;
+		} while (successor.validMoves(successor, 3).size() != 0 && tries != 100);
+		
+		if (successor.validMoves(successor, 3).size() == 0)
+		{
 			game.drawLine(o, dx, dy);
-		} else {
-			game.drawLine(theMove.o, theMove.x, theMove.y);
+			return;
 		}
+		
+		// 3) Group Chains 
+		
+		state = updateBoard(game, playerId);
+		
+		Mapper mapper = new Mapper(state);
+		mapper.map();
+		Group largest = mapper.getLargestGroup();
+		
+		// 4) PLace inside the smallest group
+		
+		Group smallest = mapper.getSmallestGroup();
+	
+		if (smallest != null) {
+			System.out.println("Min Group size " + smallest.group.size());
+			for (Point p : mapper.getSmallestGroup().group) System.out.print("(" + p.x + "," + p.y +") ");
+		}
+		
+		Point picked = smallest.group.get(0);
+		Move pick = state.emptyMove(state, picked.x, picked.y);
+		game.drawLine(pick.o, pick.x, pick.y);
+		
+		
+		
+		
+		
+		
 	}
 	
+	/**
+	 * Makes an arraylist of moves to be considered for minimax, All moves are considered for now
+	 * @param game
+	 * @param state
+	 * @param playerId
+	 * @return ArrayList of possible Moves
+	 */
 	private ArrayList<Move> possibleMoves(DotsAndBoxes game, State state, int playerId)
 	{
 		ArrayList<Move> moves = new ArrayList<Move>();
 		Minimax mm = new Minimax(state, playerId, playerId, false);
+		
 		
 		moves.addAll(mm.validMoves(state, 3));
 		moves.addAll(mm.validMoves(state, 1));
@@ -115,15 +156,20 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		return moves;
 	}
 	
+	/**
+	 * Selects the best move out of all possible moves and their resulting minimaxs
+	 * @param game
+	 * @param playerId
+	 * @return
+	 */
 	private Move bestMove(DotsAndBoxes game, int playerId)
 	{
 		List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
 		List<Move> moves = new ArrayList<Move>();
 		
-		moves = possibleMoves(game, state, playerId).subList(0, BREADTH);
-		
-		//if (moves.size() == 0) System.out.println("Help moves size is 0");
-		
+		moves = possibleMoves(game, state, playerId);
+		moves = moves.subList(0, Math.min(BREADTH,  moves.size()));
+				
 		for (Move m : moves)
 		{
 			State successor = new State(state);
@@ -165,7 +211,10 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		return "Adrian's Bot";
 	}
 
-	
+	/**
+	 * The State class will hold all information about a current state in the game 
+	 * @author Adrian Shedley
+	 */
 	class State {
 		
 		private int currentPlayer;
@@ -238,7 +287,36 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 				}
 			}
 			
+			playerScore[0] = 0;
+			playerScore[1] = 0;
 			// todo add completed boxes
+		}
+				
+		public ArrayList<Move> validMoves(State state, int numSides) {
+			ArrayList<Move> moves = new ArrayList<Move>();
+			
+			for (int xx = 0; xx < width ;xx++)
+			{
+				for (int yy = 0; yy < height ; yy++)
+				{
+					if (state.getNumSides()[xx][yy] == numSides)
+					{
+						moves.add(emptyMove(state, xx, yy));
+					}
+				}
+			}
+			
+			return moves;
+		}
+	
+		public Move emptyMove(State state, int xx, int yy)
+		{
+			if (!state.getBoard()[0][xx][yy]) return new Move(Orien.VERT, xx, yy);
+			else if (!state.getBoard()[1][xx][yy]) return new Move(Orien.HORZ, xx, yy);
+			else if (!state.getBoard()[0][xx+1][yy]) return new Move(Orien.VERT, xx + 1, yy);
+			else if (!state.getBoard()[1][xx][yy+1]) return new Move(Orien.HORZ, xx, yy + 1);
+			
+			return null;
 		}
 		
 	    public int[][] getNumSides()
@@ -387,6 +465,169 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		
 	}
 	
+	class Mapper
+	{
+		State state;
+		
+		ArrayList<Group> groups;
+		boolean[][] visited;
+
+		public Mapper(State state)
+		{
+			this.state = state;	
+			groups = new ArrayList<Group>();
+			visited = new boolean[state.getWidth()][state.getHeight()];
+		}
+		
+		public ArrayList<Group> map()
+		{			
+			for (int xx = 0 ; xx < state.getWidth() ; xx++)
+			{
+				for (int yy = 0;  yy < state.getHeight() ; yy++)
+				{
+					if (!visited[xx][yy]) groups.add(map(xx,yy));
+				}
+			}
+			
+			return groups;
+		}
+		
+		public Group map(int x , int y)
+		{
+			Group gp = new Group(state, this);
+			gp.map(new Point(x, y));
+			return gp;
+		}
+		
+		public ArrayList<Group> getGroups()
+		{
+			return groups;
+			
+		}
+		
+		public Group getLargestGroup()
+		{
+			int maxSize = 0;
+			Group max = null;
+			
+			for (Group gg: groups)
+			{
+				if (gg.group.size() > maxSize)
+				{
+					maxSize = gg.group.size();
+					max = gg;
+				}
+			}
+			
+			return max;
+		}
+		
+		public Group getSmallestGroup()
+		{
+			int minSize = Integer.MAX_VALUE;
+			Group min = null;
+			
+			for (Group gg: groups)
+			{
+				if (gg.group.size() < minSize && gg.group.size() != 0)
+				{
+					minSize = gg.group.size();
+					min = gg;
+				}
+			}
+			
+			return min;
+		}
+	}
+	
+	class Group
+	{
+		State state;
+		Mapper parent;
+		
+		ArrayList<Point> group;
+		int[][] adj;
+		
+		public Group(State state, Mapper parent) {
+			this.state = state;
+			this.parent = parent;
+			
+			group = new ArrayList<Point>();
+			adj = new int[state.getWidth()][state.getHeight()];
+		}
+		
+		public boolean map(Point p) {
+						
+			if (!parent.visited[p.x][p.y] && (state.getNumSides()[p.x][p.y] == 2 || (state.getNumSides()[p.x][p.y] + adj[p.x][p.y] == 3)) )
+			{
+				group.add(p);
+				adj[p.x][p.y]--; 
+				
+				parent.visited[p.x][p.y] = true; 
+				
+				if (p.x - 1 >= 0) {
+					Point p2 = new Point(p.x - 1, p.y);
+					if (openAdjacent(p, p2)) {
+						adj[p2.x][p2.y]++; 
+						map(p2);
+					}
+					
+				}
+				
+				if (p.x + 1 < state.getWidth())  {
+					Point p2 = new Point(p.x + 1, p.y);
+					if (openAdjacent(p, p2)) {
+						adj[p2.x][p2.y]++; 
+						map(p2);
+					}
+				}
+				
+				if (p.y - 1 >= 0)  {
+					Point p2 = new Point(p.x, p.y - 1);
+					if (openAdjacent(p, p2)) {
+						adj[p2.x][p2.y]++; 
+						map(p2);
+					}
+				}
+				
+				if (p.y + 1 < state.getHeight())  {
+					Point p2 = new Point(p.x, p.y + 1);
+					if (openAdjacent(p, p2))  {
+						adj[p2.x][p2.y]++; 
+						map(p2);
+					}
+				}
+			}
+			
+			return group.size() != 0;
+			
+		}
+		
+		// Method for if the two points are adjacent and open
+		private boolean openAdjacent(Point p1, Point p2)
+		{
+			boolean openAdj = false;
+			
+			if (p1.x == p2.x && Math.abs(p1.y - p2.y) == 1) {
+				// X same, so dealing with the horizontals
+				int dy = Math.max(p1.y, p2.y);
+				
+				openAdj = !state.getBoard()[1][p1.x][dy];
+				
+			} else if (p1.y == p2.y && Math.abs(p1.x - p2.x) == 1){
+				// Y same so dealing with verticals
+				int dx = Math.max(p1.x, p2.x);
+				
+				openAdj = !state.getBoard()[0][dx][p1.y];
+			} // else not adj because not touching
+			
+			return openAdj;
+		}
+		
+	}
+	
+	class Point { int x, y; public Point(int x, int y) { this.x = x; this.y = y; } }
+	
 	class Minimax implements Callable<Integer> {
 
 		private State st;
@@ -404,34 +645,34 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		
 		private int evalWinner(State state)
 		{
-			if (state.isTerminal())
+			if (true)//state.isTerminal())
 			{
-				if (state.getPlayer() == myId) return state.getPlayerScore()[myId - 1];
-				else return state.getPlayerScore()[myId == 1 ? 0 : 1];
-			}
-			else
-			{
-				if (state.getPlayer() == myId) return state.getPlayerScore()[myId - 1];
-				else return state.getPlayerScore()[myId == 1 ? 0 : 1];
+				int score = 0;
 				
-				//return 0;
-			}
-		}
-		
-		private int minimax(State state, int depth, boolean maximizingPlayer) {
-			if ( depth == 0 || state.isTerminal())
-			{
-				int score = evalWinner(state);
-				//System.out.println(state.isTerminal() + " " + score);
+				if (state.getPlayer() == myId) {
+					score += state.getPlayerScore()[myId - 1];
+					//score -= state.getPlayerScore()[myId == 1 ? 0 : 1];
+				} else {
+					score -= state.getPlayerScore()[myId - 1];
+					//score += state.getPlayerScore()[myId == 1 ? 0 : 1];
+				}
 				
 				return score;
 			}
+			return 0;
+		}
+		
+		private int minimax(State state, int depth, boolean maximizingPlayer) {
+			if ( depth == 0 || state.isTerminal()) {
+				int score = evalWinner(state);
+				return score;
+			}
 			
-			if (maximizingPlayer)
-			{
+			if (maximizingPlayer) {
 				int value = Integer.MIN_VALUE;
 				
-				 List<Move> validMoves = possibleMoves(state.getGame(), state, state.currentPlayer).subList(0, BREADTH);
+				 List<Move> validMoves = possibleMoves(state.getGame(), state, state.currentPlayer);
+				 validMoves = validMoves.subList(0, Math.min(BREADTH,  validMoves.size()));
 				
 				 for (Move move : validMoves)
 				 {
@@ -446,13 +687,12 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 				 }
 				 
 				 return value;
-			}
-			else
-			{
+			} else {
 				int value = Integer.MAX_VALUE;
 				
-				 List<Move> validMoves = possibleMoves(state.getGame(), state, state.currentPlayer).subList(0, BREADTH);
-				
+				 List<Move> validMoves = possibleMoves(state.getGame(), state, state.currentPlayer);
+				 validMoves = validMoves.subList(0, Math.min(BREADTH,  validMoves.size()));
+				 
 				 for (Move move : validMoves)
 				 {
 					 State successor = new State(state);
@@ -502,6 +742,11 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 		
 	}
 	
+	/**
+	 * The move data type. Holds Orientation o and Position x,y
+	 * @author Adrian
+	 *
+	 */
 	class Move {
 		Orien o;
 		int x, y;
@@ -513,104 +758,4 @@ public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 			this.y = y;
 		}
 	}
-	
-	class MCTS {
-		
-		DotsAndBoxes game;
-		Node root;
-		State state;
-		int myId;
-		
-		public MCTS(DotsAndBoxes game, State state, int playerId)
-		{
-			this.game = game;
-			this.state = state;
-			myId = playerId;
-			
-			root = new Node(state, null);
-		}
-		
-		public Node mcts(Node root)
-		{
-			long startTime = System.currentTimeMillis();
-			
-			Node leaf;
-			
-			while (System.currentTimeMillis() - startTime > TIME)
-			{
-				// do mcts
-				//leaf = rollout(root);
-				
-				
-			}
-			
-			
-			return root;
-		}
-		
-		public void traverse()
-		{
-			
-		}
-		
-		public void rollout() {
-			
-		}
-		
-		public void backprop() {
-			
-		}
-		
-		public Node bestChild()
-		{
-			return null;
-		}
-		
-	}
-	
-	class Node {
-		
-		public State state;
-		public int visits, score;
-		
-		public Node parent;
-		public ArrayList<Node> children;
-		
-		public Node(State state, Node parent)
-		{
-			this.parent = parent;
-			children = new ArrayList<Node>();
-			
-			this.state = state;
-			this.visits = 0;
-			this.score = 0;
-		}
-
-		public ArrayList<Node> getUnvisited()
-		{
-			ArrayList<Node> unVisited = new ArrayList<Node>();
-			
-			for (Node n : children)
-			{
-				if (n.visits == 0) unVisited.add(n);
-			}
-			
-			return unVisited;
-		}
-		
-		public boolean fullyExpanded()
-		{
-			if (getUnvisited().size() == 0 || state.isTerminal())
-			{
-				return true;
-			}
-			
-			return false;
-		}
-		
-	}
-	
-	
 }
-
-
