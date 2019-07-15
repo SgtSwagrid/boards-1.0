@@ -34,7 +34,7 @@ public class Main {
     private static final int REVERSI = 9;
     private static final int TICTACTOE = 10;
 	
-    private static final int GAME = TICTACTOE;
+    private static final int GAME = DOTSANDBOXES;
     
 	public static void main(String[] args) {
 	    
@@ -51,5 +51,7 @@ public class Main {
 	        case REVERSI: new Reversi(new ReversiController(), new ReversiController()); break;
 	        case TICTACTOE: new TicTacToe(new TicTacToeController(), new TicTacToeController()); break;
 	    }
+	    
+	    
 	}
 }
