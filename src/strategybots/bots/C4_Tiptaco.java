@@ -21,7 +21,7 @@ public class C4_Tiptaco implements Player<ConnectFour> {
 	 * @author Adrian Shedley
 	 */
 	
-	public static final int NUM_THREADS = 1;
+	public static final int NUM_THREADS = 4;
 	public static final int TREE_DEPTH= 5;
 	
 	private ConnectFour g = null;
@@ -78,29 +78,18 @@ public class C4_Tiptaco implements Player<ConnectFour> {
 	
 	private int bestPosition(ConnectFour game)
 	{
-		//List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
+		List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
 		List<Integer> moves = new ArrayList<Integer>();
-		List<Integer> futures = new ArrayList<Integer>();
 		
 		for (int ii = 0 ; ii < width ; ii++) {
 			
 			if (game.validatePlacement(ii))
-			{
+			{				
 				Board successor = new Board(board);
 				successor.placePiece(ii, game.getStackSize(ii));
 				
-				//futures.add(ex.submit(new Minimax(successor, myId, TREE_DEPTH)));
-				
-				Minimax mm = new Minimax(successor, myId, TREE_DEPTH);
-				
-				try {
-					futures.add(mm.call());
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-				
+				futures.add(ex.submit(new Minimax(successor, myId, TREE_DEPTH)));
+
 				moves.add(ii);
 			}
 
@@ -111,20 +100,22 @@ public class C4_Tiptaco implements Player<ConnectFour> {
 		
 		for (int ii = 0 ; ii < futures.size(); ii++)
 		{
-			//try {
-				if (futures.get(ii)/*.get()*/ > bestScore)
+			try {				
+				if (futures.get(ii).get() > bestScore)
 				{
-					bestScore = futures.get(ii)/*.get()*/;
+					bestScore = futures.get(ii).get();
 					bestSlot = moves.get(ii);
 				}
-			/*} catch (InterruptedException | ExecutionException e) {
+			} catch (InterruptedException | ExecutionException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}*/
+			}
 		}
 		
 		return bestSlot;
 	}
+	
+	
 	
 	class Minimax implements Callable<Integer> {
 
@@ -153,9 +144,12 @@ public class C4_Tiptaco implements Player<ConnectFour> {
 		}
 		
 		private int minimax(Board board, int depth, boolean maximizingPlayer) {
-			if ( depth == 0 || board.terminal)
+			if ( depth == 0 || board.isTerminal())
 			{
-				return evalWinner(board) * (depth + 1);
+				int score = evalWinner(board) * (depth + 1);
+				System.out.println(board.isTerminal() + " " + score);
+				
+				return score;
 			}
 			
 			if (maximizingPlayer)
