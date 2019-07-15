@@ -21,6 +21,7 @@ import strategybots.games.Reversi.ReversiController;
 import strategybots.games.TicTacToe;
 import strategybots.games.TicTacToe.TicTacToeController;;
 
+//...
 public class Main {
     
     private static final int AMAZONS = 1;
