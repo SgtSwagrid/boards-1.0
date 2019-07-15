@@ -1,6 +1,8 @@
 package strategybots.launch;
 
+import strategybots.bots.AlecDotsBot;
 import strategybots.bots.JaredDotsBot;
+import strategybots.bots.ShitBot;
 import strategybots.games.Amazons;
 import strategybots.games.Chess;
 import strategybots.games.Chomp;
@@ -48,7 +50,11 @@ public class Main {
             case CHOMP: new Chomp(new ChompController(), new ChompController()); break;
             case CLOBBER: new Clobber(new ClobberController(), new ClobberController()); break;
             case CONNECTFOUR: new ConnectFour(new ConnectFourController(), new ConnectFourController()); break;
+<<<<<<< HEAD
             case DOTSANDBOXES: new DotsAndBoxes(new DotsController(), new JaredDotsBot()); break;
+=======
+            case DOTSANDBOXES: new DotsAndBoxes(5, 5, new DotsController(), new ShitBot()); break;
+>>>>>>> branch 'master' of https://github.com/SgtSwagrid/strategy-bots.git
             case PENTAGO: new Pentago(new PentagoController(), new PentagoController()); break;
             case REVERSI: new Reversi(new ReversiController(), new ReversiController()); break;
             case TICTACTOE: new TicTacToe(new TicTacToeController(), new TicTacToeController()); break;
