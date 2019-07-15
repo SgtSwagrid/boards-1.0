@@ -1,8 +1,7 @@
 package strategybots.launch;
 
 import strategybots.bots.C4_Dummy;
-import strategybots.bots.C4_MCTS;
-import strategybots.bots.C4_Tiptaco;
+import strategybots.bots.AlecDotsBot;
 import strategybots.games.Amazons;
 import strategybots.games.Chess;
 import strategybots.games.Chomp;
@@ -37,7 +36,7 @@ public class Main {
     private static final int REVERSI = 9;
     private static final int TICTACTOE = 10;
 	
-    private static final int GAME = CONNECTFOUR;
+    private static final int GAME = DOTSANDBOXES;
     
 	public static void main(String[] args) {
 	    
@@ -49,7 +48,7 @@ public class Main {
 	        case CHOMP: new Chomp(new ChompController(), new ChompController()); break;
 	        case CLOBBER: new Clobber(new ClobberController(), new ClobberController()); break;
 	        case CONNECTFOUR: new ConnectFour(new ConnectFourController(), new C4_Dummy()); break;
-            case DOTSANDBOXES: new DotsAndBoxes(new DotsController(), new DotsController()); break;
+            case DOTSANDBOXES: new DotsAndBoxes(new DotsController("Alec"), new AlecDotsBot()); break;
             case PENTAGO: new Pentago(new PentagoController(), new PentagoController()); break;
 	        case REVERSI: new Reversi(new ReversiController(), new ReversiController()); break;
 	        case TICTACTOE: new TicTacToe(new TicTacToeController(), new TicTacToeController()); break;
