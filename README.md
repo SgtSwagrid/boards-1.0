@@ -1,5 +1,5 @@
 # strategy-bots
-This repository is for an ongoing project featuring:
+This repository is an ongoing project featuring:
 1. Java implementations for various abstract strategy board games. (`src/strategybots/games/`)
 2. Bots created to optimally play and win these games. (`src/strategybots/bots/`)
 
