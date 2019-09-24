@@ -3,6 +3,7 @@ package strategybots.games.util;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import strategybots.graphics.Colour;
 import strategybots.graphics.Texture;
@@ -87,6 +88,17 @@ public abstract class TileGame extends Game {
      * @return the height of the game board.
      */
     public int getHeight() { return height; }
+    
+    /**
+     * @param action to perform for each grid position.
+     */
+    public void forEachPosition(BiConsumer<Integer, Integer> action) {
+        for(int x = 0; x < width; x++) {
+            for(int y = 0; y < height; y++) {
+                action.accept(x, y);
+            }
+        }
+    }
     
     /**
      * @return the window in which the game board exists.
