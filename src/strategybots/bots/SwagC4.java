@@ -26,15 +26,18 @@ public class SwagC4 implements Player<ConnectFour> {
     
     private int[] bestMove(int[][] board, int playerId, long time) {
         
-        int score = 0, move = -1, depth = 0;
+        int score = 0, move = -1, depth;
         long start = System.currentTimeMillis();
+        int maxDepth = game.getWidth() * game.getHeight();
         
-        for(; System.currentTimeMillis()-start < time; depth++) {
+        for(depth = 0; depth <= maxDepth; depth++) {
             
             int[] result = evaluate(board, playerId, depth,
                     -Integer.MAX_VALUE, Integer.MAX_VALUE);
             score = result[0];
             move = result[1];
+            
+            if(System.currentTimeMillis()-start > time) break;
         }
         return new int[] {score, move, depth};
     }
@@ -57,7 +60,7 @@ public class SwagC4 implements Player<ConnectFour> {
             
             if(isWin(board, playerId, x, stackSize)) {
                 board[x][stackSize] = 0;
-                return new int[] {depth*1000, x};
+                return new int[] {depth*10000, x};
             }
             
             int moveScore = -evaluate(board, playerId%2+1, depth-1, -b, -a)[0];
