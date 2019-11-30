@@ -1,11 +1,16 @@
 package strategybots.bots;
 
+import java.util.Arrays;
+
 import strategybots.games.ConnectFour;
 import strategybots.games.base.Game.Player;
 
 public class SwagC4 implements Player<ConnectFour> {
     
     private ConnectFour game;
+    private int playerId;
+    private int width, height, target;
+    
     private int turn = 1;
     private long time = 2000;
     
@@ -15,38 +20,35 @@ public class SwagC4 implements Player<ConnectFour> {
     
     @Override
     public void init(ConnectFour game, int playerId) {
+        
         this.game = game;
+        this.playerId = playerId;
+        width = game.getWidth();
+        height = game.getHeight();
+        target = game.getTarget();
     }
 
     @Override
     public void takeTurn(ConnectFour game, int playerId) {
         
         long start = System.currentTimeMillis();
-        
-        int[] move = bestMove(getBoard(), playerId);
+        int[] move = getMove();
         game.placeStone(move[1]);
-        
-        System.out.println("=======================");
-        System.out.println("SwagC4 Statistics:");
-        System.out.println("Player:      " + playerId
-                + " ("+(playerId==1?"Yellow":"Red")+")");
-        System.out.println("Turn:        " + turn++);
-        System.out.println("Expectation: " + move[0]);
-        System.out.println("Column:      " + (move[1]+1));
-        System.out.println("Depth:       " + move[2]);
-        System.out.println("Time:        "
-                + (System.currentTimeMillis() - start) + "ms");
+        printStats(move[0], move[1], move[2], start);
     }
     
-    private int[] bestMove(int[][] board, int playerId) {
+    private int[] getMove() {
         
-        int score = 0, move = -1, depth;
+        int score = 0, move = -1, depth = 1;
+        int maxDepth = width * height;
         long start = System.currentTimeMillis();
-        int maxDepth = game.getWidth() * game.getHeight();
         
-        for(depth = 0; depth < maxDepth; depth++) {
+        int[][] board = getBoard();
+        int[] heights = getHeights();
+        
+        for(; depth < maxDepth; depth++) {
             
-            int[] result = evaluate(board, playerId, depth,
+            int[] result = minimax(board, heights, playerId, depth,
                     -Integer.MAX_VALUE, Integer.MAX_VALUE);
             score = result[0];
             move = result[1];
@@ -56,7 +58,8 @@ public class SwagC4 implements Player<ConnectFour> {
         return new int[] {score, move, depth};
     }
     
-    private int[] evaluate(int[][] board, int playerId, int depth, int a, int b) {
+    private int[] minimax(int[][] board, int heights[],
+            int playerId, int depth, int a, int b) {
         
         if(depth == 0) return new int[]
                 {heuristic(board, playerId), -1};
@@ -64,37 +67,33 @@ public class SwagC4 implements Player<ConnectFour> {
         int score = -Integer.MAX_VALUE;
         int move = -1;
         
-        for(int x = 0; x < game.getWidth(); x++) {
+        for(int x = 0; x < width; x++) {
             
-            int stackSize = getStackSize(board, x);
-            
-            if(stackSize >= game.getHeight()) continue;
-            
-            board[x][stackSize] = playerId;
-            
-            if(isWin(board, playerId, x, stackSize)) {
-                board[x][stackSize] = 0;
-                return new int[] {depth*10000, x};
+            if(heights[x] >= height) continue;
+            board[x][heights[x]++] = playerId;
+             
+            if(checkWin(board, playerId, x, heights[x])) {
+                board[x][--heights[x]] = 0;
+                return new int[] {depth*1000, x};
             }
             
-            int moveScore = -evaluate(board, playerId%2+1, depth-1, -b, -a)[0];
+            int s = -minimax(board, heights, playerId%2+1, depth-1, -b, -a)[0];
             
-            board[x][stackSize] = 0;
-            
-            if(moveScore > score) {
-                score = moveScore;
+            if(s > score) {
+                score = s;
                 move = x;
                 a = score;
             }
+            board[x][--heights[x]] = 0;
             if(a > b) break;
         }
         return new int[] {score, move};
     }
     
-    private boolean isWin(int[][] board, int playerId, int x, int y) {
-        
-        int[][] dirs = new int[][] {{1, 0}, {1, 1}, {0, 1}, {-1, 1}};
-        int[] signs = new int[] {-1, 1};
+    private final int[][] dirs = new int[][] {{1, 0}, {1, 1}, {0, 1}, {-1, 1}};
+    private final int[] signs = new int[] {-1, 1};
+    
+    private boolean checkWin(int[][] board, int playerId, int x, int y) {
         
         for(int[] dir : dirs) {
             
@@ -102,20 +101,20 @@ public class SwagC4 implements Player<ConnectFour> {
             
             for(int sign : signs) {
                 
-                for(int i = 1; i < game.getTarget(); i++) {
+                for(int i = 1; i < target; i++) {
                     
                     int xx = x+i*dir[0]*sign;
                     int yy = y+i*dir[1]*sign;
                     
-                    if(xx < 0 || xx >= game.getWidth()) break;
-                    if(yy < 0 || yy >= game.getHeight()) break;
+                    if(xx < 0 || xx >= width) break;
+                    if(yy < 0 || yy >= height) break;
                     
                     if(board[xx][yy] != playerId) break;
                     
                     streak++;
                 }
             }
-            if(streak >= game.getTarget()) return true;
+            if(streak >= target) return true;
         }
         return false;
     }
@@ -126,52 +125,70 @@ public class SwagC4 implements Player<ConnectFour> {
     
     private int h(int[][] board, int playerId) {
         
-        int[][] dirs = new int[][] {{1, 0}, {1, 1}, {0, 1}, {-1, 1}};
-        
         int score = 0;
         
         for(int[] dir : dirs) {
             
-            int x0 = dir[0]>=0 ? 0 : (game.getTarget()-1);
-            int x1 = game.getWidth() - (dir[0]<=0 ? 0 : (game.getTarget()-1));
+            int x0 = dir[0]>=0 ? 0 : (target-1);
+            int x1 = width - (dir[0]<=0 ? 0 : (target-1));
             
-            int y0 = dir[1]>=0 ? 0 : (game.getTarget()-1);
-            int y1 = game.getHeight() - (dir[1]<=0 ? 0 : (game.getTarget()-1));
+            int y0 = dir[1]>=0 ? 0 : (target-1);
+            int y1 = height - (dir[1]<=0 ? 0 : (target-1));
             
             for(int x = x0; x < x1; x++) {
                 y: for(int y = y0; y < y1; y++) {
                     
-                    int streak = 0;
-                    
-                    for(int i = 0; i < game.getTarget(); i++) {
+                    int n = 0;
+                    for(int i = 0; i < target; i++) {
                         int piece = board[x+i*dir[0]][y+i*dir[1]];
-                        if(piece == playerId) streak++;
+                        if(piece == playerId) n++;
                         else if(piece == playerId%2+1) break y;
                     }
-                    score += streak * streak;
+                    score += n * n;
                 }
             }
         }
         return score;
     }
     
-    private int getStackSize(int[][] board, int x) {
-        
-        for(int y = 0; y < game.getHeight(); y++) {
-            if(board[x][y] == 0) return y;
-        }
-        return game.getHeight();
-    }
-    
     private int[][] getBoard() {
         
-        int[][] board = new int[game.getWidth()][game.getHeight()];
-        for(int x = 0; x < game.getWidth(); x++) {
-            for(int y = 0; y < game.getHeight(); y++) {
+        int[][] board = new int[width][height];
+        for(int x = 0; x < width; x++) {
+            for(int y = 0; y < height; y++) {
                 board[x][y] = game.getStone(x, y);
             }
         }
         return board;
+    }
+    
+    private int[] getHeights() {
+        
+        int[] heights = new int[width];
+        for(int x = 0; x < width; x++) {
+            for(int y = 0; y < height; y++) {
+                if(game.getStone(x, y) == 0) {
+                    heights[x] = y;
+                    break;
+                }
+            }
+            heights[x] = height;
+        }
+        return heights;
+    }
+    
+    private void printStats(int score, int move, int depth, long start) {
+        
+        System.out.println("=======================");
+        System.out.println("SwagC4 Statistics:");
+        System.out.println("Player:      " + playerId
+                + " ("+(playerId==1?"Yellow":"Red")+")");
+        System.out.println("Turn:        " + turn++);
+        System.out.println("Expectation: " + score);
+        System.out.println("Column:      " + (move+1));
+        System.out.println("Depth:       " + depth);
+        System.out.println("Time:        "
+                + (System.currentTimeMillis() - start) + "ms");
     }
     
     @Override
