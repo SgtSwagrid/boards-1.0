@@ -15,8 +15,10 @@ public class SwagC4 implements Player<ConnectFour> {
 
     @Override
     public void takeTurn(ConnectFour game, int playerId) {
+        
         int[] move = bestMove(getBoard(), playerId, 2000);
         game.placeStone(move[1]);
+        
         System.out.println("================");
         System.out.println("SwagC4 statistics:");
         System.out.println("Player:      " + playerId
