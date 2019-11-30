@@ -3,8 +3,8 @@ package strategybots.games;
 import java.util.HashSet;
 import java.util.Set;
 
-import strategybots.games.util.TileGame;
-import strategybots.games.util.Board.Pattern;
+import strategybots.games.base.TileGame;
+import strategybots.games.base.Board.Pattern;
 import strategybots.graphics.Colour;
 
 /**

@@ -3,8 +3,8 @@ package strategybots.games;
 import java.util.HashSet;
 import java.util.Set;
 
-import strategybots.games.util.Board.Pattern;
-import strategybots.games.util.TileGame;
+import strategybots.games.base.TileGame;
+import strategybots.games.base.Board.Pattern;
 import strategybots.graphics.Colour;
 
 /**
@@ -131,6 +131,11 @@ public class TicTacToe extends TileGame {
     public int getStone(int x, int y) {
         return getPieceInst(x, y).isPresent() ? getPieceInst(x, y).get().getOwnerId() : 0;
     }
+    
+    /**
+     * @return the number of stones in a row required to win.
+     */
+    public int getTarget() { return target; }
     
     @Override
     protected void init() {

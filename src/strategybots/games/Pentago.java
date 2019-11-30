@@ -2,7 +2,7 @@ package strategybots.games;
 
 import strategybots.event.Event;
 import strategybots.event.Event.EventHandler;
-import strategybots.games.util.Board.Pattern;
+import strategybots.games.base.Board.Pattern;
 import strategybots.graphics.Button;
 import strategybots.graphics.Colour;
 import strategybots.graphics.Texture;

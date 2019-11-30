@@ -2,8 +2,8 @@ package strategybots.games;
 
 import java.util.Optional;
 
-import strategybots.games.util.TileGame;
-import strategybots.games.util.Board.Pattern;
+import strategybots.games.base.TileGame;
+import strategybots.games.base.Board.Pattern;
 import strategybots.graphics.Colour;
 
 /**

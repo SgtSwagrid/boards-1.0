@@ -2,7 +2,7 @@ package strategybots.games;
 
 import java.util.Optional;
 
-import strategybots.games.util.TileGame;
+import strategybots.games.base.TileGame;
 
 /**
  * <b>Game of the Amazons implementation.</b><br>

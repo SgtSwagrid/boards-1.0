@@ -1,6 +1,6 @@
 package strategybots.games;
 
-import strategybots.games.util.Board.Pattern;
+import strategybots.games.base.Board.Pattern;
 import strategybots.graphics.Colour;
 
 /**

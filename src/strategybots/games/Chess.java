@@ -2,16 +2,7 @@ package strategybots.games;
 
 import java.util.Optional;
 
-//IN PROGRESS
-
-//TODO:
-// * Check and win detection.
-// * Prevent castling out of/through/into check.
-// * Prevent en passant captures after a turn has passed.
-// * Pawn promotions.
-// * Commenting.
-
-import strategybots.games.util.TileGame;
+import strategybots.games.base.TileGame;
 
 /**
  * <b>Chess implementation.</b><br>

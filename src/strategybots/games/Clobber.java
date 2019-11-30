@@ -1,6 +1,6 @@
 package strategybots.games;
 
-import strategybots.games.util.TileGame;
+import strategybots.games.base.TileGame;
 
 /**
  * <b>Clobber implementation.</b><br>
