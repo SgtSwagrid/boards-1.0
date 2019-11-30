@@ -163,11 +163,11 @@ public class SwagC4 implements Player<ConnectFour> {
     private int[] getHeights() {
         
         int[] heights = new int[width];
-        for(int x = 0; x < width; x++) {
+        x: for(int x = 0; x < width; x++) {
             for(int y = 0; y < height; y++) {
                 if(game.getStone(x, y) == 0) {
                     heights[x] = y;
-                    break;
+                    continue x;
                 }
             }
             heights[x] = height;
