@@ -6,7 +6,7 @@ import strategybots.games.base.Game.Player;
 public class SwagC4 implements Player<ConnectFour> {
     
     private ConnectFour game;
-    private int turn = 0;
+    private int turn = 1;
     
     @Override
     public void init(ConnectFour game, int playerId) {
@@ -18,7 +18,10 @@ public class SwagC4 implements Player<ConnectFour> {
         int[] move = bestMove(getBoard(), playerId, 2000);
         game.placeStone(move[1]);
         System.out.println("================");
-        System.out.println("SwagC4 Turn " + ++turn + " Statistics:");
+        System.out.println("SwagC4 statistics:");
+        System.out.println("Player:      " + playerId
+                + " ("+(playerId==1?"Yellow":"Red")+")");
+        System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + move[0]);
         System.out.println("Column:      " + move[1]);
         System.out.println("Depth:       " + move[2]);
