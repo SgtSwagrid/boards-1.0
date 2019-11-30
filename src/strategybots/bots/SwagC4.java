@@ -1,7 +1,5 @@
 package strategybots.bots;
 
-import java.util.Arrays;
-
 import strategybots.games.ConnectFour;
 import strategybots.games.base.Game.Player;
 
