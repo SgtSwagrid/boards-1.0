@@ -30,7 +30,7 @@ public class SwagC4 implements Player<ConnectFour> {
         long start = System.currentTimeMillis();
         int maxDepth = game.getWidth() * game.getHeight();
         
-        for(depth = 0; depth <= maxDepth; depth++) {
+        for(depth = 0; depth < maxDepth; depth++) {
             
             int[] result = evaluate(board, playerId, depth,
                     -Integer.MAX_VALUE, Integer.MAX_VALUE);
