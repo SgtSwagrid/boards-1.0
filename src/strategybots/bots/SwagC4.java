@@ -7,6 +7,11 @@ public class SwagC4 implements Player<ConnectFour> {
     
     private ConnectFour game;
     private int turn = 1;
+    private long time = 2000;
+    
+    public SwagC4() {}
+    
+    public SwagC4(long time) { this.time = time; }
     
     @Override
     public void init(ConnectFour game, int playerId) {
@@ -16,7 +21,9 @@ public class SwagC4 implements Player<ConnectFour> {
     @Override
     public void takeTurn(ConnectFour game, int playerId) {
         
-        int[] move = bestMove(getBoard(), playerId, 2000);
+        long start = System.currentTimeMillis();
+        
+        int[] move = bestMove(getBoard(), playerId);
         game.placeStone(move[1]);
         
         System.out.println("================");
@@ -25,11 +32,13 @@ public class SwagC4 implements Player<ConnectFour> {
                 + " ("+(playerId==1?"Yellow":"Red")+")");
         System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + move[0]);
-        System.out.println("Column:      " + move[1]);
+        System.out.println("Column:      " + move[1]+1);
         System.out.println("Depth:       " + move[2]);
+        System.out.println("Time:        "
+                + (System.currentTimeMillis() - start) + "ms");
     }
     
-    private int[] bestMove(int[][] board, int playerId, long time) {
+    private int[] bestMove(int[][] board, int playerId) {
         
         int score = 0, move = -1, depth;
         long start = System.currentTimeMillis();
