@@ -7,7 +7,7 @@ import java.util.Random;
 import strategybots.games.ConnectFour;
 import strategybots.games.base.Game.Player;
 
-public class TipMCTS implements Player<ConnectFour> {
+public class TipMNK implements Player<ConnectFour> {
     
     private ConnectFour game;
     private long time = 2000;
@@ -20,9 +20,9 @@ public class TipMCTS implements Player<ConnectFour> {
     
     private Node root = null;
     
-    public TipMCTS() {}
+    public TipMNK() {}
     
-    public TipMCTS(long time) { this.time = time; }
+    public TipMNK(long time) { this.time = time; }
         
     @Override
     public void init(ConnectFour game, int playerId) {
