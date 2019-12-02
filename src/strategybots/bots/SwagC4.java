@@ -62,7 +62,7 @@ public class SwagC4 implements Player<ConnectFour> {
         if(depth == 0) return new int[]
                 {heuristic(board, playerId), -1};
         
-        int score = -Integer.MAX_VALUE;
+        int score = 0;
         int move = -1;
         
         for(int x = 0; x < width; x++) {
@@ -70,20 +70,20 @@ public class SwagC4 implements Player<ConnectFour> {
             if(heights[x] >= height) continue;
             board[x][heights[x]++] = playerId;
              
-            if(checkWin(board, playerId, x, heights[x])) {
+            if(checkWin(board, playerId, x, heights[x]-1)) {
                 board[x][--heights[x]] = 0;
                 return new int[] {depth*1000, x};
             }
             
             int s = -minimax(board, heights, playerId%2+1, depth-1, -b, -a)[0];
             
-            if(s > score) {
+            if(s > score || move == -1) {
                 score = s;
                 move = x;
-                a = score;
+                a = score>a ? score:a;
             }
             board[x][--heights[x]] = 0;
-            if(a > b) break;
+            if(a >= b) break;
         }
         return new int[] {score, move};
     }
