@@ -5,16 +5,18 @@ import java.util.Optional;
 import java.util.Random;
 
 import strategybots.games.ConnectFour;
+import strategybots.games.TicTacToe;
 import strategybots.games.base.Game.Player;
 
-public class TipMNK implements Player<ConnectFour> {
+public class TipMNK implements Player<TicTacToe> {
     
-    private ConnectFour game;
+    private TicTacToe game;
     private long time = 2000;
     private int turn = 1;
     
     private static int b = 7; // Branching
     private static float learningRate = 1.41f;  // Learning rate
+    private static int bottomIterations = Runtime.getRuntime().availableProcessors();
     private static int globalSims = 0;
     private static Random rand = new Random();
     
@@ -25,21 +27,21 @@ public class TipMNK implements Player<ConnectFour> {
     public TipMNK(long time) { this.time = time; }
         
     @Override
-    public void init(ConnectFour game, int playerId) {
+    public void init(TicTacToe game, int playerId) {
         this.game = game;
-        b = game.getWidth();
+        b = game.getWidth() * game.getHeight();
     }
 
     @Override
-    public void takeTurn(ConnectFour game, int playerId) {
+    public void takeTurn(TicTacToe game, int playerId) {
         
         long start = System.currentTimeMillis();
         
-        int move = bestMove(getBoard(), playerId);
+        Vec2 move = bestMove(getBoard(), playerId);
         
-        root = root.getChildren()[move];
+        root = root.getChildFromMove(move);
         
-        game.placeStone(move);
+        game.placeStone(move.x, move.y);
         
         System.out.println("=======================");
         System.out.println("TipMCTS Statistics:");
@@ -47,14 +49,14 @@ public class TipMNK implements Player<ConnectFour> {
                 + " ("+(playerId==1?"Yellow":"Red")+")");
         System.out.println("Turn:        " + turn++);
         //System.out.println("Expectation: " + move[0]);
-        System.out.println("Column:      " + (move+1));
+        System.out.println("Move:        [" + move.x + ", " + move.y + "]");
         //System.out.println("Depth:       " + move[2]);
         System.out.println("Global Sims: " + globalSims);
         System.out.println("Time:        "
                 + (System.currentTimeMillis() - start) + "ms");
     }
     
-    private int bestMove(int[][] board, int playerId) {
+    private Vec2 bestMove(int[][] board, int playerId) {
         
         long start = System.currentTimeMillis();
         
@@ -67,7 +69,6 @@ public class TipMNK implements Player<ConnectFour> {
         	rebaseTree(root, board);
         	globalSims = root.sims;
         	System.out.println(root);
-
         }
         
        
@@ -88,32 +89,33 @@ public class TipMNK implements Player<ConnectFour> {
         	
         }
         
-        int move = Math.round(bestChild(root)[0]);
+        Node bestChild = bestChild(root);
+        Vec2 move = new Vec2(bestChild.x, bestChild.y);
         
         return move;
     }
     
     // Get the bets child based on Wins / Sims
-    private float[] bestChild(Node root) {
+    private Node bestChild(Node root) {
     	
-    	int maxChildId = 0; 
+    	Node maxChild = null; 
     	float maxChildValue = -1.f;
     	int player = 3-root.player;
     	
-    	for (int ii = 0 ; ii < b ; ii++) {
-    		if (root.getChildren()[ii] != null) { 
-    			float myWins = root.getChildren()[ii].wins[player] + 0.0001f;
-    			float mySims = root.getChildren()[ii].sims + 0.0001f;
-    			float finalScore = (float)myWins / (float)mySims;
-    			
-    			if (finalScore > maxChildValue) {
-    				maxChildId = ii;
-    				maxChildValue = finalScore;
-    			}
-    		}
+    	for (Node child : root.getChildren()) {
+    		
+    		float myWins = child.wins[player] + 0.0001f;
+			float mySims = child.sims + 0.0001f;
+			float finalScore = (float)myWins / (float)mySims;
+			
+			if (finalScore > maxChildValue) {
+				maxChild = child;
+				maxChildValue = finalScore;
+			}
+
     	}
     	
-    	return new float[] {maxChildId, maxChildValue};
+    	return maxChild;
     }
     
     private void rebaseTree(Node root, int[][] newBoard) {
@@ -184,14 +186,6 @@ public class TipMNK implements Player<ConnectFour> {
         return false;
     }
     
-    private int getStackSize(int[][] board, int x) {
-        
-        for(int y = 0; y < game.getHeight(); y++) {
-            if(board[x][y] == 0) return y;
-        }
-        return game.getHeight();
-    }
-    
     private int[][] getBoard() {
         
         int[][] board = new int[game.getWidth()][game.getHeight()];
@@ -218,25 +212,26 @@ public class TipMNK implements Player<ConnectFour> {
     	
     }
     
-	private int getRandomMove(int[][] board) {
+	private Vec2 getRandomMove(int[][] board) {
 		
-		ArrayList<Integer> moves = getValidMoves(board);
+		ArrayList<Vec2> moves = getValidMoves(board);
 		
 		int index = rand.nextInt(moves.size());
 		return moves.get(index);
 		
 	}
 	
-	private ArrayList<Integer> getValidMoves(int[][] board) {
+	private ArrayList<Vec2> getValidMoves(int[][] board) {
 		
-		ArrayList<Integer> moves = new ArrayList<Integer>();
+		ArrayList<Vec2> moves = new ArrayList<Vec2>();
 		
-		for (int ii = 0 ; ii < b; ii++) {
-			if (board[ii][game.getHeight() - 1] == 0) {
-				moves.add(ii);
+		for (int xx = 0 ; xx < game.getWidth(); xx++) {
+			for (int yy = 0; yy < game.getHeight(); yy++) {
+				if (board[xx][yy] == 0) {
+					moves.add(new Vec2(xx, yy));
+				}
 			}
 		}
-		
 		return moves;
 		
 	}
@@ -270,6 +265,8 @@ public class TipMNK implements Player<ConnectFour> {
 	    		// Generate children of node
 	    		randChild.populateChildren();
 	    		
+	    		randChild.visited = true;
+	    		
 	    		randChild.sims += newWins[3];
 	    		randChild.updateWins(newWins);
 	    		
@@ -286,8 +283,7 @@ public class TipMNK implements Player<ConnectFour> {
     		
     	} else { // No unexpored, pick by value
     		Node selected = selectNode(subroot);
-    		//System.out.println("Recursing depth " + depth);
-    		newWins = MCTS_rec(selected, depth + 1);
+      		newWins = MCTS_rec(selected, depth + 1);
     	}
     	
     	subroot.sims += newWins[3];
@@ -302,7 +298,7 @@ public class TipMNK implements Player<ConnectFour> {
     	Integer result = 0;
     	
     	int playerMove = tempNode.player;
-    	int xMove = 0, yMove = 0;
+    	Vec2 move = new Vec2();
     	// Check if the opposition has just placed a winning piece and the board is not Full
     	boolean isTerminal = isWin(tempNode.getBoard(), playerMove, tempNode.x, tempNode.y);
     	boolean isFull = isFull(tempNode.getBoard());
@@ -312,14 +308,12 @@ public class TipMNK implements Player<ConnectFour> {
     		
     		// Starting at the base child node, select a move and update the playerID and last position as well as board
     		// Get column move, randomly
-    		xMove = getRandomMove(tempNode.getBoard());
-    		// get Y of col
-    		yMove = getStackSize(tempNode.getBoard(), xMove);
+    		move = getRandomMove(tempNode.getBoard());
     		// do move and swap PlayerID
     		playerMove = 3 - tempNode.player;
-    		playMove(tempNode.getBoard(), playerMove, xMove, yMove);
-    		tempNode.x = xMove;
-    		tempNode.y = yMove;
+    		playMove(tempNode.getBoard(), playerMove, move.x, move.y);
+    		tempNode.x = move.x;
+    		tempNode.y = move.y;
     		tempNode.player = playerMove;
 
     		// Update the terminal condition
@@ -337,7 +331,7 @@ public class TipMNK implements Player<ConnectFour> {
     public int[] rollout(Node child) {
     	
     	// TODO add multiple rollouts
-    	ArrayList<Integer> moves = getValidMoves(child.getBoard());
+    	ArrayList<Vec2> moves = getValidMoves(child.getBoard());
     	
     	int[] results = new int[] {0, 0, 0, 0};
     	
@@ -345,19 +339,21 @@ public class TipMNK implements Player<ConnectFour> {
     	
     	// new code
     	ArrayList<Node> childTemps = new ArrayList<Node>();
-    	for (Integer move : moves) {
-    		Node tempChild = new Node(child.getBoard(), child.player, child.x, child.y);
+    	
+    	for (int ii = 0 ; ii < Math.min(moves.size(), bottomIterations); ii++) {
     		
-	    	int xMove = (int)move;
-    		int yMove = getStackSize(tempChild.getBoard(), xMove);
+    		Node tempChild = new Node(child.getBoard(), child.player, child.x, child.y);
+    		Vec2 move = moves.remove(rand.nextInt(moves.size()));
+    		
     		// do move and swap PlayerID
     		int playerMove = 3 - tempChild.player;
-    		tempChild.board = playMove(tempChild.board, playerMove, xMove, yMove);
-    		tempChild.x = xMove;
-    		tempChild.y = yMove;
+    		tempChild.board = playMove(tempChild.board, playerMove, move.x, move.y);
+    		tempChild.x = move.x;
+    		tempChild.y = move.y;
     		tempChild.player = playerMove;
     		
     		childTemps.add(tempChild);
+    		
     	}
     	
     	Integer result = childTemps
@@ -379,29 +375,40 @@ public class TipMNK implements Player<ConnectFour> {
     // Select the best node from the subroot's list of children
     private Node selectNode(Node subroot) {
     	
-    	int maxChild = 0; 
+    	Node maxChild = null; 
     	float maxChildValue = 0.0f;
     	
-    	for (int ii = 0 ; ii < b ; ii++) {
-    		if (subroot.getChildren()[ii] != null) { 
-    			if (subroot.getChildren()[ii].score() > maxChildValue) {
-    				maxChild = ii;
-    				maxChildValue = subroot.getChildren()[ii].score();
-    			}
-    		}
+    	for (Node child : subroot.getChildren()) {
+			if (child.score() > maxChildValue) {
+				maxChild = child;
+				maxChildValue = child.score();
+			}
     	}
-    	
-    	return subroot.getChildren()[maxChild];
+
+    	return maxChild;
     }
     
     @Override
     public String getName() { return "TipTacos's MCTS"; }
     
+    class Vec2 {
+    	
+    	int x = 0, y = 0;
+    	
+    	public Vec2() {}
+    	
+    	public Vec2 (int x, int y) {
+    		this.x = x;
+    		this.y = y;
+    	}
+    }
+    
     // NODE CLASS
 	class Node {
 		
 		private Node parent;
-		private Node[] children = new Node[b];
+		private ArrayList<Node> children = new ArrayList<Node>();
+		private boolean visited = false;
 		private int[][] board;
 		private int x, y;
 		private int wins[] = new int[3], sims;
@@ -456,16 +463,16 @@ public class TipMNK implements Player<ConnectFour> {
 		}
 		
 		// Get the integer for index of each of the non-null children
-		private ArrayList<Integer> getUnexploredChildren() {
+		private ArrayList<Node> getUnexploredChildren() {
 			
-			ArrayList<Integer> unexplored = new ArrayList<Integer>();
+			ArrayList<Node> unexplored = new ArrayList<Node>();
 						
-			for (int ii = 0 ; ii < b; ii++) {
-				if (children[ii] != null) {
-					if (children[ii].sims == 0) {
-						unexplored.add(ii);
-					}
+			for (Node child : children) {
+				
+				if (!child.visited) { 
+					unexplored.add(child);
 				}
+
 			}
 			
 			return unexplored;
@@ -475,19 +482,19 @@ public class TipMNK implements Player<ConnectFour> {
 		// Populate children
 		public void populateChildren() {
 			
-			ArrayList<Integer> validMoves = getValidMoves(board);
+			ArrayList<Vec2> validMoves = getValidMoves(board);
 			
-			for (Integer xMove : validMoves) {
-				int yMove = getStackSize(board, xMove);
-				children[xMove] = new Node(this, board, 3-player, xMove, yMove);
+			for (Vec2 move : validMoves) {
+				Node newChild = new Node(this, board, 3-player, move.x, move.y);
+				playMove(newChild.getBoard(), 3-player, move.x, move.y);
 				
-				playMove(children[xMove].getBoard(), 3-player, xMove, yMove);
+				boolean full = isFull(newChild.getBoard());
+				boolean win = isWin(newChild.getBoard(), 3-player, move.x, move.y);
 				
-				boolean full = isFull(children[xMove].getBoard());
-				boolean win = isWin(children[xMove].getBoard(), 3-player, xMove, yMove);
+				newChild.terminal = full ? 0 : -1;
+				newChild.terminal = win ? 3-player : newChild.terminal;
 				
-				children[xMove].terminal = full ? 0 : -1;
-				children[xMove].terminal = win ? 3-player : children[xMove].terminal;
+				children.add(newChild);
 			}
 			
 		}
@@ -495,14 +502,26 @@ public class TipMNK implements Player<ConnectFour> {
 		// Return a random child that has been unexpored
 		public Node getRandomChild() {
 			
-			ArrayList<Integer> unexplored = getUnexploredChildren();
+			ArrayList<Node> unexplored = getUnexploredChildren();
 			int index = rand.nextInt(unexplored.size());
 			
-			return children[(int)unexplored.get(index)];
+			return unexplored.get(index);
 			
 		}
 		
-		public Node[] getChildren() {
+		public Node getChildFromMove(Vec2 move) {
+			
+			for (Node child : children) {
+				
+				if (child.x == move.x && child.y == move.y) {
+					return child;
+				}
+
+			}
+			return null;
+		}
+		
+		public ArrayList<Node> getChildren() {
 			
 			return children;
 			
