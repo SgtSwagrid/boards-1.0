@@ -1,5 +1,7 @@
 package strategybots.bots;
 
+import static java.lang.Math.*;
+
 import strategybots.games.ConnectFour;
 import strategybots.games.base.Game.Player;
 
@@ -44,9 +46,11 @@ public class SwagC4 implements Player<ConnectFour> {
         int[][] board = getBoard();
         int[] heights = getHeights();
         
+        int heuristic = heuristicGlobal(board, playerId);
+        
         for(; depth < maxDepth; depth++) {
             
-            int[] result = minimax(board, heights, playerId, depth,
+            int[] result = minimax(board, heights, playerId, depth, heuristic,
                     -Integer.MAX_VALUE, Integer.MAX_VALUE);
             score = result[0];
             move = result[1];
@@ -56,14 +60,10 @@ public class SwagC4 implements Player<ConnectFour> {
         return new int[] {score, move, depth};
     }
     
-    private int[] minimax(int[][] board, int heights[],
-            int playerId, int depth, int a, int b) {
+    private int[] minimax(int[][] board, int heights[], int playerId,
+            int depth, int heuristic, int a, int b) {
         
-        if(depth == 0) return new int[]
-                {heuristic(board, playerId), -1};
-        
-        int score = 0;
-        int move = -1;
+        int score = 0, move = -1;
         
         for(int x = 0; x < width; x++) {
             
@@ -75,7 +75,9 @@ public class SwagC4 implements Player<ConnectFour> {
                 return new int[] {depth*1000, x};
             }
             
-            int s = -minimax(board, heights, playerId%2+1, depth-1, -b, -a)[0];
+            int h = heuristic + heuristicDelta(board, playerId, x, heights[x]-1);
+            int s = depth<=1 ? h :
+                -minimax(board, heights, playerId%2+1, depth-1, -h, -b, -a)[0];
             
             if(s > score || move == -1) {
                 score = s;
@@ -117,36 +119,79 @@ public class SwagC4 implements Player<ConnectFour> {
         return false;
     }
     
-    private int heuristic(int[][] board, int playerId) {
-        return h(board, playerId) - h(board, playerId%2+1);
+    private int heuristicGlobal(int[][] board, int playerId) {
+        
+        int score = 0;
+        int[][] newBoard = new int[width][height];
+        
+        for(int x = 0; x < width; x++) {
+            for(int y = 0; y < height && board[x][y] != 0; y++) {
+                newBoard[x][y] = board[x][y];
+                int sign = board[x][y] == playerId ? 1 : -1;
+                score += sign * heuristicDelta(newBoard, board[x][y], x, y);
+            }
+        }
+        return score;
     }
     
-    private int h(int[][] board, int playerId) {
+    private int heuristicDelta(int[][] board, int playerId, int x, int y) {
         
         int score = 0;
         
         for(int[] dir : dirs) {
             
-            int x0 = dir[0]>=0 ? 0 : (target-1);
-            int x1 = width - (dir[0]<=0 ? 0 : (target-1));
+            int[] v0 = raycast(width, height, x, y, -dir[0], -dir[1], target-1);
+            int[] v1 = raycast(width, height, x, y, dir[0], dir[1], target-1);
+            int len = max(abs(v1[0]-v0[0]), abs(v1[1]-v0[1])) + 1;
             
-            int y0 = dir[1]>=0 ? 0 : (target-1);
-            int y1 = height - (dir[1]<=0 ? 0 : (target-1));
+            int myPieces = 0, otherPieces = 0;
             
-            for(int x = x0; x < x1; x++) {
-                y: for(int y = y0; y < y1; y++) {
+            for(int i = 0; i < len; i++) {
+                
+                int xx = v0[0] + dir[0]*i;
+                int yy = v0[1] + dir[1]*i;
+                
+                if(board[xx][yy] == playerId) myPieces++;
+                else if(board[xx][yy] != 0) otherPieces++;
+                
+                if (i >= target) {
                     
-                    int n = 0;
-                    for(int i = 0; i < target; i++) {
-                        int piece = board[x+i*dir[0]][y+i*dir[1]];
-                        if(piece == playerId) n++;
-                        else if(piece == playerId%2+1) break y;
-                    }
-                    score += n * n;
+                    int xx_end = xx - dir[0]*target;
+                    int yy_end = yy - dir[1]*target;
+                    
+                    if(board[xx_end][yy_end] == playerId) myPieces--;
+                    else if(board[xx_end][yy_end] != 0) otherPieces--;
+                }
+                
+                if(i >= target-1) {
+                    
+                    if(myPieces == 1)
+                        score += otherPieces*otherPieces;
+                    if(otherPieces == 0)
+                        score += 2*myPieces-1;
                 }
             }
         }
         return score;
+    }
+    
+    private static int[] raycast(int w, int h, int x, int y, int dx, int dy, int l) {
+        
+        int xLen = dx > 0 ? (w-x-1) : (
+                   dx < 0 ? x : (
+                   w>h?w:h));
+        
+        int yLen = dy > 0 ? (h-y-1) : (
+                   dy < 0 ? y : (
+                   w>h?w:h));
+        
+        int len = xLen < yLen ? xLen : yLen;
+        len = l < len ? l : len;
+         
+        return new int[] {
+            x + dx*len,
+            y + dy*len
+        };
     }
     
     private int[][] getBoard() {
