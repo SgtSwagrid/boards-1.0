@@ -1,4 +1,4 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -11,8 +11,8 @@ import java.util.Set;
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Orien;
 import strategybots.games.DotsAndBoxes.Side;
-import strategybots.games.util.Game.Player;
-import strategybots.graphics.Tile;
+import strategybots.games.base.Game.Player;
+import strategybots.games.graphics.Tile;
 
 
 public class AlecDotsBot implements Player<DotsAndBoxes> {
@@ -209,6 +209,7 @@ public class AlecDotsBot implements Player<DotsAndBoxes> {
         }
         
         //for(int x = 0)
+        return null;
     }
     
     @Override

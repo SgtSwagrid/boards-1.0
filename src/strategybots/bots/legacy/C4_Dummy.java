@@ -1,9 +1,9 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import java.util.Random;
 
 import strategybots.games.ConnectFour;
-import strategybots.games.util.Game.Player;
+import strategybots.games.base.Game.Player;
 
 public class C4_Dummy implements Player<ConnectFour> {
     

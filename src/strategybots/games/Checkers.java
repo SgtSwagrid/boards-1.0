@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import strategybots.games.base.TileGame;
 import strategybots.games.base.Board.Pattern;
-import strategybots.graphics.Colour;
+import strategybots.games.graphics.Colour;
 
 /**
  * <b>Checkers implementation.</b><br>

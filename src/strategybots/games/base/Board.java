@@ -8,12 +8,12 @@ import java.util.function.BiConsumer;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 
-import strategybots.event.Event;
-import strategybots.graphics.Button;
-import strategybots.graphics.Colour;
-import strategybots.graphics.Tile;
-import strategybots.graphics.Window;
-import strategybots.graphics.Window.WindowResizeEvent;
+import strategybots.games.event.Event;
+import strategybots.games.graphics.Button;
+import strategybots.games.graphics.Colour;
+import strategybots.games.graphics.Tile;
+import strategybots.games.graphics.Window;
+import strategybots.games.graphics.Window.WindowResizeEvent;
 
 /**
  * Chessboard implementation for use in games which require

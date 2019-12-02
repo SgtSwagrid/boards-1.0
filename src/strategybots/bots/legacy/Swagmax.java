@@ -1,4 +1,4 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import java.util.HashSet;
 import java.util.Iterator;

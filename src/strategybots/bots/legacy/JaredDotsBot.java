@@ -1,9 +1,9 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Orien;
 import strategybots.games.DotsAndBoxes.Side;
-import strategybots.games.util.Game.Player;
+import strategybots.games.base.Game.Player;
 
 
 public class JaredDotsBot implements Player<DotsAndBoxes> {

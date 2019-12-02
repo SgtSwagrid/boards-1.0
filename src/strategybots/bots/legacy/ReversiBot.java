@@ -1,4 +1,4 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 public class ReversiBot {
 

@@ -1,4 +1,4 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,9 +14,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import dk.brics.automaton.MinimizationOperations;
-import strategybots.bots.visual.VisualC4;
-import strategybots.bots.zobrist.Zobrist;
+//import dk.brics.automaton.MinimizationOperations;
+import strategybots.bots.legacy.zobrist.Zobrist;
+//import strategybots.bots.visual.VisualC4;
 import strategybots.games.legacy.HyperMNK;
 import strategybots.games.legacy.HyperMNK.HyperMNKPlayer;
 
@@ -41,7 +41,7 @@ public class C4_MINIMAX implements HyperMNKPlayer, Serializable {
 	
 	private int type = 0, timeLimit = 2000;
 	
-	private VisualC4 vis, vis2;
+	//private VisualC4 vis, vis2;
 	
 	private class Vec2 {
 		public int x, y;
@@ -128,7 +128,7 @@ public class C4_MINIMAX implements HyperMNKPlayer, Serializable {
 			
 			for (Vec2 move : getActions(state))
 			{
-				int eval = minimax(getResult(state, move), depth - 1, alpha, beta, false, vis);
+				int eval = 0;//minimax(getResult(state, move), depth - 1, alpha, beta, false, vis);
 				
 				System.out.println("Move " + depth + ": " + eval);
 				
@@ -137,7 +137,7 @@ public class C4_MINIMAX implements HyperMNKPlayer, Serializable {
 					maxEval = eval;
 					bestMove = move;
 					
-					vis2.refresh(getResult(state, bestMove).getGameState());
+					//vis2.refresh(getResult(state, bestMove).getGameState());
 					
 					try {
 						Thread.sleep(100);
@@ -162,7 +162,7 @@ public class C4_MINIMAX implements HyperMNKPlayer, Serializable {
 		return bestMove;
 	}
 	
-	private int minimax(GameState state, int depth, int alpha, int beta, boolean maximizingPlayer, VisualC4 vis)
+	private int minimax(GameState state, int depth, int alpha, int beta, boolean maximizingPlayer/*, VisualC4 vis*/)
 	{
 		
 		/*try {
@@ -186,7 +186,7 @@ public class C4_MINIMAX implements HyperMNKPlayer, Serializable {
 			
 			for (Vec2 move : getActions(state))
 			{
-				int eval = minimax(getResult(state, move), depth - 1, alpha, beta, false, vis);
+				int eval = 0;//minimax(getResult(state, move), depth - 1, alpha, beta, false, vis);
 				
 				maxEval = Math.max(maxEval, eval);
 				alpha = Math.max(alpha, eval);
@@ -205,7 +205,7 @@ public class C4_MINIMAX implements HyperMNKPlayer, Serializable {
 			
 			for (Vec2 move : getActions(state))
 			{
-				int eval = minimax(getResult(state, move), depth - 1, alpha, beta, true, vis);
+				int eval = 0;//minimax(getResult(state, move), depth - 1, alpha, beta, true, vis);
 				
 				minEval = Math.min(minEval, eval);
 				beta = Math.min(beta, eval);
@@ -831,8 +831,8 @@ public class C4_MINIMAX implements HyperMNKPlayer, Serializable {
 			System.out.println("zorbist laoded with " + zobrist.size() + " entries.");
 		}
 		
-		vis = new VisualC4(gs.getGameState());
-		vis2 = new VisualC4(gs.getGameState());
+		//vis = new VisualC4(gs.getGameState());
+		//vis2 = new VisualC4(gs.getGameState());
 	}
 	
 	public Zobrist loadZobrist(String path)
@@ -931,7 +931,7 @@ public class C4_MINIMAX implements HyperMNKPlayer, Serializable {
 		
 		public int getScore()
 		{
-			return data.score;
+			return 0;//data.score;
 		}
 		
 		public void addScore(int score)

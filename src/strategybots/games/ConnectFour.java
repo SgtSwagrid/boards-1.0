@@ -1,7 +1,7 @@
 package strategybots.games;
 
 import strategybots.games.base.Board.Pattern;
-import strategybots.graphics.Colour;
+import strategybots.games.graphics.Colour;
 
 /**
  * <b>Connect Four implementation.</b><br>

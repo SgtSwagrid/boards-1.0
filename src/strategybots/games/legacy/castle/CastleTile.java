@@ -8,11 +8,11 @@ import java.util.Map.Entry;
 
 import org.lwjgl.util.vector.Vector2f;
 
-import strategybots.games.castle.Castle.CastlePlayer;
-import strategybots.games.castle.render.Button;
-import strategybots.games.castle.render.Texture;
+//import strategybots.games.castle.Castle.CastlePlayer;
+//import strategybots.games.castle.render.Button;
+//import strategybots.games.castle.render.Texture;
 
-public class CastleTile extends Button {
+public class CastleTile /*extends Button*/ {
 	
 	public static final int TILE_SIZE = 150;
 	
@@ -22,12 +22,12 @@ public class CastleTile extends Button {
 	
 	private int x, y;
 	
-	private Map<CastlePlayer, List<Troop>> troops = new LinkedHashMap<>();
+	//private Map<CastlePlayer, List<Troop>> troops = new LinkedHashMap<>();
 	
 	{
-		size = new Vector2f(TILE_SIZE, TILE_SIZE);
-		depth = RENDER_DEPTH;
-		texture = Texture.getTexture("res/texture/castle_tile.png");
+		//size = new Vector2f(TILE_SIZE, TILE_SIZE);
+		//depth = RENDER_DEPTH;
+		//texture = Texture.getTexture("res/texture/castle_tile.png");
 		
 		
 	}
@@ -39,8 +39,8 @@ public class CastleTile extends Button {
 	
 	public void setPosition(int x, int y) {
 		this.x = x; this.y = y;
-		position.x = (2 * x - castle.getBoardSize() + 1) * TILE_SIZE / 2;
-		position.y = (2 * y - castle.getBoardSize() + 1) * TILE_SIZE / 2;
+		//position.x = (2 * x - castle.getBoardSize() + 1) * TILE_SIZE / 2;
+		//position.y = (2 * y - castle.getBoardSize() + 1) * TILE_SIZE / 2;
 	}
 	
 	public Castle getCastle() { return castle; }
@@ -51,26 +51,26 @@ public class CastleTile extends Button {
 	
 	public void addTroop(Troop troop) {
 		
-		if(!troops.containsKey(troop.getOwner()))
-			troops.put(troop.getOwner(), new LinkedList<>());
+		//if(!troops.containsKey(troop.getOwner()))
+			//troops.put(troop.getOwner(), new LinkedList<>());
 		
-		troops.get(troop.getOwner()).add(troop);
+		//troops.get(troop.getOwner()).add(troop);
 		updateTroopOrder();
 	}
 	
 	public void removeTroop(Troop troop) {
-		if(troops.containsKey(troop.getOwner())) {
-			troops.get(troop.getOwner()).remove(troop);
+		//if(troops.containsKey(troop.getOwner())) {
+			//troops.get(troop.getOwner()).remove(troop);
 			updateTroopOrder();
-		}
+		//}
 	}
 	
 	private void updateTroopOrder() {
 		int id = 0;
-		for(Entry<CastlePlayer, List<Troop>> entry : troops.entrySet()) {
-			for(Troop troop : entry.getValue()) {
-				troop.updateOrdering(id++);
-			}
-		}
+		//for(Entry<CastlePlayer, List<Troop>> entry : troops.entrySet()) {
+			//for(Troop troop : entry.getValue()) {
+				//troop.updateOrdering(id++);
+			//}
+		//}
 	}
 }

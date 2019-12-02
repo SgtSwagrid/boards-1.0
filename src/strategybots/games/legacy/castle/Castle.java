@@ -5,9 +5,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import strategybots.games.castle.render.Colour;
-import strategybots.games.castle.render.TileRenderer;
-import strategybots.games.castle.render.Window;
+//import strategybots.games.castle.render.Colour;
+//import strategybots.games.castle.render.TileRenderer;
+//import strategybots.games.castle.render.Window;
 
 public class Castle {
 
@@ -19,9 +19,9 @@ public class Castle {
 	
 	private List<Troop> selectedTroops = new LinkedList<>();
 	
-	private Colour[] colours = new Colour[] {
-			Colour.RED, Colour.BLUE, Colour.GREEN, Colour.YELLOW
-	};
+	//private Colour[] colours = new Colour[] {
+	//		Colour.RED, Colour.BLUE, Colour.GREEN, Colour.YELLOW
+	//};
 	
 	private int boardSize;
 	
@@ -35,9 +35,9 @@ public class Castle {
 	
 	public int getBoardSize() { return boardSize; }
 	
-	public Colour getColour(CastlePlayer player) {
-		return colours[players.indexOf(player)];
-	}
+	//public Colour getColour(CastlePlayer player) {
+	//	return colours[players.indexOf(player)];
+	//}
 	
 	public CastlePlayer getCurrentPlayer() {
 		return currentPlayer;
@@ -66,9 +66,9 @@ public class Castle {
 	
 	private void start() {
 		
-		Window window = new Window(1050, 1050, "Castle Game v1.0");
-		window.addRenderer(TileRenderer.INSTANCE);
-		window.setColour(Colour.TEAL);
+		//Window window = new Window(1050, 1050, "Castle Game v1.0");
+		//window.addRenderer(TileRenderer.INSTANCE);
+		//window.setColour(Colour.TEAL);
 		
 		createBoard();
 		
@@ -94,7 +94,7 @@ public class Castle {
 			}
 		}
 		
-		new Troop(this, players.get(0), board[0][0]);
+		/*new Troop(this, players.get(0), board[0][0]);
 		new Troop(this, players.get(0), board[0][0]);
 		new Troop(this, players.get(1), board[0][0]);
 		new Troop(this, players.get(0), board[0][0]);
@@ -102,7 +102,7 @@ public class Castle {
 		new Troop(this, players.get(1), board[0][0]);
 		new Troop(this, players.get(1), board[0][0]);
 		
-		new Troop(this, players.get(0), board[1][0]);
+		new Troop(this, players.get(0), board[1][0]);*/
 	}
 	
 	public interface CastlePlayer {

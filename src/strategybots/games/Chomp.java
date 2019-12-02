@@ -2,9 +2,9 @@ package strategybots.games;
 
 import strategybots.games.base.TileGame;
 import strategybots.games.base.Board.Pattern;
-import strategybots.graphics.Colour;
-import strategybots.graphics.Texture;
-import strategybots.graphics.Tile;
+import strategybots.games.graphics.Colour;
+import strategybots.games.graphics.Texture;
+import strategybots.games.graphics.Tile;
 
 /**
  * <b>Chomp implementation.</b><br>

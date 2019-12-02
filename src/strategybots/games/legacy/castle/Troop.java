@@ -5,12 +5,12 @@ import java.util.Optional;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector2f;
 
-import strategybots.games.castle.Castle.CastlePlayer;
-import strategybots.games.castle.render.Button;
-import strategybots.games.castle.render.Colour;
-import strategybots.games.castle.render.Tile;
+//import strategybots.games.castle.Castle.CastlePlayer;
+//import strategybots.games.castle.render.Button;
+//import strategybots.games.castle.render.Colour;
+//import strategybots.games.castle.render.Tile;
 
-public class Troop extends Button {
+public class Troop /*extends Button*/ {
 	
 	private static final int TROOP_SIZE = 30;
 	private static final int TROOP_SPACING = 5;
@@ -22,7 +22,7 @@ public class Troop extends Button {
 	
 	private CastleTile tile;
 	
-	private CastlePlayer owner;
+	//private CastlePlayer owner;
 	
 	private boolean selected = false;
 	private Optional<SelectHighlight> selectHighlight = Optional.empty();
@@ -30,17 +30,17 @@ public class Troop extends Button {
 			TROOP_SIZE + HIGHLIGHT_SIZE * 2);
 	
 	{
-		size = new Vector2f(TROOP_SIZE, TROOP_SIZE);
-		depth = RENDER_DEPTH;
+		//size = new Vector2f(TROOP_SIZE, TROOP_SIZE);
+		//depth = RENDER_DEPTH;
 	}
 	
-	public Troop(Castle castle, CastlePlayer owner, CastleTile tile) {
+	/*public Troop(Castle castle, CastlePlayer owner, CastleTile tile) {
 		this.castle = castle;
-		this.owner = owner;
+		//this.owner = owner;
 		this.tile = tile;
-		colour = castle.getColour(owner);
-		tile.addTroop(this);
-	}
+		//colour = castle.getColour(owner);
+		//tile.addTroop(this);
+	}*/
 	
 	public void move(CastleTile destination) {
 		tile.removeTroop(this);
@@ -52,7 +52,7 @@ public class Troop extends Button {
 	
 	public CastleTile getTile() { return tile; }
 	
-	public CastlePlayer getOwner() { return owner; }
+	//public CastlePlayer getOwner() { return owner; }
 	
 	public void updateOrdering(int index) {
 		
@@ -61,28 +61,28 @@ public class Troop extends Button {
 		int row = index % (tileSize / (TROOP_SIZE + TROOP_SPACING));
 		int column = index / (tileSize / (TROOP_SIZE + TROOP_SPACING));
 		
-		position.x = tile.getPosition().x - tileSize / 2 + row * (
-				TROOP_SIZE + TROOP_SPACING) + TROOP_SIZE / 2;
+		//position.x = tile.getPosition().x - tileSize / 2 + row * (
+		//		TROOP_SIZE + TROOP_SPACING) + TROOP_SIZE / 2;
 		
-		position.y = tile.getPosition().y + tileSize / 2 - column * (
-				TROOP_SIZE + TROOP_SPACING) - TROOP_SIZE / 2;
+		//position.y = tile.getPosition().y + tileSize / 2 - column * (
+		//		TROOP_SIZE + TROOP_SPACING) - TROOP_SIZE / 2;
 	}
 	
 	public void select() {
 		selected = true;
-		selectHighlight = Optional.ofNullable(new SelectHighlight(position, highlightSize));
+		//selectHighlight = Optional.ofNullable(new SelectHighlight(position, highlightSize));
 	}
 	
 	public void unselect() {
-		selectHighlight.get().destroy();
+		//selectHighlight.get().destroy();
 		selectHighlight = Optional.empty();
 		selected = false;
 	}
 	
-	@Override
-	protected void onLeftClick() {
+	//@Override
+	/*protected void onLeftClick() {
 			
-		if(castle.getCurrentPlayer() == owner) {
+		//if(castle.getCurrentPlayer() == owner) {
 			
 			if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
 				
@@ -93,17 +93,17 @@ public class Troop extends Button {
 				castle.clearSelectedTroops();
 				castle.addSelectedTroop(this);
 			}
-		}
-	}
+		//}
+	}*/
 	
-	private class SelectHighlight extends Tile {
+	private class SelectHighlight /*extends Tile*/ {
 		{
-			depth = 0.2F;
-			colour = Colour.GREEN;
+			//depth = 0.2F;
+			//colour = Colour.GREEN;
 		}
 		public SelectHighlight(Vector2f position, Vector2f size) {
-			this.position = position;
-			this.size = size;
+			//this.position = position;
+			//this.size = size;
 		}
 	}
 }

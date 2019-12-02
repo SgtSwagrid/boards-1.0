@@ -1,4 +1,4 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,13 +10,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import strategybots.bots.C4_Tiptaco.Board;
-import strategybots.bots.C4_Tiptaco.Minimax;
+import strategybots.bots.legacy.C4_Tiptaco.Board;
+import strategybots.bots.legacy.C4_Tiptaco.Minimax;
 import strategybots.games.ConnectFour;
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Orien;
-import strategybots.games.util.Game.Player;
-import strategybots.graphics.Colour;
+import strategybots.games.base.Game.Player;
+import strategybots.games.graphics.Colour;
 
 public class Dots_Tiptaco implements Player<DotsAndBoxes>{
 

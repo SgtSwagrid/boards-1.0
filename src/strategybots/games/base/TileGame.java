@@ -5,10 +5,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-import strategybots.graphics.Colour;
-import strategybots.graphics.Texture;
-import strategybots.graphics.Tile;
-import strategybots.graphics.Window;
+import strategybots.games.graphics.Colour;
+import strategybots.games.graphics.Texture;
+import strategybots.games.graphics.Tile;
+import strategybots.games.graphics.Window;
 
 /**
  * Abstract supertype for abstract board games using a basic grid board.<br>

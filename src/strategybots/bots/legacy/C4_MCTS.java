@@ -1,4 +1,4 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,7 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import strategybots.bots.zobrist.Zobrist;
+import strategybots.bots.legacy.zobrist.Zobrist;
 import strategybots.games.legacy.HyperMNK;
 import strategybots.games.legacy.HyperMNK.HyperMNKPlayer;
 

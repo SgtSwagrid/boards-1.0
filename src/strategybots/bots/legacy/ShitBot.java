@@ -1,10 +1,10 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import java.util.Random;
 
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Orien;
-import strategybots.games.util.Game.Player;
+import strategybots.games.base.Game.Player;
 
 public class ShitBot implements Player<DotsAndBoxes> {
     

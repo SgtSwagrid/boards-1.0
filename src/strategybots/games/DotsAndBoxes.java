@@ -2,7 +2,7 @@ package strategybots.games;
 
 import strategybots.games.base.TileGame;
 import strategybots.games.base.Board.Pattern;
-import strategybots.graphics.Colour;
+import strategybots.games.graphics.Colour;
 
 /**
  * <b>Dots and Boxes implementation.</b><br>

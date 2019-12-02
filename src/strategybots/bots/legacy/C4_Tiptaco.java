@@ -1,4 +1,4 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import strategybots.games.ConnectFour;
-import strategybots.games.util.Game.Player;
+import strategybots.games.base.Game.Player;
 
 public class C4_Tiptaco implements Player<ConnectFour> {
 

@@ -1,25 +1,25 @@
-package strategybots.bots;
+package strategybots.bots.legacy;
 
 import static java.lang.Math.*;
 
-import strategybots.games.TicTacToe;
+import strategybots.games.ConnectFour;
 import strategybots.games.base.Game.Player;
 
-public class SwagMNK implements Player<TicTacToe> {
+public class SwagC4 implements Player<ConnectFour> {
     
-    private TicTacToe game;
+    private ConnectFour game;
     private int playerId;
     private int width, height, target;
     
     private int turn = 1;
     private long time = 2000;
     
-    public SwagMNK() {}
+    public SwagC4() {}
     
-    public SwagMNK(long time) { this.time = time; }
+    public SwagC4(long time) { this.time = time; }
     
     @Override
-    public void init(TicTacToe game, int playerId) {
+    public void init(ConnectFour game, int playerId) {
         
         this.game = game;
         this.playerId = playerId;
@@ -29,68 +29,65 @@ public class SwagMNK implements Player<TicTacToe> {
     }
 
     @Override
-    public void takeTurn(TicTacToe game, int playerId) {
+    public void takeTurn(ConnectFour game, int playerId) {
         
         long start = System.currentTimeMillis();
         int[] move = getMove();
-        game.placeStone(move[1], move[2]);
-        printStats(move[0], move[1], move[2], move[3], start);
+        game.placeStone(move[1]);
+        printStats(move[0], move[1], move[2], start);
     }
     
     private int[] getMove() {
         
-        int score = 0, moveX = -1, moveY = -1, depth = 1;
+        int score = 0, move = -1, depth = 1;
         int maxDepth = width * height;
         long start = System.currentTimeMillis();
         
         int[][] board = getBoard();
+        int[] heights = getHeights();
         
         int heuristic = heuristicGlobal(board, playerId);
         
         for(; depth < maxDepth; depth++) {
             
-            int[] result = minimax(board, playerId, depth, heuristic,
+            int[] result = minimax(board, heights, playerId, depth, heuristic,
                     -Integer.MAX_VALUE, Integer.MAX_VALUE);
             score = result[0];
-            moveX = result[1];
-            moveY = result[2];
+            move = result[1];
             
             if(System.currentTimeMillis()-start > time) break;
         }
-        return new int[] {score, moveX, moveY, depth};
+        return new int[] {score, move, depth};
     }
     
-    private int[] minimax(int[][] board, int playerId,
+    private int[] minimax(int[][] board, int heights[], int playerId,
             int depth, int heuristic, int a, int b) {
         
-        int score = 0, moveX = -1, moveY = -1;
+        int score = 0, move = -1;
         
         for(int x = 0; x < width; x++) {
-            for(int y = 0; y < height; y++) {
-                
-                if(board[x][y] != 0) continue;
-                board[x][y] = playerId;
-                 
-                if(checkWin(board, playerId, x, y)) {
-                    board[x][y] = 0;
-                    return new int[] {depth*1000, x};
-                }
-                
-                int h = heuristic + heuristicDelta(board, playerId, x, y);
-                int s = depth<=1 ? h :
-                    -minimax(board, playerId%2+1, depth-1, -h, -b, -a)[0];
-                
-                if(s > score || moveX == -1) {
-                    score = s;
-                    moveX = x;
-                    moveY = y;
-                    a = score>a ? score:a;
-                }
-                board[x][y] = 0;
-                if(a >= b) break;
+            
+            if(heights[x] >= height) continue;
+            board[x][heights[x]++] = playerId;
+             
+            if(checkWin(board, playerId, x, heights[x]-1)) {
+                board[x][--heights[x]] = 0;
+                return new int[] {depth*1000, x};
             }
+            
+            int h = heuristic + heuristicDelta(board, playerId, x, heights[x]-1);
+            int s = depth<=1 ? h :
+                -minimax(board, heights, playerId%2+1, depth-1, -h, -b, -a)[0];
+            
+            if(s > score || move == -1) {
+                score = s;
+                move = x;
+                a = score>a ? score:a;
+            }
+            board[x][--heights[x]] = 0;
+            if(a >= b) break;
         }
-        return new int[] {score, moveX, moveY};
+        return new int[] {score, move};
     }
     
     private final int[][] dirs = new int[][] {{1, 0}, {1, 1}, {0, 1}, {-1, 1}};
@@ -208,20 +205,35 @@ public class SwagMNK implements Player<TicTacToe> {
         return board;
     }
     
-    private void printStats(int score, int moveX, int moveY, int depth, long start) {
+    private int[] getHeights() {
+        
+        int[] heights = new int[width];
+        x: for(int x = 0; x < width; x++) {
+            for(int y = 0; y < height; y++) {
+                if(game.getStone(x, y) == 0) {
+                    heights[x] = y;
+                    continue x;
+                }
+            }
+            heights[x] = height;
+        }
+        return heights;
+    }
+    
+    private void printStats(int score, int move, int depth, long start) {
         
         System.out.println("=======================");
-        System.out.println("SwagMNK Statistics:");
+        System.out.println("SwagC4 Statistics:");
         System.out.println("Player:      " + playerId
                 + " ("+(playerId==1?"Yellow":"Red")+")");
         System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + score);
-        System.out.println("Position:    (" + (moveX+1) + ", " + (moveY+1) + ")");
+        System.out.println("Column:      " + (move+1));
         System.out.println("Depth:       " + depth);
         System.out.println("Time:        "
                 + (System.currentTimeMillis() - start) + "ms");
     }
     
     @Override
-    public String getName() { return "SwagMNK"; }
+    public String getName() { return "SwagC4"; }
 }

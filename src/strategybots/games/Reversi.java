@@ -5,7 +5,7 @@ import java.util.Set;
 
 import strategybots.games.base.TileGame;
 import strategybots.games.base.Board.Pattern;
-import strategybots.graphics.Colour;
+import strategybots.games.graphics.Colour;
 
 /**
  * <b>Reversi/Othello implementation.</b><br>

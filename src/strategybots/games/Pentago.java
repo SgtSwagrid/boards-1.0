@@ -1,12 +1,12 @@
 package strategybots.games;
 
-import strategybots.event.Event;
-import strategybots.event.Event.EventHandler;
 import strategybots.games.base.Board.Pattern;
-import strategybots.graphics.Button;
-import strategybots.graphics.Colour;
-import strategybots.graphics.Texture;
-import strategybots.graphics.Window.WindowResizeEvent;
+import strategybots.games.event.Event;
+import strategybots.games.event.Event.EventHandler;
+import strategybots.games.graphics.Button;
+import strategybots.games.graphics.Colour;
+import strategybots.games.graphics.Texture;
+import strategybots.games.graphics.Window.WindowResizeEvent;
 
 /**
  * <b>Pentago implementation.</b><br>
