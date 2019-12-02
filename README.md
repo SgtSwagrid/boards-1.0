@@ -3,9 +3,10 @@ This repository is an ongoing project featuring:
 1. Java implementations for various abstract strategy board games. (`src/strategybots/games/`)
 2. Bots created to optimally play and win these games. (`src/strategybots/bots/`)
 
-### Required libraries:
- * [LWJGL 2.X](http://legacy.lwjgl.org/)
- * [Slick-Util](http://slick.ninjacave.com/slick-util/)
+### Featured bots:
+#### Connect Four:
+* SwagC4 (negamax + alpha-beta + heuristic)
+* TipMCTS (monte-carlo tree search)
 
 ### Featured games:
 * [Checkers/Draughts](https://en.wikipedia.org/wiki/English_draughts)
@@ -19,3 +20,7 @@ This repository is an ongoing project featuring:
 * [Pentago](https://en.wikipedia.org/wiki/Pentago)
 * [Reversi/Othello](https://en.wikipedia.org/wiki/Reversi)
 * [Tic-Tac-Toe](https://en.wikipedia.org/wiki/M,n,k-game)
+
+### Required libraries:
+ * [LWJGL 2.9.3](http://legacy.lwjgl.org/)
+ * [Slick-Util](http://slick.ninjacave.com/slick-util/)
