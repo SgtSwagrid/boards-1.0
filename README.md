@@ -7,6 +7,8 @@ This repository is an ongoing project featuring:
 #### Connect Four:
 * SwagC4 (negamax + alpha-beta + heuristic)
 * TipMCTS (monte-carlo tree search)
+#### Tic-Tac-Toe / M,N,K-Game:
+* SwagMNK (negamax + alpha-beta + heuristic)
 
 ### Featured games:
 * [Checkers/Draughts](https://en.wikipedia.org/wiki/English_draughts)
@@ -19,7 +21,7 @@ This repository is an ongoing project featuring:
 * [Go](https://en.wikipedia.org/wiki/Go_(game)) (Todo)
 * [Pentago](https://en.wikipedia.org/wiki/Pentago)
 * [Reversi/Othello](https://en.wikipedia.org/wiki/Reversi)
-* [Tic-Tac-Toe](https://en.wikipedia.org/wiki/M,n,k-game)
+* [Tic-Tac-Toe/M,N,K-Game](https://en.wikipedia.org/wiki/M,n,k-game)
 
 ### Required libraries:
  * [LWJGL 2.9.3](http://legacy.lwjgl.org/)
