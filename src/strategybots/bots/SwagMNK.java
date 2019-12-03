@@ -73,7 +73,7 @@ public class SwagMNK implements Player<TicTacToe> {
                  
                 if(checkWin(board, playerId, x, y)) {
                     board[x][y] = 0;
-                    return new int[] {depth*1000, x};
+                    return new int[] {depth*1000, x, y};
                 }
                 
                 int h = heuristic + heuristicDelta(board, playerId, x, y);
