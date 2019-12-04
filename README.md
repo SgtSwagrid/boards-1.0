@@ -9,6 +9,8 @@ This repository is an ongoing project featuring:
 * TipMCTS (monte-carlo tree search)
 #### Tic-Tac-Toe / M,N,K-Game:
 * SwagMNK (negamax + alpha-beta + heuristic)
+#### Reversi / Othello:
+* TipOthello (monte-carlo tree search)
 
 ### Featured games:
 * [Checkers/Draughts](https://en.wikipedia.org/wiki/English_draughts)
