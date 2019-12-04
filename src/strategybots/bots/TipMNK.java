@@ -1,6 +1,7 @@
 package strategybots.bots;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Random;
 
@@ -71,6 +72,9 @@ public class TipMNK implements Player<TicTacToe> {
         	System.out.println(root);
         }
         
+    	//root = new Node(board, 3-playerId, 0, 0);
+
+        
        
         root.populateChildren();
         
@@ -90,7 +94,7 @@ public class TipMNK implements Player<TicTacToe> {
         }
         
         Node bestChild = bestChild(root);
-        Vec2 move = new Vec2(bestChild.x, bestChild.y);
+        Vec2 move = bestChild.move;
         
         return move;
     }
@@ -300,7 +304,7 @@ public class TipMNK implements Player<TicTacToe> {
     	int playerMove = tempNode.player;
     	Vec2 move = new Vec2();
     	// Check if the opposition has just placed a winning piece and the board is not Full
-    	boolean isTerminal = isWin(tempNode.getBoard(), playerMove, tempNode.x, tempNode.y);
+    	boolean isTerminal = isWin(tempNode.getBoard(), playerMove, tempNode.move.x, tempNode.move.y);
     	boolean isFull = isFull(tempNode.getBoard());
     	
     	// Continue until someone wins
@@ -312,18 +316,18 @@ public class TipMNK implements Player<TicTacToe> {
     		// do move and swap PlayerID
     		playerMove = 3 - tempNode.player;
     		playMove(tempNode.getBoard(), playerMove, move.x, move.y);
-    		tempNode.x = move.x;
-    		tempNode.y = move.y;
+    		tempNode.move.x = move.x;
+    		tempNode.move.y = move.y;
     		tempNode.player = playerMove;
 
     		// Update the terminal condition
-    		isTerminal = isWin(tempNode.getBoard(), playerMove, tempNode.x, tempNode.y);
+    		isTerminal = isWin(tempNode.getBoard(), playerMove, tempNode.move.x, tempNode.move.y);
         	isFull = isFull(tempNode.getBoard());
     	}
     	
     	// Check if the last valid move in the rollout was ours, and a win
-    	if (isWin(tempNode.getBoard(), 1, tempNode.x, tempNode.y)) result += 1;
-    	if (isWin(tempNode.getBoard(), 2, tempNode.x, tempNode.y)) result += (b+1);
+    	if (isWin(tempNode.getBoard(), 1, tempNode.move.x, tempNode.move.y)) result += 1;
+    	if (isWin(tempNode.getBoard(), 2, tempNode.move.x, tempNode.move.y)) result += (b+1);
     	
     	return result;
     }
@@ -342,14 +346,14 @@ public class TipMNK implements Player<TicTacToe> {
     	
     	for (int ii = 0 ; ii < Math.min(moves.size(), bottomIterations); ii++) {
     		
-    		Node tempChild = new Node(child.getBoard(), child.player, child.x, child.y);
+    		Node tempChild = new Node(child.getBoard(), child.player, child.move.x, child.move.y);
     		Vec2 move = moves.remove(rand.nextInt(moves.size()));
     		
     		// do move and swap PlayerID
     		int playerMove = 3 - tempChild.player;
     		tempChild.board = playMove(tempChild.board, playerMove, move.x, move.y);
-    		tempChild.x = move.x;
-    		tempChild.y = move.y;
+    		tempChild.move.x = move.x;
+    		tempChild.move.y = move.y;
     		tempChild.player = playerMove;
     		
     		childTemps.add(tempChild);
@@ -394,12 +398,18 @@ public class TipMNK implements Player<TicTacToe> {
     class Vec2 {
     	
     	int x = 0, y = 0;
+    	int prio = 0;
     	
     	public Vec2() {}
     	
     	public Vec2 (int x, int y) {
     		this.x = x;
     		this.y = y;
+    	}
+    	
+    	public Vec2 (int x, int y, int prio) {
+    		this(x, y);
+    		this.prio = prio;
     	}
     }
     
@@ -410,7 +420,7 @@ public class TipMNK implements Player<TicTacToe> {
 		private ArrayList<Node> children = new ArrayList<Node>();
 		private boolean visited = false;
 		private int[][] board;
-		private int x, y;
+		private Vec2 move;
 		private int wins[] = new int[3], sims;
 		private int player;
 		private int terminal = -1;
@@ -424,10 +434,15 @@ public class TipMNK implements Player<TicTacToe> {
 		
 		public Node(int[][] board, int player, int x, int y) {
 			
+			this(board, player, new Vec2(x, y));
+			
+		}
+		
+		public Node(int[][] board, int player, Vec2 move) {
+			
 			this.board = deepCopy(board);
 			this.player = player;
-			this.x = x;
-			this.y = y;
+			this.move = move;
 			
 		}
 		
@@ -474,7 +489,6 @@ public class TipMNK implements Player<TicTacToe> {
 				}
 
 			}
-			
 			return unexplored;
 			
 		}
@@ -484,8 +498,11 @@ public class TipMNK implements Player<TicTacToe> {
 			
 			ArrayList<Vec2> validMoves = getValidMoves(board);
 			
+			int[][] prios = generatePriorities(board);
+			
 			for (Vec2 move : validMoves) {
 				Node newChild = new Node(this, board, 3-player, move.x, move.y);
+				newChild.move.prio = prios[move.x][move.y];
 				playMove(newChild.getBoard(), 3-player, move.x, move.y);
 				
 				boolean full = isFull(newChild.getBoard());
@@ -496,6 +513,35 @@ public class TipMNK implements Player<TicTacToe> {
 				
 				children.add(newChild);
 			}
+			
+			children.sort(movePriorityComparator);
+			
+		}
+		
+		private int[][] generatePriorities(int[][] board) {
+			
+			int lims = 2;
+			int[][] prios = new int[board.length][board[0].length];
+			
+			for (int x = 0 ; x < game.getWidth(); x++) {
+				for (int y = 0 ; y < game.getHeight(); y++) {
+					
+					if (board[x][y] != 0) {
+					
+						for (int xx = x - lims; xx <= x + lims; xx++) {
+							for (int yy = y - lims ; yy <= y + lims; yy++ ) {
+								
+								if(xx >= 0 && xx < game.getWidth() && yy >= 0 && yy < game.getHeight()) {
+									
+									prios[xx][yy]++;
+									
+								}
+							}
+						}
+					}
+				}
+			}
+			return prios;
 			
 		}
 		
@@ -513,7 +559,7 @@ public class TipMNK implements Player<TicTacToe> {
 			
 			for (Node child : children) {
 				
-				if (child.x == move.x && child.y == move.y) {
+				if (child.move.x == move.x && child.move.y == move.y) {
 					return child;
 				}
 
@@ -546,5 +592,15 @@ public class TipMNK implements Player<TicTacToe> {
 			return newBoard;
 			
 		}
+		
+		public final Comparator<Node> movePriorityComparator = new Comparator<Node>() {         
+			@Override         
+			public int compare(Node n1, Node n2) {             
+				return (n2.move.prio < n1.move.prio ? -1 :                     
+					(n2.move.prio == n1.move.prio ? 0 : 1));           
+			}     
+		}; 
+		
 	}
+	
 }
