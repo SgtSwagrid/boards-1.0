@@ -45,11 +45,9 @@ public class SwagMNK implements Player<TicTacToe> {
         
         int[][] board = getBoard();
         
-        int heuristic = heuristicGlobal(board, playerId);
-        
         for(; depth < maxDepth; depth++) {
             
-            int[] result = minimax(board, playerId, depth, heuristic,
+            int[] result = minimax(board, playerId, depth, 0,
                     -Integer.MAX_VALUE, Integer.MAX_VALUE);
             score = result[0];
             moveX = result[1];
@@ -76,7 +74,7 @@ public class SwagMNK implements Player<TicTacToe> {
                     return new int[] {depth*1000, x, y};
                 }
                 
-                int h = heuristic + heuristicDelta(board, playerId, x, y);
+                int h = heuristic + heuristic(board, playerId, x, y);
                 int s = depth<=1 ? h :
                     -minimax(board, playerId%2+1, depth-1, -h, -b, -a)[0];
                 
@@ -122,22 +120,7 @@ public class SwagMNK implements Player<TicTacToe> {
         return false;
     }
     
-    private int heuristicGlobal(int[][] board, int playerId) {
-        
-        int score = 0;
-        int[][] newBoard = new int[width][height];
-        
-        for(int x = 0; x < width; x++) {
-            for(int y = 0; y < height && board[x][y] != 0; y++) {
-                newBoard[x][y] = board[x][y];
-                int sign = board[x][y] == playerId ? 1 : -1;
-                score += sign * heuristicDelta(newBoard, board[x][y], x, y);
-            }
-        }
-        return score;
-    }
-    
-    private int heuristicDelta(int[][] board, int playerId, int x, int y) {
+    private int heuristic(int[][] board, int playerId, int x, int y) {
         
         int score = 0;
         
@@ -200,11 +183,7 @@ public class SwagMNK implements Player<TicTacToe> {
     private int[][] getBoard() {
         
         int[][] board = new int[width][height];
-        for(int x = 0; x < width; x++) {
-            for(int y = 0; y < height; y++) {
-                board[x][y] = game.getStone(x, y);
-            }
-        }
+        game.forEachPosition((x, y) -> board[x][y] = game.getStone(x, y));
         return board;
     }
     
