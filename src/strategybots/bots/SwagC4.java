@@ -46,11 +46,9 @@ public class SwagC4 implements Player<ConnectFour> {
         int[][] board = getBoard();
         int[] heights = getHeights();
         
-        int heuristic = heuristicGlobal(board, playerId);
-        
         for(; depth < maxDepth; depth++) {
             
-            int[] result = minimax(board, heights, playerId, depth, heuristic,
+            int[] result = minimax(board, heights, playerId, depth, 0,
                     -Integer.MAX_VALUE, Integer.MAX_VALUE);
             score = result[0];
             move = result[1];
@@ -75,7 +73,7 @@ public class SwagC4 implements Player<ConnectFour> {
                 return new int[] {depth*1000, x};
             }
             
-            int h = heuristic + heuristicDelta(board, playerId, x, heights[x]-1);
+            int h = heuristic + heuristic(board, playerId, x, heights[x]-1);
             int s = depth<=1 ? h :
                 -minimax(board, heights, playerId%2+1, depth-1, -h, -b, -a)[0];
             
@@ -119,22 +117,7 @@ public class SwagC4 implements Player<ConnectFour> {
         return false;
     }
     
-    private int heuristicGlobal(int[][] board, int playerId) {
-        
-        int score = 0;
-        int[][] newBoard = new int[width][height];
-        
-        for(int x = 0; x < width; x++) {
-            for(int y = 0; y < height && board[x][y] != 0; y++) {
-                newBoard[x][y] = board[x][y];
-                int sign = board[x][y] == playerId ? 1 : -1;
-                score += sign * heuristicDelta(newBoard, board[x][y], x, y);
-            }
-        }
-        return score;
-    }
-    
-    private int heuristicDelta(int[][] board, int playerId, int x, int y) {
+    private int heuristic(int[][] board, int playerId, int x, int y) {
         
         int score = 0;
         
@@ -197,25 +180,15 @@ public class SwagC4 implements Player<ConnectFour> {
     private int[][] getBoard() {
         
         int[][] board = new int[width][height];
-        for(int x = 0; x < width; x++) {
-            for(int y = 0; y < height; y++) {
-                board[x][y] = game.getStone(x, y);
-            }
-        }
+        game.forEachPosition((x, y) -> board[x][y] = game.getStone(x, y));
         return board;
     }
     
     private int[] getHeights() {
         
         int[] heights = new int[width];
-        x: for(int x = 0; x < width; x++) {
-            for(int y = 0; y < height; y++) {
-                if(game.getStone(x, y) == 0) {
-                    heights[x] = y;
-                    continue x;
-                }
-            }
-            heights[x] = height;
+        for(int x = 0; x < width; x++) {
+            heights[x] = game.getStackHeight(x);
         }
         return heights;
     }
