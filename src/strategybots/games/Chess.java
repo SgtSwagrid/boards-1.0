@@ -5,6 +5,8 @@ import java.util.Optional;
 import strategybots.games.base.TileGame;
 
 /**
+ * THIS IMPLEMENTATION IS INCOMPLETE. DO NOT USE.
+ * 
  * <b>Chess implementation.</b><br>
  * <br>
  * Rules: <a href="https://en.wikipedia.org/wiki/Chess">Wikipedia</a><br>
@@ -16,6 +18,8 @@ import strategybots.games.base.TileGame;
  */
 public class Chess extends TileGame {
     
+    private static final long serialVersionUID = 3768927483479016678L;
+
     /** The set of piece types in chess. */
     public enum Chessman { PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING }
     
@@ -91,14 +95,14 @@ public class Chess extends TileGame {
         //Ensure there is a piece ready to be promoted.
         if(!promotion.isPresent()) return false;
         
-        switch(newType) {
+        //switch(newType) {
             
             //TODO
             
             
             
             
-        }
+        //}
         
         return true;
     }
@@ -163,6 +167,8 @@ public class Chess extends TileGame {
      */
     private class Pawn extends Piece {
          
+        private static final long serialVersionUID = -761873584935853190L;
+        
         /** Whether the pawn moved forwards 2 spaces on the previous turn. Used for en passant. */
         private boolean movedDouble = false;
         
@@ -242,6 +248,8 @@ public class Chess extends TileGame {
      */
     private class Rook extends Piece {
         
+        private static final long serialVersionUID = 4875419301198346425L;
+        
         /** Whether the piece has yet been moved. Used for castling. */
         private boolean moved = false;
         
@@ -289,6 +297,8 @@ public class Chess extends TileGame {
      */
     private class Knight extends Piece {
         
+        private static final long serialVersionUID = 5733044206284824747L;
+
         Knight(int ownerId, int x, int y) {
             super(ownerId, x, y, KNIGHT_TEXTURES[ownerId - 1]);
         }
@@ -321,6 +331,8 @@ public class Chess extends TileGame {
      */
     private class Bishop extends Piece {
         
+        private static final long serialVersionUID = -3070814962520252515L;
+
         Bishop(int ownerId, int x, int y) {
             super(ownerId, x, y, BISHOP_TEXTURES[ownerId - 1]);
         }
@@ -367,6 +379,8 @@ public class Chess extends TileGame {
      */
     private class Queen extends Piece {
         
+        private static final long serialVersionUID = -2344156684729093731L;
+
         Queen(int ownerId, int x, int y) {
             super(ownerId, x, y, QUEEN_TEXTURES[ownerId - 1]);
         }
@@ -413,6 +427,7 @@ public class Chess extends TileGame {
      */
     private class King extends Piece {
         
+        private static final long serialVersionUID = -7906130242443041647L;
         /** Whether the piece has yet been moved. Used for castling. */
         private boolean moved = false;
         

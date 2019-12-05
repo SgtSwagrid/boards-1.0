@@ -16,6 +16,8 @@ import strategybots.games.graphics.Colour;
  */
 public class DotsAndBoxes extends TileGame {
     
+    private static final long serialVersionUID = 6284684201192673782L;
+
     /** Represents an orientation, horizontal or vertical. */
     public enum Orien { HORZ, VERT }
     

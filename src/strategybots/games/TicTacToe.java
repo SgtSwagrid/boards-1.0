@@ -19,6 +19,8 @@ import strategybots.games.graphics.Colour;
  */
 public class TicTacToe extends TileGame {
     
+    private static final long serialVersionUID = -6686456418998354738L;
+
     /** Title of the window. */
     private static final String TITLE = "Tic Tac Toe";
     
@@ -262,6 +264,8 @@ public class TicTacToe extends TileGame {
      */
     protected class Stone extends Piece {
         
+        private static final long serialVersionUID = -5561859588398498281L;
+
         Stone(int ownerId, int x, int y) {
             super(ownerId, x, y, getStoneTexture(ownerId));
             setColour(getStoneColour(ownerId));

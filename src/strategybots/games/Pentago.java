@@ -20,6 +20,8 @@ import strategybots.games.graphics.Window.WindowResizeEvent;
  */
 public class Pentago extends TicTacToe {
     
+    private static final long serialVersionUID = 1611856682085330302L;
+
     /** Title of the window. */
     private static final String TITLE = "Pentago";
     
@@ -256,6 +258,8 @@ public class Pentago extends TicTacToe {
          */
         private class RotationButton extends Button {
             
+            private static final long serialVersionUID = -5813002249187130989L;
+
             /** The coordinates of the quadrant to which this button belongs. */
             int x, y;
             
@@ -292,7 +296,7 @@ public class Pentago extends TicTacToe {
                 //Attempt to rotate this quadrant.
                 if(game.rotateQuadrant(x, y, isClockwise(rx, ry))) {
                     //If rotation is successful, delete the arrows and re-enable board input.
-                    for(Button button:buttons) button.delete();
+                    for(Button button : buttons) button.destroy();
                     game.getBoard().setInputEnabled(true);
                 }
             }
@@ -311,8 +315,8 @@ public class Pentago extends TicTacToe {
             }
             
             @Override
-            public void delete() {
-                super.delete();
+            public void destroy() {
+                super.destroy();
                 Event.removeHandler(h);
             }
             

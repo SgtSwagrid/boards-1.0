@@ -15,6 +15,8 @@ import strategybots.games.graphics.Colour;
  */
 public class ConnectFour extends TicTacToe {
     
+    private static final long serialVersionUID = 1991009329682020913L;
+
     /** Title of the window. */
     private static final String TITLE = "Connect Four";
     
@@ -68,7 +70,7 @@ public class ConnectFour extends TicTacToe {
         if(!validatePlacement(x)) return false;
         
         //Place the piece at the top of this column.
-        return placeStone(x, getStackSize(x));
+        return placeStone(x, getStackHeight(x));
     }
     
     /**
@@ -76,7 +78,7 @@ public class ConnectFour extends TicTacToe {
      * @param x the x coordinate of the column to check.
      * @return the number of pieces in this column.
      */
-    public int getStackSize(int x) {
+    public int getStackHeight(int x) {
         
         for(int y = 0; y < getHeight(); y++) {
             
@@ -104,7 +106,7 @@ public class ConnectFour extends TicTacToe {
      */
     public boolean validatePlacement(int x) {
         //Ensure x is in bounds and column isn't full.
-        return x>=0 && x<getWidth() && getStackSize(x)<getHeight();
+        return x>=0 && x<getWidth() && getStackHeight(x)<getHeight();
     }
     
     @Override

@@ -19,6 +19,8 @@ import strategybots.games.graphics.Colour;
  */
 public class Reversi extends TileGame {
     
+    private static final long serialVersionUID = -1522720936027259256L;
+
     /** Title of the window. */
     private static final String TITLE = "Reversi";
     
@@ -251,6 +253,8 @@ public class Reversi extends TileGame {
      */
     private class Disc extends Piece {
         
+        private static final long serialVersionUID = 3123879029304830122L;
+
         Disc(int ownerId, int x, int y) {
             super(ownerId, x, y, DISC_TEXTURES[ownerId - 1]);
         }

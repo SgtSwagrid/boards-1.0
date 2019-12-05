@@ -18,6 +18,8 @@ import strategybots.games.graphics.Colour;
  */
 public class Checkers extends TileGame {
     
+    private static final long serialVersionUID = -7990612607907042198L;
+
     /** Title of the window. */
     private static final String TITLE = "Checkers";
     
@@ -258,7 +260,9 @@ public class Checkers extends TileGame {
      * @author Alec Dorrington
      */
     private abstract class CheckersPiece extends Piece {
-        
+         
+        private static final long serialVersionUID = -2946381302758295618L;
+
         CheckersPiece(int ownerId, int x, int y, String texture) {
             super(ownerId, x, y, texture);
         }
@@ -366,6 +370,8 @@ public class Checkers extends TileGame {
      */
     private class Man extends CheckersPiece {
         
+        private static final long serialVersionUID = -4439026233159136098L;
+
         Man(int ownerId, int x, int y) {
             super(ownerId, x, y, MAN_TEXTURES[ownerId-1]);
         }
@@ -406,6 +412,8 @@ public class Checkers extends TileGame {
      */
     private class King extends CheckersPiece {
         
+        private static final long serialVersionUID = -2505229941776118668L;
+
         King(int ownerId, int x, int y) {
             super(ownerId, x, y, KING_TEXTURES[ownerId-1]);
         }

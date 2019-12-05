@@ -18,6 +18,8 @@ import strategybots.games.graphics.Tile;
  */
 public class Chomp extends TileGame {
     
+    private static final long serialVersionUID = 335811676389291033L;
+
     /** Title of the window. */
     private static final String TITLE = "Chomp";
     

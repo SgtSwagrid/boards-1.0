@@ -14,6 +14,8 @@ import strategybots.games.base.TileGame;
  */
 public class Clobber extends TileGame {
     
+    private static final long serialVersionUID = 7555962235762019380L;
+
     /** Title of the window. */
     private static final String TITLE = "Clobber";
     
@@ -176,6 +178,8 @@ public class Clobber extends TileGame {
      */
     private class Stone extends Piece {
         
+        private static final long serialVersionUID = -6821456203492225462L;
+
         Stone(int ownerId, int x, int y) {
             super(ownerId, x, y, STONE_TEXTURES[ownerId-1]);
         }

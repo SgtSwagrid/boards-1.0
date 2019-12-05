@@ -1,5 +1,6 @@
 package strategybots.games.base;
 
+import java.io.Serializable;
 import java.util.Optional;
 
 /**
@@ -9,8 +10,10 @@ import java.util.Optional;
  * @author Alec Dorrington
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public abstract class Game {
+public abstract class Game implements Serializable {
     
+    private static final long serialVersionUID = 121708475422755346L;
+
     /** Array of all players participating in this game. */
     private Player[] players;
     
@@ -88,7 +91,18 @@ public abstract class Game {
      * @param playerId the ID of the player to get (starting at 1).
      * @return the player of the given ID.
      */
-    protected Player getPlayer(int playerId) { return players[playerId - 1]; }
+    protected Player getPlayer(int playerId) {
+        return players[playerId-1];
+    }
+    
+    /**
+     * Returns a display name for the given player.
+     * @param playerId the ID of the player for which to return a name.
+     * @return the display name of the player.
+     */
+    protected String getPlayerName(int playerId) {
+        return getPlayer(playerId).getName();
+    }
     
     /**
      * @return the player whose turn it currently is.
@@ -139,7 +153,7 @@ public abstract class Game {
             
             //While the game is running (hasn't been finished or quit).
             running = true;
-            while(running) {
+            while(isRunning()) {
                 
                 //Determine who the current player is.
                 currentPlayer = players[currentPlayerId - 1];

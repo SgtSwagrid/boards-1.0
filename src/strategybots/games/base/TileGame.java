@@ -19,6 +19,8 @@ import strategybots.games.graphics.Window;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class TileGame extends Game {
     
+    private static final long serialVersionUID = -1764178362241848211L;
+
     /** Colour used for selected pieces. */
     private static Colour HIGHLIGHT_COLOUR = Colour.rgb(46, 213, 115);
     
@@ -94,6 +96,7 @@ public abstract class TileGame extends Game {
      * @param action to perform for each grid position.
      */
     public void forEachPosition(BiConsumer<Integer, Integer> action) {
+        
         for(int x = 0; x < width; x++) {
             for(int y = 0; y < height; y++) {
                 action.accept(x, y);
@@ -104,12 +107,17 @@ public abstract class TileGame extends Game {
     /**
      * @return the window in which the game board exists.
      */
-    protected Window getWindow() { return window; }
+    public Window getWindow() { return window; }
     
     /**
      * @return the board upon which the game is being played.
      */
-    protected Board getBoard() { return board; }
+    public Board getBoard() { return board; }
+    
+    @Override
+    public boolean isRunning() {
+        return super.isRunning() && board.getWindow().isOpen();
+    }
     
     /**
      * Finds the piece at a position on the board, if on exists.
@@ -117,7 +125,7 @@ public abstract class TileGame extends Game {
      * @param y the y position to check.
      * @return the piece at the given position, if there is one.
      */
-    protected Optional<Piece> getPieceInst(int x, int y) {
+    public Optional<Piece> getPieceInst(int x, int y) {
         return Optional.ofNullable(boardPieces[x][y]);
     }
     
@@ -126,19 +134,15 @@ public abstract class TileGame extends Game {
      * @param owner_id the ID of the player whose pieces to return.
      * @return all the pieces owned by this player.
      */
-    protected Set<Piece> getPieces(int owner_id) {
-        return playerPieces[owner_id - 1];
-    }
-    
-    @Override
-    public boolean isRunning() {
-        return super.isRunning() && board.getWindow().isOpen();
+    protected Set<Piece> getPieces(int ownerId) {
+        return playerPieces[ownerId-1];
     }
     
     @Override
     protected void preTurn() {
         //Set the title to indicate the players' turn.
-        window.setTitle(title + " - Current Turn: " + getPlayerName(getCurrentPlayerId()));
+        window.setTitle(title + " - Current Turn: "
+                + getPlayerName(getCurrentPlayerId()));
     }
     
     @Override
@@ -164,15 +168,6 @@ public abstract class TileGame extends Game {
     }
     
     /**
-     * Returns a display name for the given player.
-     * @param playerId the ID of the player for which to return a name.
-     * @return the display name of the player.
-     */
-    protected String getPlayerName(int playerId) {
-        return getPlayer(playerId).getName();
-    }
-    
-    /**
      * Changes the background colour given to selected pieces.
      * @param colour
      */
@@ -195,8 +190,11 @@ public abstract class TileGame extends Game {
      */
     protected abstract class Piece extends Tile {
         
+        private static final long serialVersionUID = 9077509164516940403L;
+
         /** The owner of this piece. */
         private Player<?> owner;
+        
         /** The ID of the owner of this piece. */
         private int ownerId;
         
@@ -258,7 +256,6 @@ public abstract class TileGame extends Game {
         /**
          * Removes this piece from the board.
          */
-        @Override
         public void delete() {
             
             //Remove the piece from the board pieces array.
@@ -269,18 +266,13 @@ public abstract class TileGame extends Game {
             playerPieces[getOwnerId() - 1].remove(this);
             
             //Remove this tile from the renderer.
-            super.delete();
+            destroy();
         }
-        
-        /**
-         * @return the board on which this piece resides.
-         */
-        public Board getBoard() { return board; }
         
         /**
          * @return the player to whom this piece belongs.
          */
-        public Player<?> getOwner() { return owner; }
+        protected Player<?> getOwner() { return owner; }
         
         /**
          * @return the ID of the player to whom this piece belongs.

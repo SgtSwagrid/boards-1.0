@@ -4,7 +4,8 @@ import org.lwjgl.input.Keyboard;
 
 /**
  * Abstract superclass for events involving input.
- * @author Alec
+ * 
+ * @author Alec Dorrington
  */
 public abstract class InputEvent extends Event {
     

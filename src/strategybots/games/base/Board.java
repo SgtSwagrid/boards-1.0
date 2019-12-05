@@ -1,7 +1,7 @@
 package strategybots.games.base;
 
+import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -9,9 +9,11 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 
 import strategybots.games.event.Event;
+import strategybots.games.event.InputHandler;
 import strategybots.games.graphics.Button;
 import strategybots.games.graphics.Colour;
 import strategybots.games.graphics.Tile;
+import strategybots.games.graphics.TileShader;
 import strategybots.games.graphics.Window;
 import strategybots.games.graphics.Window.WindowResizeEvent;
 
@@ -23,8 +25,10 @@ import strategybots.games.graphics.Window.WindowResizeEvent;
  * 
  * @author Alec Dorrignton
  */
-public class Board {
+public class Board implements Serializable {
     
+    private static final long serialVersionUID = 6201987199582058357L;
+
     /** Patterns for use in determining how to colour the board. */
     public enum Pattern { CHECKER, TABLE, GINGHAM, SOLID }
     
@@ -45,7 +49,7 @@ public class Board {
     private int width, height;
     
     /** The window in which this chessboard resides. */
-    private Window window;
+    private final Window window;
     
     /** The tile squares. */
     private BoardTile[][] tiles;
@@ -55,7 +59,7 @@ public class Board {
     /** Relative size of each border between columns/rows. */
     private int[] vBorderWidth, hBorderHeight;
     /** Cumulative size of columns/rows. */
-    private int[] cumWidth, cumHeight;
+    private int[] cmtWidth, cmtHeight;
     
     /** Whether tile clicks are to be registered. */
     private boolean inputEnabled = true;
@@ -74,7 +78,8 @@ public class Board {
         this.height = height;
         
         //Create an appropriately sized window.
-        window = new Window(1000, 1000, title);
+        window = new Window(1000, 1000, title,
+                TileShader.INSTANCE, InputHandler.INSTANCE);
         window.setColour(background);
         
         //Tiles should automatically resize/reposition on window resize.
@@ -99,7 +104,7 @@ public class Board {
         colSize[col] = width;
         //Update cumulative width for all subsequent columns.
         for(int x = 2*col+1; x <= 2*this.width; x++) {
-            cumWidth[x] += delta;
+            cmtWidth[x] += delta;
         }
         update();
     }
@@ -116,7 +121,7 @@ public class Board {
         rowSize[row] = height;
         //Update cumulative height for all subsequent rows.
         for(int y = 2*row+1; y <= 2*this.height; y++) {
-            cumHeight[y] += delta;
+            cmtHeight[y] += delta;
         }
         update();
     }
@@ -133,7 +138,7 @@ public class Board {
         vBorderWidth[n] = width;
         //Update cumulative width for all subsequent rows.
         for(int x = 2*n; x <= 2*this.width; x++) {
-            cumWidth[x] += delta;
+            cmtWidth[x] += delta;
         }
         update();
     }
@@ -150,7 +155,7 @@ public class Board {
         hBorderHeight[n] = height;
         //Update cumulative width for all subsequent rows.
         for(int y = 2*n; y <= 2*this.height; y++) {
-            cumHeight[y] += delta;
+            cmtHeight[y] += delta;
         }
         update();
     }
@@ -209,8 +214,8 @@ public class Board {
         //Ensure piece isn't present in another tile.
         for(int xx = 0; xx < width; xx++) {
             for(int yy = 0; yy < height; yy++) {
-                if(tiles[xx][yy].piece.orElse(null) == tile) {
-                    tiles[xx][yy].piece = Optional.empty();
+                if(tiles[xx][yy].piece == tile) {
+                    tiles[xx][yy].piece = null;
                 }
             }
         }
@@ -306,7 +311,7 @@ public class Board {
      */
     public int getBoardWidth() {
         return Math.min(window.getWidth(), window.getHeight()
-                * cumWidth[2*width]/cumHeight[2*height]);
+                * cmtWidth[2*width]/cmtHeight[2*height]);
     }
     
     /**
@@ -316,7 +321,7 @@ public class Board {
      */
     public int getBoardHeight() {
         return Math.min(window.getHeight(), window.getWidth()
-                * cumHeight[2*height]/cumWidth[2*width]);
+                * cmtHeight[2*height]/cmtWidth[2*width]);
     }
     
     /**
@@ -334,23 +339,23 @@ public class Board {
         vBorderWidth = new int[width+1];
         hBorderHeight = new int[height+1];
         
-        cumWidth = new int[2*width+1];
-        cumHeight = new int[2*height+1];
+        cmtWidth = new int[2*width+1];
+        cmtHeight = new int[2*height+1];
         
         //Set all columns to be of equal width.
-        cumWidth[0] = 0;
+        cmtWidth[0] = 0;
         for(int x = 0; x < width; x++) {
             colSize[x] = REL_TILE_SIZE;
-            cumWidth[2*x+1] = (x+1)*REL_TILE_SIZE;
-            cumWidth[2*x+2] = (x+1)*REL_TILE_SIZE;
+            cmtWidth[2*x+1] = (x+1)*REL_TILE_SIZE;
+            cmtWidth[2*x+2] = (x+1)*REL_TILE_SIZE;
         }
         
         //Set all rows to be of equal height.
-        cumHeight[0] = 0;
+        cmtHeight[0] = 0;
         for(int y = 0; y < height; y++) {
             rowSize[y] = REL_TILE_SIZE;
-            cumHeight[2*y+1] = (y+1)*REL_TILE_SIZE;
-            cumHeight[2*y+2] = (y+1)*REL_TILE_SIZE;
+            cmtHeight[2*y+1] = (y+1)*REL_TILE_SIZE;
+            cmtHeight[2*y+2] = (y+1)*REL_TILE_SIZE;
         }
         
         //For each grid cell.
@@ -385,13 +390,15 @@ public class Board {
      * Represents a single grid cell in a board.
      * @author Alec Dorrington
      */
-    private class BoardTile extends Button {
+    private class BoardTile extends Button implements Serializable {
         
+        private static final long serialVersionUID = 4883834805410376233L;
+
         //The position of this tile.
         int x, y;
         
         //The piece currently on this tile.
-        Optional<Tile> piece = Optional.empty();
+        Tile piece;
         
         /** Click listeners for this tile. */
         Set<Action> listeners = new HashSet<>();
@@ -421,7 +428,7 @@ public class Board {
          * @param piece the piece to move onto this tile.
          */
         void setPiece(Tile piece) {
-            this.piece = Optional.of(piece);
+            this.piece = piece;
             moveTile(piece);
         }
         
@@ -432,19 +439,19 @@ public class Board {
         void moveTile(Tile tile) {
             
             //Calculate the position (in relative coordinates) to which the tile should be moved.
-            int xx = 2*cumWidth[2*x] + colSize[x];
-            int yy = 2*cumHeight[2*y] + rowSize[y];
+            int xx = 2*cmtWidth[2*x] + colSize[x];
+            int yy = 2*cmtHeight[2*y] + rowSize[y];
             
             //Convert the position to pixel space.
-            xx = -getBoardWidth()/2 + xx * getBoardWidth()/cumWidth[2*width]/2;
-            yy = -getBoardHeight()/2 + yy * getBoardHeight()/cumHeight[2*height]/2;
+            xx = -getBoardWidth()/2 + xx * getBoardWidth()/cmtWidth[2*width]/2;
+            yy = -getBoardHeight()/2 + yy * getBoardHeight()/cmtHeight[2*height]/2;
             
             //Move the tile to its new position.
             tile.setPosition(xx, yy);
             
             //Determine the appropriate size in pixels given relative column/row sizes.
-            tile.setWidth(colSize[x] * getBoardWidth()/cumWidth[2*width] + 1);
-            tile.setHeight(rowSize[y] * getBoardHeight()/cumHeight[2*height] + 1);
+            tile.setWidth(colSize[x] * getBoardWidth()/cmtWidth[2*width] + 1);
+            tile.setHeight(rowSize[y] * getBoardHeight()/cmtHeight[2*height] + 1);
         }
         
         /**
@@ -453,14 +460,14 @@ public class Board {
          */
         void update() {
             moveTile(this);
-            if(piece.isPresent()) moveTile(piece.get());
+            if(piece != null) moveTile(piece);
         }
         
         @Override
         protected void onLeftClick(int rx, int ry) {
             //When this tile is clicked, trigger all of its listeners.
             if(inputEnabled) {
-                listeners.parallelStream().forEach(Action::run);
+                listeners.forEach(Action::run);
             }
         }
         

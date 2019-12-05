@@ -53,6 +53,7 @@ public abstract class Event {
     public static <E extends Event> EventHandler addHandler(
             Class<E> event, Object key, Consumer<E> action) {
         
+        //Get lock on events list.
         try {
             eventsLock.acquire();
         } catch(InterruptedException e) {
@@ -79,6 +80,7 @@ public abstract class Event {
      */
     public static void removeHandler(EventHandler handler) {
         
+        //Get lock on events list.
         try {
             eventsLock.acquire();
         } catch(InterruptedException e) {
@@ -92,24 +94,37 @@ public abstract class Event {
     }
     
     /**
+     * Disable event handling.
+     */
+    public static void destroy() {
+        threadPool.shutdownNow();
+    }
+    
+    /**
      * Trigger this event. All EventHandlers of matching type will
      * subsequently be triggered, using the given event as a parameter.
      */
     @SuppressWarnings("unchecked")
     protected void trigger() {
         
+        //Get lock on events list.
         try {
             eventsLock.acquire();
         } catch(InterruptedException e) {
             e.printStackTrace();
         }
         
+        //If there are handlers for this type of event.
         if(events.containsKey(getClass())) {
             
+            //For each such event handler.
             for(EventHandler handler : events.get(getClass())) {
                 
-                if(!handler.condition.isPresent() || checkCondition(handler.condition.get())) {
+                //If the condition is satisfied.
+                if(!handler.condition.isPresent() ||
+                        checkCondition(handler.condition.get())) {
                     
+                    //Call each matching event handler.
                     threadPool.execute(() ->
                         handler.action.accept(Event.this));
                 }

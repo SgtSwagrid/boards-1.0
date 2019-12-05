@@ -15,9 +15,13 @@ import org.lwjgl.opengl.Display;
 /**
  * Manages user input, triggering any relevant events when appropriate.
  * Ensure to call update() as often as possible for this to work properly.
- * @author Alec
+ * 
+ * @author Alec Dorrington
  */
 public class InputHandler {
+    
+    /** Singleton input handler instance. */
+    public static final InputHandler INSTANCE = new InputHandler();
     
     /** The set of all keys which are currently held down. */
     private Set<Integer> heldKeys = new HashSet<>();
@@ -25,6 +29,9 @@ public class InputHandler {
     /** The set of all mouse buttons which are currently held down.  */
     private Set<Integer> heldButtons = new HashSet<>();
     
+    /**
+     * Initialize the input handler.
+     */
     public void init() {
         
         try {
@@ -36,12 +43,22 @@ public class InputHandler {
         }
     }
     
+    /**
+     * Update the input handler. Call this regularly.
+     */
     public void update() {
         
         updateKeyboard();
         updateMouseClicks();
         updateCursor();
         updateScrollWheel();
+    }
+    
+    /**
+     * Disable event handling.
+     */
+    public void destroy() {
+        Event.destroy();
     }
     
     /**
@@ -89,8 +106,6 @@ public class InputHandler {
         while(Mouse.next()) {
             
             int button = Mouse.getEventButton();
-            
-            
             
             //Button pressed.
             if(Mouse.getEventButtonState()) {

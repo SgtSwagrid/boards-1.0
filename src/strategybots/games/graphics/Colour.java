@@ -5,7 +5,8 @@ import org.lwjgl.util.vector.Vector4f;
 /**
  * Helper class containing colour presets and utilities.
  * An instance of this class represents a particular colour.
- * @author Alec
+ * 
+ * @author Alec Dorrington
  */
 public class Colour {
     
@@ -124,6 +125,11 @@ public class Colour {
                 hex % 256);
     }
     
+    /**
+     * Mixes together all of the given colours.
+     * @param colours the colours to mix.
+     * @return the resultant colour.
+     */
     public static Colour mix(Colour... colours) {
         
         float r = 0.0F, g = 0.0F, b = 0.0F, a = 0.0F;
@@ -153,14 +159,26 @@ public class Colour {
         A = a;
     }
     
+    /**
+     * @param amount the amount by which to darken (0.0-1.0).
+     * @return a new colour, which is a darker version of the original.
+     */
     public Colour darken(float amount) {
         return new Colour(R - amount, G - amount, B - amount, A);
     }
     
+    /**
+     * @param amount the amount by which to lighten (0.0-1.0).
+     * @return a new colour, which is a lighter version of the original.
+     */
     public Colour lighten(float amount) {
         return new Colour(R + amount, G + amount, B + amount, A);
     }
     
+    /**
+     * @param a the new alpha (opacity) value.
+     * @return a new colour, which is an alpha-modified version of the original.
+     */
     public Colour withAlpha(int a) {
         return new Colour(R, G, B, a / 255.0F);
     }

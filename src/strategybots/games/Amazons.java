@@ -16,6 +16,8 @@ import strategybots.games.base.TileGame;
  */
 public class Amazons extends TileGame {
     
+    private static final long serialVersionUID = 2256458469805208278L;
+
     /** Title of the window. */
     private static final String TITLE = "Game of the Amazons";
     
@@ -270,6 +272,8 @@ public class Amazons extends TileGame {
      */
     private class Amazon extends Piece {
         
+        private static final long serialVersionUID = 7033301951880234533L;
+
         Amazon(int ownerId, int x, int y) {
             super(ownerId, x, y, AMAZON_TEXTURES[ownerId - 1]);
         }
@@ -348,6 +352,8 @@ public class Amazons extends TileGame {
      */
     private class Arrow extends Piece {
         
+        private static final long serialVersionUID = -799468057413175972L;
+
         private Arrow(int ownerId, int x, int y) {
             super(ownerId, x, y, ARROW_TEXTURES[ownerId - 1]);
         }
