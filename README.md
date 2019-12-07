@@ -4,9 +4,9 @@ This repository is an ongoing project featuring:
 2. Bots created to optimally play and win these games. (`src/strategybots/bots/`)
 
 <p float="left" align="middle">
-  <img src="/img/DotsAndBoxes.PNG" width="100" />
-  <img src="/img/Pentago.PNG" width="100" /> 
-  <img src="/img/Reversi.PNG" width="100" />
+  <img src="/img/DotsAndBoxes.PNG" width="300" />
+  <img src="/img/Pentago.PNG" width="300" /> 
+  <img src="/img/Reversi.PNG" width="300" />
 </p>
 
 ### Featured bots:
