@@ -3,6 +3,10 @@ This repository is an ongoing project featuring:
 1. Java implementations for various abstract strategy board games. (`src/strategybots/games/`)
 2. Bots created to optimally play and win these games. (`src/strategybots/bots/`)
 
+![Dots and Boxes](img/DotsAndBoxes.PNG)
+![Pentago](img/Pentago.PNG)
+![Reversi](img/Reversi.PNG)
+
 ### Featured bots:
 #### Connect Four:
 * SwagC4 (negamax + alpha-beta + heuristic)
