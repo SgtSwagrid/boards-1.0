@@ -3,7 +3,7 @@ This repository is an ongoing project featuring:
 1. Java implementations for various abstract strategy board games. (`src/strategybots/games/`)
 2. Bots created to optimally play and win these games. (`src/strategybots/bots/`)
 
-<p float="left" align="middle">
+<p float="left">
   <img src="/img/DotsAndBoxes.PNG" width="200" />
   <img src="/img/Pentago.PNG" width="200" /> 
   <img src="/img/Reversi.PNG" width="200" />
