@@ -137,10 +137,10 @@ public class DotsAndBoxes extends TileGame {
             
             //Determine the actual position of the line based on the direction.
             //Use the actual position to call the previous drawLine() method.
-            case RIGHT: return drawLine(Orien.HORZ, x+1, y);
-            case TOP: return drawLine(Orien.VERT, x, y+1);
-            case LEFT: return drawLine(Orien.HORZ, x, y);
-            case BOTTOM: return drawLine(Orien.VERT, x, y);
+            case RIGHT: return drawLine(Orien.VERT, x+1, y);
+            case TOP: return drawLine(Orien.HORZ, x, y+1);
+            case LEFT: return drawLine(Orien.VERT, x, y);
+            case BOTTOM: return drawLine(Orien.HORZ, x, y);
             default: return false;
         }
     }
@@ -174,10 +174,10 @@ public class DotsAndBoxes extends TileGame {
             
             //Determine the actual position of the line based on the direction.
             //Use the actual position to call the previous hasLine() method.
-            case RIGHT: return drawLine(Orien.HORZ, x+1, y);
-            case TOP: return drawLine(Orien.VERT, x, y+1);
-            case LEFT: return drawLine(Orien.HORZ, x, y);
-            case BOTTOM: return drawLine(Orien.VERT, x, y);
+            case RIGHT: return hasLine(Orien.VERT, x+1, y);
+            case TOP: return hasLine(Orien.HORZ, x, y+1);
+            case LEFT: return hasLine(Orien.VERT, x, y);
+            case BOTTOM: return hasLine(Orien.HORZ, x, y);
             default: return false;
         }
     }
