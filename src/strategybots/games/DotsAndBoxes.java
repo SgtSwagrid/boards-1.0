@@ -188,6 +188,11 @@ public class DotsAndBoxes extends TileGame {
     @Override
     public int getHeight() { return height; }
     
+    public int getScore(int playerId) { 
+    	if (playerId == 0) return 0;
+    	return scores[playerId - 1]; 
+    }
+    
     /**
      * Checks for captures on the squares adjacent to a placed line.
      * @param orien the orientation of the line.
