@@ -7,14 +7,12 @@ package strategybots.bots;
  */
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Side;
-import strategybots.games.Reversi;
 import strategybots.games.base.Game.Player;
 
 public class TipDots2 implements Player<DotsAndBoxes>{
@@ -48,18 +46,29 @@ public class TipDots2 implements Player<DotsAndBoxes>{
 	public void takeTurn(DotsAndBoxes game, int playerId) {
 
 		long start = System.currentTimeMillis();
-		int[] move = getMove(game, playerId);
+		// Use minimax to get the  
+		Triple result = getMove(game, playerId);
 		
 		// Convert from side orientation number to SIDE enum
+		ArrayList<Move> moveStack = new ArrayList<Move>(); 
+		if (result.move.isCompound()) {
+			moveStack.addAll(result.move.moves);
+		} else {
+			moveStack.add(result.move);
+		}
 		Side side = null;
-        if (move[3] == 1) side = Side.TOP; 
-        else if (move[3] == 2) side = Side.RIGHT;
-        else if (move[3] == 4) side = Side.BOTTOM;
-        else if (move[3] == 8) side = Side.LEFT;
 		
-		game.drawLine(side, move[1], move[2]);
-		printStats(move[0], playerId, move[1], move[2], move[3], move[4], start);
+		for (Move move : moveStack) {
+	        if (move.orien == 1) side = Side.TOP; 
+	        else if (move.orien == 2) side = Side.RIGHT;
+	        else if (move.orien == 4) side = Side.BOTTOM;
+	        else if (move.orien == 8) side = Side.LEFT;
+			
+			game.drawLine(side, move.x, move.y);
+			printStats(result.score, playerId, move.x, move.y, move.orien, result.depth, start);
+		}
 	}
+	
 	
 	/** 
 	 * Use Minimax to determine the best move from the current boardstate and playerId
@@ -67,10 +76,11 @@ public class TipDots2 implements Player<DotsAndBoxes>{
 	 * @param playerId the player to maximise score for
 	 * @return An array of values {SCORE, X, Y, ORIENTATION, DEPTH}
 	 */
-    private int[] getMove(DotsAndBoxes game, int playerId) {
+    private Triple getMove(DotsAndBoxes game, int playerId) {
         
-        int score = 0, moveX = -1, moveY = -1, moveSide = -1, depth = 1;
-        int maxDepth = width * height;
+        int score = 0, depth = 1;
+        Move move = null;
+        int maxDepth = 2 * width * height + width + height;
         long start = System.currentTimeMillis();
         
         int[][] board = getBoard(game);
@@ -80,19 +90,16 @@ public class TipDots2 implements Player<DotsAndBoxes>{
         
         // Iteratively deepen the minimax tree between depth 1 and depth height*width
         for(; depth < maxDepth; depth++) {
-            
         	masterDepth = depth;
-            int[] result = minimax(board, captures, playerId, depth,
+            Triple result = minimax(board, captures, playerId, depth,
                     -Integer.MAX_VALUE, Integer.MAX_VALUE);
-            score = result[0];
-            moveX = result[1];
-            moveY = result[2];
-            moveSide = result[3];
+            score = result.score;
+            move = result.move;
             
             if(System.currentTimeMillis()-start > time) break;
         }
         
-        return new int[] {score, moveX, moveY, moveSide, depth};
+        return new Triple(score, move, depth);
     }
     
     /**
@@ -106,50 +113,75 @@ public class TipDots2 implements Player<DotsAndBoxes>{
      * @param b Beta limit value
      * @return An output array for {SCORE, X, Y, ORIENTATON}
      */
-    private int[] minimax(int[][] board, int[] captures, int playerId,
+    private Triple minimax(int[][] board, int[] captures, int playerId,
             int depth, int a, int b) {
         
-        int score = 0, moveX = -1, moveY = -1, moveSide = -1, iters = 0;
-        boolean skipTwos = false;
-        
+        int score = 0, iters = 0; 
+        Move bestMove = null;
         ArrayList<Move> moves = getMoves(board);
-        if (moves.size() > 0 && moves.get(0).prio != -1 && masterDepth < 10) skipTwos = true;
-        // preorder moves TODO
         
         for (Move move : moves) { 
             
-        	if (move.prio == -1 && skipTwos) break;
-        	int x = move.x, y = move.y, side = move.orien;
+        	/*String dept = "";
+        			
+        	for (int i = 0 ; i < 8-depth; i++) {
+        		dept += "  ";
+        	}*/
+        	
+        	//System.out.println(dept + move + " prio " + move.prio);
+        	
         	// Do move as PLACING
-        	boolean placed = applyMove(board, captures, playerId, move, true);
+        	boolean hasCaptured = applyMove(board, captures, playerId, move, true);
+        	
         	int h = heuristic(captures, playerId);
         	
-            if(checkWin(board, playerId, h)) {
+            if(moves.size() == 1) { //checkWin(board, playerId, h)) {
+            	
             	applyMove(board, captures, playerId, move, false);
-                return new int[] {h*1000, x, y, move.orien};
+            	//System.out.println("Terminal move " + move);
+                return new Triple(h, move, depth);
             }
             
-            int nextPlayer = placed ? playerId : playerId % 2 + 1 ;
-            int s = depth<=1 ? h : (placed ? 1 : -1) * minimax(board, captures, nextPlayer, depth-1, -b, -a)[0];
+            //int usedDepth = move.isCompound() ? move.moves.size() : 1;
+            int nextPlayer = hasCaptured ? playerId : (3-playerId) ;
+            int s = (depth<1) ? h : (hasCaptured ? 
+            		minimax(board, captures, nextPlayer, depth-1, a, b).score : 
+            		-minimax(board, captures, nextPlayer, depth-1, -b, -a).score);
             
-            if(s > score || moveX == -1) {
+            if (s == 0) {
+            	//System.out.println("Score is 0 at depth " + depth);
+            }
+            
+        	/*if (depth < 10) {
+            	String dept = "";
+        		for (int i = 0 ; i < 9-depth; i++) {
+            		dept += "    ";
+            	}
+        		System.out.println(dept + s + " MOVE: " + move + " : " + move.prio + " [" + captures[0] + ", " + captures[1] + "]");
+        	}*/
+  
+            
+            if(s > score || bestMove == null ) {
                 score = s;
-                moveX = x;
-                moveY = y;
-                moveSide = side;
+                bestMove = move;
                 a = score > a ? score : a;
             }
             
             // undo move
             applyMove(board, captures, playerId, move, false);
+            
+            /*if (depth > 1 && moves.size() == 1) {
+            	System.out.println("Uh oh stinky at depth " + depth);
+            	printBoard(board);
+            }*/
+            
             if(a >= b) break;
             
             iters++;
-            if (iters >=  beamFactor) break; 
-            
+            if (iters >= beamFactor*2) break; 
         }
                 
-        return new int[] {score, moveX, moveY, moveSide};
+        return new Triple(score, bestMove, depth);
     }
 	
     /**
@@ -164,7 +196,7 @@ public class TipDots2 implements Player<DotsAndBoxes>{
     	//int heur = heuristic(captures, playerId);
     	ArrayList<Move> moves = getMoves(board);
     	// TRUE if the margin in PLAYERS favour is positive and there are no more moves.
-    	return (heur > 0 && moves.size() == 0);
+    	return (heur >= 0 && moves.size() == 0);
     }
 
     /**
@@ -190,37 +222,96 @@ public class TipDots2 implements Player<DotsAndBoxes>{
     private boolean applyMove(int[][] board, int[] captures, int playerId, Move move, boolean placing) {
     	
     	int width = board.length, height = board[0].length;
-    	boolean captured = false;
-    	Move move2 = new Move(move.x, move.y, move.orien, move.prio);
-
-    	if (move.orien == 2) { // right
-    		if (move.x + 1 < height) { move2.x++; move2.orien = 8; } else move2 = null;
-    	} else if (move.orien == 1) { // top
-    		if (move.y + 1 < width) { move2.y++; move2.orien = 4; } else move2 = null;
-    	} else if (move.orien == 8) { // left
-    		if (move.x - 1 >= 0) { move2.x--; move2.orien = 2; } else move2 = null;
-    	} else if (move.orien == 4) { // bottom
-    		if (move.y - 1 >= 0) { move2.y--; move2.orien = 1; }else move2 = null;
-    	}
+    	boolean captured = false, lastMove = true;
+    	int iters = 0;
     	
-    	board[move.x][move.y] += placing ? move.orien : 0 ; 
-    	if (board[move.x][move.y] == 15) {
-    		captured = true;
-    		captures[playerId - 1] += placing ? 1 : -1;
-    	}
-    	board[move.x][move.y] += placing ? 0 : -move.orien ; 
+    	//ArrayList<Move> toExecute = new ArrayList<Move>();
     	
-    	if (move2 != null) {
-        	board[move2.x][move2.y] += placing ? move2.orien : 0 ; 
-        	if (board[move2.x][move2.y] == 15) {
-        		captured = true;
-        		captures[playerId - 1] += placing ? 1 : -1;
-        	}
-        	board[move2.x][move2.y] += placing ? 0 : -move2.orien ; 
-        }
+    	//if (moveInput.isCompound()) {
+    	//	toExecute.addAll(moveInput.moves);
+    	//	if (placing == false) Collections.reverse(toExecute);
+    	//} else {
+    		//toExecute.add(moveInput);
+    	//}
+    	
+    	//for (Move move : toExecute) {
+	    	Move move2 = new Move(move.x, move.y, move.orien, move.prio);
+	
+	    	if (move.orien == 2) { // right
+	    		if (move.x + 1 < width) { move2.x++; move2.orien = 8; } else move2 = null;
+	    	} else if (move.orien == 1) { // top
+	    		if (move.y + 1 < height) { move2.y++; move2.orien = 4; } else move2 = null;
+	    	} else if (move.orien == 8) { // left
+	    		if (move.x - 1 >= 0) { move2.x--; move2.orien = 2; } else move2 = null;
+	    	} else if (move.orien == 4) { // bottom
+	    		if (move.y - 1 >= 0) { move2.y--; move2.orien = 1; } else move2 = null;
+	    	}
+	    	
+	    	board[move.x][move.y] += placing ? move.orien : 0 ; 
+	    	if (board[move.x][move.y] == 15) {
+	    		captured = true && lastMove;
+	    		captures[playerId - 1] += placing ? 1 : -1;
+	    	}
+	    	board[move.x][move.y] += placing ? 0 : -move.orien ; 
+	    	
+	    	if (move2 != null) {
+	        	board[move2.x][move2.y] += placing ? move2.orien : 0 ; 
+	        	if (board[move2.x][move2.y] == 15) {
+	        		captured = true && lastMove;
+	        		captures[playerId - 1] += placing ? 1 : -1;
+	        	}
+	        	board[move2.x][move2.y] += placing ? 0 : -move2.orien ; 
+	        }
+	    	
+	    	//iters++;
+	    	//if (iters == toExecute.size() - 1) lastMove = true;
+    	//}
     	
     	return captured;
     }
+    
+    private ArrayList<Move> getCompoundMoves(int[][] board, Move seedMove) {
+
+    	ArrayList<Move> outputMoves = new ArrayList<Move>();
+    	Move compoundMove = new Move(seedMove);
+    	compoundMove.addMove(seedMove);
+    	int cX = seedMove.x, cY = seedMove.y, cSide = seedMove.orien;
+    	
+    	do {
+	    	if (cSide == 2) { // right
+	    		if (cX + 1 < width) { cX++; } else break;
+	    	} else if (cSide == 1) { // top
+	    		if (cY + 1 < height) { cY++; } else break;
+	    	} else if (cSide == 8) { // left
+	    		if (cX - 1 >= 0) { cX--;} else break;
+	    	} else if (cSide == 4) { // bottom
+	    		if (cY - 1 >= 0) { cY--; } else break;
+	    	}
+	    	
+	    	if (cX < 0 || cY < 0) System.out.println(cX + " ,  " + cY);
+	    	if (getSides(board[cX][cY]) == 2) {
+	    		int cSideD = cSide >= 4 ? (cSide / 4) : (cSide * 4);
+	    		cSide = 15 - board[cX][cY] - cSideD;
+	    		compoundMove.addMove(new Move(cX, cY, cSide, seedMove.prio));
+	    	}
+	    	
+    	} while (getSides(board[cX][cY]) == 2);
+
+    	// once ended, if length >= 2, clone and remove second last move. 
+    	if (compoundMove.isCompound() && compoundMove.moves.size() >= 2) {
+    		Move compoundMove2 = new Move();
+    		compoundMove2.addMove(compoundMove);
+    		compoundMove2.moves.remove(compoundMove.moves.size() - 2);
+    		
+    		outputMoves.add(compoundMove);
+    		outputMoves.add(compoundMove2);
+    	} else {
+    		outputMoves.add(seedMove);
+    	}
+    	
+    	return outputMoves;
+    }
+
     
     /**
      * Gets a list of all valid moves for the current board state. Zero moves means that the game is finished.
@@ -232,6 +323,7 @@ public class TipDots2 implements Player<DotsAndBoxes>{
     private ArrayList<Move> getMoves(int[][] board) {
     	
 		ArrayList<Move> valid = new ArrayList<Move>();
+		ArrayList<Move> caps = new ArrayList<Move>();
         int width = board.length;
         int height = board[0].length;
 		
@@ -242,21 +334,65 @@ public class TipDots2 implements Player<DotsAndBoxes>{
 			for (int y = 0 ; y < height; y++) {
 				int sideSum = 15-board[x][y];	
 				
-				boolean twin = board[x][y] == 3 || board[x][y] == 5 || board[x][y] == 9 || board[x][y] == 6 || board[x][y] == 10 || board[x][y] == 12;
-				boolean single = board[x][y] == 1 || board[x][y] == 2 || board[x][y] == 4 || board[x][y] == 8;
-				boolean cap = board[x][y] == 14 ||  board[x][y] == 13 ||  board[x][y] == 11 ||  board[x][y] == 7;
-				
+				int numSides = getSides(board[x][y]);
+				boolean twin = numSides == 2;
+				boolean single = numSides == 1;
+				boolean cap = numSides == 3;
+								
 				for (int ii = 0 ; ii < sideLimit; ii++) {
+						
 					if (sideSum - sides[ii] >= 0) {
-						valid.add(new Move(x, y, sides[ii], cap ? 4 : (single ? 1 : twin ? -1 : 0)));
+						
+
+						Move move = new Move(x, y, sides[ii], cap ? 4 : (single ? 1 : (twin ? -1 : 0)));
+						if (cap) {
+							caps.add(move);
+						} else {
+							valid.add(move);
+						}
+
 						sideSum -= sides[ii];
 					}
 				}
 			}
     	}
     	
+    	// Compound move shenanigans 
+    	
+    	// If there are at least one 3 move, remove all 2 moves, 
+    	if (caps.size() > 0) {
+    		//valid.removeIf(n -> n.prio == -1);
+    		
+    		//for (Move capture : caps) {
+    		//	valid.addAll(getCompoundMoves(board, capture));
+    		//}
+    	}
+
+    	valid.addAll(caps);
+    	
     	valid.sort(movePriorityComparator);
 		return valid;
+    }
+    
+    private int getSides(int cell) {
+    	if (cell == 0) return 0;
+		boolean single = cell == 1 || cell == 2 || cell == 4 || cell == 8;
+    	boolean twin = cell == 3 || cell == 5 || cell == 9 || cell == 6 || cell == 10 || cell == 12;
+		boolean triple = cell == 14 || cell == 13 || cell == 11 || cell == 7;
+		boolean captured = cell == 15;
+		
+		return single ? 1 : (twin ? 2 : (triple ? 3 : (captured ? 4 : 0)));
+    }
+    
+    private void printBoard(int[][] board) {
+    	int width = board.length, height = board[0].length;
+    	
+    	for (int y = height - 1; y >= 0 ; y--) {
+    		for (int x = 0 ; x < width; x++) {
+    			System.out.print(board[x][y] + ", ");
+    		}
+    		System.out.println("; ");
+    	}
     }
     
     /**
@@ -265,8 +401,7 @@ public class TipDots2 implements Player<DotsAndBoxes>{
 	public final Comparator<Move> movePriorityComparator = new Comparator<Move>() {         
 		@Override         
 		public int compare(Move m1, Move m2) {             
-			return (m2.prio < m1.prio ? -1 :                     
-				(m2.prio == m1.prio ? 0 : 1));           
+			return (m2.prio < m1.prio ? -1 : (m2.prio == m1.prio ? 0 : 1));           
 		}     
 	}; 
     
@@ -319,12 +454,33 @@ public class TipDots2 implements Player<DotsAndBoxes>{
     @Override
     public String getName() { return "TipTacos's Dots and Boxes MCTS"; }
 	
+    class Triple {
+    	Move move;
+    	int score;
+    	int depth;
+    	
+    	public Triple(int score, Move move) {
+    		this(score, move, -1);
+    	}
+    	
+    	public Triple(int score, Move move, int depth) {
+    		this.score = score;
+    		this.move = move;
+    		this.depth = depth;
+    	}
+    }
+    
     class Move {
     	
-    	int x = 0, y = 0, orien = 0;
-    	int prio = 0;
+    	ArrayList<Move> moves = new ArrayList<Move>();
+    	int x = -1, y = -1, orien = -1, prio = 0;
     	
     	public Move() {}
+    	
+    	public Move(Move move) {
+    		moves.addAll(move.moves);
+    		this.prio = 10;
+    	}
     	
     	public Move (int x, int y, int orien) {
     		this.x = x;
@@ -336,5 +492,17 @@ public class TipDots2 implements Player<DotsAndBoxes>{
     		this(x, y, orien);
     		this.prio = prio;
     	}
+    	
+    	public void addMove(Move move) {
+    		if (move.moves.size() == 0) {
+    			moves.add(move);
+    		} else {
+    			moves.addAll(move.moves);
+    		}
+    	}
+    	
+    	public boolean isCompound() { return moves.size() > 0; }
+    	
+    	public String toString() { return "Move (" + x + ", " + y + ", " + orien + ")" ; }
     }
 }
