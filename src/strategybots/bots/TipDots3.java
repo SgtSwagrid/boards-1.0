@@ -36,6 +36,11 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 		this.time = millis;
 	}
 	
+	public TipDots3(long millis, int beam) {
+		this(millis);
+		this.beamFactor = beam;
+	}
+	
 	@Override
 	public void takeTurn(DotsAndBoxes game, int playerId) {
 
@@ -72,7 +77,11 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 		printStats(score, playerId, bestEdge, depth, start);
 	}
 	
-	
+	/**
+	 * Take an edge and play an appropriate move according to the current game state
+	 * @param game The game object	
+	 * @param edge The edge that is to be played
+	 */
 	private void playMove(DotsAndBoxes game, Edge edge) {
 		
 		int width = game.getWidth(), height = game.getHeight();
@@ -106,6 +115,13 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 		game.drawLine(side, v0.x, v0.y);
 	}
 	
+	/**
+	 * Take in a game object and return a board representation as a graph of nodes with connected edges
+	 * Each of the edges in the list represents a valid move.
+	 * @param game The game object
+	 * @param playerId The playerId that is this bot
+	 * @return Board object
+	 */
 	private Board getGraph(DotsAndBoxes game, int playerId) {
 		
 		Board board = new Board();
@@ -139,10 +155,26 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 		return board;
 	}
 	
+	/**
+	 * Return a new Side object that links the two vertexes as specified by the two pairs of coordinates
+	 * @param verts The complete set of vertexes in the graph.
+	 * @param x0 
+	 * @param y0
+	 * @param x1
+	 * @param y1
+	 * @return A new edge object.
+	 */
 	private Edge makeSide(Set<Vertex> verts, int x0, int y0, int x1, int y1) {
 		return new Edge(getVertex(verts, x0, y0), getVertex(verts, x1, y1));
 	}
 	
+	/**
+	 * Return a vertex with the matching x and y coordinates.
+	 * @param verts The complete set of vertexes in the graph.
+	 * @param x
+	 * @param y
+	 * @return Vertex matching the (x,y) or null if none is found.
+	 */
 	private Vertex getVertex(Set<Vertex> verts, int x, int y) {
 		
 		Vertex found = null;
@@ -157,6 +189,18 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 		return found;
 	}
 	
+	/**
+	 * Negamax implementation that has alpha-beta pruning, and the option to take multiple turns as the same player.
+	 * This is a recursive function with a depth limit as specified in the parameter 
+	 * @param verts The set of vertexes in graph.
+	 * @param edges The list of edges in the current state.
+	 * @param captures The current square captured.
+	 * @param playerId The player to maximize for.
+	 * @param depth Depth limit from here onward.
+	 * @param alpha
+	 * @param beta
+	 * @return A set of values corresponding to Score, Best Move, and depth.
+	 */
 	private Triple negamax(Set<Vertex> verts, List<Edge> edges, int[] captures, int playerId, int depth, int alpha, int beta) {
 		
 		int score = 0, iters = 0, index = 0;
@@ -216,6 +260,13 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 		return new Triple(score, bestEdge, depth);
 	}
     
+	/**
+	 * Successor function 
+	 * @param edge A move to make and to update.
+	 * @param captures An array for the two players' scores.
+	 * @param playerId The player who is capturing. 
+	 * @return
+	 */
 	private boolean successor(Edge edge, int[] captures, int playerId) {
 		
 		Vertex v0 = edge.getV0(), v1 = edge.getV1();
@@ -240,6 +291,13 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 		return capture;
 	}
 	
+	/**
+	 * Predecessor function 
+	 * @param edge A move to make and to update.
+	 * @param captures An array for the two players' scores.
+	 * @param playerId The player who is capturing. 
+	 * @return
+	 */
 	private void predecessor(Edge edge, int[] captures, int playerId) {
 		Vertex v0 = edge.getV0(), v1 = edge.getV1();
 		
@@ -258,6 +316,12 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 		}
 	}
 	
+	/**
+	 * Heuristic function that calculates the win margin corresponding to the given player
+	 * @param captures The array of scores for both players
+	 * @param playerId The player to calculate the margin for.
+	 * @return An integer margin value. A positive value indicates that the player specified is winning.
+	 */
 	private int heuristic(int[] captures, int playerId) {	
 		return captures[playerId-1] - captures[(3-playerId) - 1];
 	}
@@ -277,14 +341,12 @@ public class TipDots3 implements Player<DotsAndBoxes>{
         
         System.out.println("=======================");
         System.out.println("Tiptaco's Dots Bot 3 Statistics:");
-        System.out.println("Player:      " + playerId
-                + " ("+(playerId==1?"Blue":"Red")+")");
+        System.out.println("Player:      " + playerId + " ("+(playerId==1?"Blue":"Red")+")");
         System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + score);
-        System.out.println("Edge:    (" + ee);
+        System.out.println("Edge:    	(" + ee);
         System.out.println("Depth:       " + depth);
-        System.out.println("Time:        "
-                + (System.currentTimeMillis() - start) + "ms");
+        System.out.println("Time:        "  + (System.currentTimeMillis() - start) + "ms");
     }
 
 	private int[] getScores(DotsAndBoxes game) {
@@ -318,7 +380,6 @@ public class TipDots3 implements Player<DotsAndBoxes>{
     	public List<Edge> getEdges() { return edges; }
     	
     	public Set<Vertex> getVerts() { return verts; }
-
     }
     
     class Triple {
@@ -394,7 +455,7 @@ public class TipDots3 implements Player<DotsAndBoxes>{
     	public Edge(Vertex v0, Vertex v1) {
     		this.v0 = v0;
     		this.v1 = v1;
-    		if (v0 == null || v1 == null) { System.out.println("WRONGF"); }
+    		if (v0 == null || v1 == null) { System.out.println("WRONG"); }
     	}
     	
     	public Vertex getOther(Vertex vIn) {
