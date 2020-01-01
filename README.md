@@ -9,6 +9,8 @@ This repository is an ongoing project featuring:
   <img src="/img/Reversi.PNG" width="200" />
 </p>
 
+For some unfortunate reason, most AI courses don't incorporate game bot tournaments into their curricula. If anybody wants to do something about fixing this, we'd be more than happy to get involved.
+
 ### Featured bots:
 #### Connect Four:
 * SwagC4 (negamax + alpha-beta + heuristic)
