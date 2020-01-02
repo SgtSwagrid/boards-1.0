@@ -22,7 +22,6 @@ public class TipOthello implements Player<Reversi>{
 	private int globalSims = 0;
 	private static float learningRate = 1.41f;
 	private static int branch = 64;
-	private static int bottomIterations = Runtime.getRuntime().availableProcessors()/2;
 	
     private Node root = null;
 	
@@ -71,9 +70,8 @@ public class TipOthello implements Player<Reversi>{
 
 			Node leaf = treePolicy(root);
 			
-			int[] result = defaultPolicy(leaf);
+			int[] result = defaultPolicyMulti(leaf);
 			leaf.visited = true;
-			globalSims++;
 			
 			backup(leaf, result);
 		}
@@ -86,31 +84,44 @@ public class TipOthello implements Player<Reversi>{
 		
 		Node node = nodeIn;
 		
-		while (generateTerminal(node) == -1) {
-			
-			start:
-			
-			if (node.hasUnexploredChildren()) {
-				
-				//System.out.println(node.pieces[0] + ", " + node.pieces[1]);
-				Node temp = expand(node);
-				if (temp == null) System.out.println("we got him boys");
-				return temp;
-				
-			} else {
-				
-				if (node.children.size() == 0) {
-					node.player = 3-node.player;
-					node.populateChildren();
+		if (node != null) {
+			while (generateTerminal(node) == -1) {
+							
+				if (node.hasUnexploredChildren()) {
 					
-					if (node.children.size() == 0) return node; else continue;
-				}
-				
-				Node temp = bestChildUTC(node);
-				if (temp == null) System.out.println("better luck next time");
-				node = temp;
-			}
+					//System.out.println(node.pieces[0] + ", " + node.pieces[1]);
+					Node temp = expand(node);
+					if (temp == null) System.out.println("we got him boys");
+					return temp;
+					
+				} else {
+					
+					// This is some hacky workaround for a problem I dont understand
+					if (node.children.size() == 0) {
 						
+						// Swap Players
+						if (!node.subTerminal) {
+							Node flipChild = new Node(node.getBoard(), 3-node.player, node.move);
+							flipChild.pieces[0] = node.pieces[0];
+							flipChild.pieces[1] = node.pieces[1];
+							flipChild.subTerminal = true;
+							node.children.add(flipChild);
+						} else { 
+							node.terminal = node.pieces[0] > node.pieces[1] ? 1 : (node.pieces[0] == node.pieces[1] ? 0 : 2);
+						}
+
+					}
+					
+					Node temp = bestChildUTC(node);
+					if (temp == null) {
+						//System.out.println("better luck next time");
+						//System.out.println(node.pieces[0] + " , " + node.pieces[1]);
+						return node;
+					}
+					node = temp;
+				}
+							
+			}
 		}
 		
 		return node;
@@ -153,57 +164,64 @@ public class TipOthello implements Player<Reversi>{
 		return bestChild;
 	}
 	
+	private int[] defaultPolicyMulti(Node leafIn) {
+		int[] reward = new int[4];
+		
+		int player = 3-leafIn.player;
+		ArrayList<Vec2> moves = getValidPositions(leafIn.getBoard(), player);
+		reward[3] = moves.size();
+		
+		Integer multiResult = moves
+	    		.parallelStream()
+	    		.map(x -> defaultPolicy(leafIn, x))	
+	    		.reduce(0, (r1, r2) -> r1 + r2);
+	    	
+    	reward[1] = multiResult % (branch+1);
+    	reward[2] = multiResult / (branch+1);
+    	
+    	reward[0] = reward[3] - reward[1] - reward[2];
+    	
+    	globalSims += reward[3];
+		
+		return reward;
+		
+	}
+	
 	// Done
-	private int[] defaultPolicy(Node leafIn) {
+	private int defaultPolicy(Node leafIn, Vec2 move) {
 		
 		Node leaf = new Node(leafIn.getBoard(), leafIn.player, leafIn.move);
 		
-		int[] reward = new int[4];
+		int reward = 0;
 
-		reward[3] = 1; //moves.size();
-		
-		// TODO: Multithread this later
 		int terminal = generateTerminal(leaf);
 				
 		while (terminal == -1) {
-			
-			//System.out.println("Leaf check rollout " + leaf.pieces[0] + " , " + leaf.pieces[1]);
-			
+						
 			int player = 3-leaf.player;
-			ArrayList<Vec2> moves = getValidPositions(leaf.getBoard(), player);
-			if (moves.size() > 0) {
-				Vec2 move = moves.get(rand.nextInt(moves.size()));
-			
-				if (move != null) {
-					
-					Set<Vec2> toFlip = getFlipped(leaf.getBoard(), player, move);
-					
-					leaf.getBoard()[move.x][move.y] = player;
-		    		leaf.pieces[player-1]++;
-		    		
-		    		for (Vec2 stone : toFlip) {
-		    			leaf.getBoard()[stone.x][stone.y] = player;
-		    			leaf.pieces[player-1]++;
-		    			leaf.pieces[(3-player)-1]--;
-		    		}	
-	
-				}
+		
+			if (move != null) {
+				
+				Set<Vec2> toFlip = getFlipped(leaf.getBoard(), player, move);
+				
+				leaf.getBoard()[move.x][move.y] = player;
+	    		leaf.pieces[player-1]++;
+	    		
+	    		for (Vec2 stone : toFlip) {
+	    			leaf.getBoard()[stone.x][stone.y] = player;
+	    			leaf.pieces[player-1]++;
+	    			leaf.pieces[(3-player)-1]--;
+	    		}	
+
 			}
-			
+
 			leaf.player = player;
 	    	terminal = generateTerminal(leaf);
-	    		    	
-	    	/*if (iters > 74) {
-	    		terminal = 0;
-	    		System.out.println("over 74 break");
-	    		break;
-	    	}*/
 	    	
 		}
 		
-		if (terminal == 0) reward[0]++;
-    	if (terminal == 1) reward[1] += 1;
-    	if (terminal == 2) reward[2] += 1;
+    	if (terminal == 1) reward += 1;
+    	if (terminal == 2) reward += (branch+1);
 
 		return reward;
 	}
@@ -220,55 +238,6 @@ public class TipOthello implements Player<Reversi>{
 			child = child.parent;
 		} while (child != null);
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	// Use MCTS to find the bets move
-	private Vec2 bestMove(int[][] board, int playerId) {
-        
-        long start = System.currentTimeMillis();
-        
-        globalSims = 0;
-        
-       /*if (root == null) {
-        	root = new Node(board, 3-playerId, 0, 0);
-        } else {
-        	System.out.println(root);
-        	rebaseTree(root, board);
-        	globalSims = root.sims;
-        	System.out.println(root);
-        }*/
-        
-    	root = new Node(board, 3-playerId, 0, 0);
-        root.populateChildren();
-        System.out.println(root.children.size());
-        
-        while (System.currentTimeMillis()-start < time) { 
-        	// Do one iteration while we still have time
-        	MCTS_rec(root, 0);
-        }
-
-        System.out.println("Generated " + root.children.size() + " root's children");
-        for (Node child : root.children) {
-        	if (child == null) {
-        		System.out.println("Root's Child is null");
-        	} else {
-        		System.out.println("Root's Child has [" + child.wins[1] + " / " + child.wins[2] + "] of " + child.sims);
-        	}
-        }
-        
-        Node bestChild = bestChild(root);
-        Vec2 move = bestChild.move;
-        
-        return move;
-    }
 	
     // Get the bets child based on Wins / Sims
     private Node bestChild(Node root) {
@@ -291,178 +260,6 @@ public class TipOthello implements Player<Reversi>{
     	
     	return maxChild;
     }
-	
-    // begin MCTS
-    public int[] MCTS_rec(Node subroot, int depth) {
-    	
-    	int[] newWins = new int[] {0, 0, 0, 1}; 
-    	
-    	if (subroot == null) { return newWins; }
-    	
-    	if (subroot.terminal != -1) {
-    		
-    		newWins[0] += (subroot.terminal == 0 ? 1 : 0);
-    		newWins[1] += (subroot.terminal == 1 ? 1 : 0);
-    		newWins[2] += (subroot.terminal == 2 ? 1 : 0);
-    		
-    		subroot.sims += newWins[3];
-        	subroot.updateWins(newWins);
-    		
-    		return newWins;
-    	}
-    	
-    	if (subroot.hasUnexploredChildren()) {
-    		// Select rand child
-    		Node randChild = subroot.getRandomChild();
-    		
-    		if (randChild.terminal == -1) {
-    		
-	    		// Rollout child
-	    		newWins = rollout(randChild);
-	    		
-	    		// Generate children of node
-	    		randChild.populateChildren();
-	    		
-	    		randChild.visited = true;
-	    		
-	    		randChild.sims += newWins[3];
-	    		randChild.updateWins(newWins);
-	    		
-    		} else {
-    			
-        		newWins[0] += (randChild.terminal == 0 ? 1 : 0);
-        		newWins[1] += (randChild.terminal == 1 ? 1 : 0);
-        		newWins[2] += (randChild.terminal == 2 ? 1 : 0);
-        		
-        		randChild.sims += newWins[3];
-        		randChild.updateWins(newWins);
-        		
-    		}
-    		
-    	} else { // No unexpored, pick by value
-    		Node selected = selectNode(subroot);
-      		newWins = MCTS_rec(selected, depth + 1);
-    	}
-    	
-    	subroot.sims += newWins[3];
-    	subroot.updateWins(newWins);
-    	
-		return newWins;
-		
-    }
-    
-    // Select the best node from the subroot's list of children
-    private Node selectNode(Node subroot) {
-    	
-    	Node maxChild = null; 
-    	float maxChildValue = 0.0f;
-    	
-    	for (Node child : subroot.getChildren()) {
-			if (child.score() > maxChildValue) {
-				maxChild = child;
-				maxChildValue = child.score();
-			}
-    	}
-
-    	return maxChild;
-    }
-    
-    public int[] rollout(Node child) {
-    	
-    	// TODO add multiple rollouts
-    	ArrayList<Vec2> moves = getValidPositions(child.getBoard(), 3-child.player);
-    	
-    	int[] results = new int[] {0, 0, 0, 0};
-    	
-    	results[3] = moves.size();
-    	
-    	// new code
-    	ArrayList<Node> childTemps = new ArrayList<Node>();
-    	
-    	for (int ii = 0 ; ii < Math.min(moves.size(), bottomIterations); ii++) {
-    		
-    		Vec2 move = moves.remove(rand.nextInt(moves.size()));
-    		Node tempChild = generateChild(child, move);
-    		childTemps.add(tempChild);
-    		
-    	}
-    	
-    	Integer result = childTemps
-    		.parallelStream()
-    		.map(this::moveResult)	
-    		.reduce(0, (r1, r2) -> r1 + r2);
-    	
-    	results[1] = result % (branch+1);
-    	results[2] = result / (branch+1);
-    	
-    	results[0] = results[3] - results[1] - results[2];
-    	
-    	globalSims += results[3];
-    	
-    	return results;
-    	
-    }
-    
-	private Vec2 getRandomMove(int[][] board, int player) {
-		
-		ArrayList<Vec2> moves = getValidPositions(board, player);
-				
-		if (moves.size() > 0) {
-			int index = rand.nextInt(moves.size());
-			return moves.get(index);
-		} else {
-			return null;
-		}
-	}
-    
-    // Returns 0 for draw, 1 for win 1, and b+1 for win 2
-    private Integer moveResult(Node tempNode) {
-    	Integer result = 0;
-    	
-    	int playerMove = tempNode.player;
-    	Vec2 move = new Vec2();
-    	// Check if the opposition has just placed a winning piece and the board is not Full
-    	// 0 = full and draw, -1 = not terminal, 1 is player 1 win, 2 is player2
-    	int terminal = generateTerminal(tempNode);
-    	
-    	
-    	// Continue until someone wins
-    	while (terminal == -1) {
-    		
-    		//System.out.println("Not terminal " + tempNode.pieces[0] + " , " + tempNode.pieces[1] + " , " + playerMove);
-    		// Starting at the base child node, select a move and update the playerID and last position as well as board
-    		playerMove = 3 - tempNode.player;
-    		move = getRandomMove(tempNode.getBoard(), playerMove);
-    		
-    		// do move and swap PlayerID
-    		if (move != null) {
-	    		// Board will now have been deepCopied, we can edit in place.
-	    		Set<Vec2> toFlip = getFlipped(tempNode.getBoard(), playerMove, move);
-	    		
-	    		tempNode.getBoard()[move.x][move.y] = playerMove;
-	    		tempNode.pieces[playerMove-1]++;
-	    		
-	    		for (Vec2 stone : toFlip) {
-	    			tempNode.getBoard()[stone.x][stone.y] = playerMove;
-	    			tempNode.pieces[playerMove-1]++;
-	    			tempNode.pieces[(3-playerMove)-1]--;
-	    		}
-	    		
-    		}
-
-    		tempNode.player = playerMove;
-    		terminal = generateTerminal(tempNode);
-
-    	}
-    	//System.out.println("Terminal");
-    	
-    	// Check if the last valid move in the rollout was ours, and a win
-    	if (terminal == 1) result += 1;
-    	if (terminal == 2) result += (branch+1);
-    	
-    	return result;
-    }
-    
     
     
 	private ArrayList<Vec2> getValidPositions(int[][] board, int player) {
@@ -674,12 +471,11 @@ public class TipOthello implements Player<Reversi>{
 		private int player;
 		private int[] pieces = new int[] {2, 2};
 		private int terminal = -1;
+		private boolean subTerminal = false;
 		
 		public Node(Node parent, int[][] board, int player, int x, int y) {
 			
 			this(board, player, x, y);
-			//this.pieces[0] = parent.pieces[0];
-			//this.pieces[1] = parent.pieces[1];
 			recount();
 		}
 		
@@ -687,8 +483,6 @@ public class TipOthello implements Player<Reversi>{
 			
 			this(board, player, move);
 			this.parent = parent;
-			//this.pieces[0] = parent.pieces[0];
-			//this.pieces[1] = parent.pieces[1];
 			recount();
 		}
 		
@@ -732,7 +526,7 @@ public class TipOthello implements Player<Reversi>{
 			
 		}
 		
-		// If there is at least one unexplored child. TODO make this a stored value
+		// If there is at least one unexplored child.
 		public boolean hasUnexploredChildren() {
 			
 			return getUnexploredChildren().size() > 0;
@@ -744,7 +538,6 @@ public class TipOthello implements Player<Reversi>{
 			for (int ii = 0; ii < 3; ii++) {
 				//System.out.print("chnaged from " + wins[ii]);
 				wins[ii] += newWins[ii];
-				//System.out.println(" to " + wins[ii]);
 			}
 			
 		}
