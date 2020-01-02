@@ -58,7 +58,7 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 		Board board = getGraph(game, playerId);
 		int[] scores = getScores(game);
 
-		Edge bestEdge = null;
+		ArrayList<Edge> bestEdges = null;
 		int depth = 1, score = 0;
 		maxDepth = board.getEdges().size();
 		
@@ -67,14 +67,14 @@ public class TipDots3 implements Player<DotsAndBoxes>{
         	
         	Triple result = negamax(board.verts, board.edges, scores, playerId, depth, -Integer.MAX_VALUE, Integer.MAX_VALUE);
         	score = result.score;
-        	bestEdge = result.edge;
+        	bestEdges = result.edges;
         	
         	if(System.currentTimeMillis()-start > time) break;
         }
 
         // Execute the best move and then display stats about this turn
-		playMove(game, bestEdge);
-		printStats(score, playerId, bestEdge, depth, start);
+		playMove(game, bestEdges);
+		printStats(score, playerId, bestEdges, depth, start);
 	}
 	
 	/**
@@ -82,37 +82,41 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 	 * @param game The game object	
 	 * @param edge The edge that is to be played
 	 */
-	private void playMove(DotsAndBoxes game, Edge edge) {
+	private void playMove(DotsAndBoxes game, ArrayList<Edge> edges) {
 		
 		int width = game.getWidth(), height = game.getHeight();
-		Vertex v0 = edge.getV0(), v1 = edge.getV1();
 		Side side = Side.TOP;
 		
-		if (v0 != v1) {  // Nodes aren't the same, can infer direction
-			if (v0.x == v1.x) {
-				if (v0.y < v1.y)  side = Side.TOP;  else  side = Side.BOTTOM; 
-			} else if (v0.y == v1.y) {
-				if (v0.x < v1.x)  side = Side.RIGHT;  else  side = Side.LEFT;
-			}
-		} else { // Nodes are the same, so this is an edge piece
-			
-			if (v0.x == 0 && v0.y == 0) {
-				if (game.hasLine(Side.BOTTOM, v0.x, v0.y))  side = Side.LEFT;  else  side = Side.BOTTOM;
-			} else if (v0.x == width-1 && v0.y == 0) {
-				if (game.hasLine(Side.BOTTOM, v0.x, v0.y)) side = Side.RIGHT;  else side = Side.BOTTOM;
-			} else if (v0.x == width-1 && v0.y == height-1) { 
-				if (game.hasLine(Side.TOP, v0.x, v0.y)) side = Side.RIGHT; else side = Side.TOP;
-			} else if (v0.x == 0 && v0.y == height-1) {
-				if (game.hasLine(Side.TOP, v0.x, v0.y)) side = Side.LEFT; else side = Side.TOP;
-			} else {
-				if (v0.x == 0)  side = Side.LEFT;
-				if (v0.x == width-1)  side = Side.RIGHT;
-				if (v0.y == 0)  side = Side.BOTTOM;
-				if (v0.y == height-1)  side = Side.TOP;
-			}
-		}
+		for (Edge edge : edges) {
 		
-		game.drawLine(side, v0.x, v0.y);
+			Vertex v0 = edge.getV0(), v1 = edge.getV1();
+
+			if (v0 != v1) {  // Nodes aren't the same, can infer direction
+				if (v0.x == v1.x) {
+					if (v0.y < v1.y)  side = Side.TOP;  else  side = Side.BOTTOM; 
+				} else if (v0.y == v1.y) {
+					if (v0.x < v1.x)  side = Side.RIGHT;  else  side = Side.LEFT;
+				}
+			} else { // Nodes are the same, so this is an edge piece
+				
+				if (v0.x == 0 && v0.y == 0) {
+					if (game.hasLine(Side.BOTTOM, v0.x, v0.y))  side = Side.LEFT;  else  side = Side.BOTTOM;
+				} else if (v0.x == width-1 && v0.y == 0) {
+					if (game.hasLine(Side.BOTTOM, v0.x, v0.y)) side = Side.RIGHT;  else side = Side.BOTTOM;
+				} else if (v0.x == width-1 && v0.y == height-1) { 
+					if (game.hasLine(Side.TOP, v0.x, v0.y)) side = Side.RIGHT; else side = Side.TOP;
+				} else if (v0.x == 0 && v0.y == height-1) {
+					if (game.hasLine(Side.TOP, v0.x, v0.y)) side = Side.LEFT; else side = Side.TOP;
+				} else {
+					if (v0.x == 0)  side = Side.LEFT;
+					if (v0.x == width-1)  side = Side.RIGHT;
+					if (v0.y == 0)  side = Side.BOTTOM;
+					if (v0.y == height-1)  side = Side.TOP;
+				}
+			}
+			
+			game.drawLine(side, v0.x, v0.y);
+		}
 	}
 	
 	/**
@@ -203,28 +207,39 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 	 */
 	private Triple negamax(Set<Vertex> verts, List<Edge> edges, int[] captures, int playerId, int depth, int alpha, int beta) {
 		
-		int score = 0, iters = 0, index = 0;
-		Edge bestEdge = null;
+		int score = 0, iters = 0;
+		ArrayList<Integer> indexs = new ArrayList<Integer>();
+		ArrayList<Edge> bestEdges = null;
 		
 		if (edges.size() == 1) {
 			
-			successor(edges.get(0), captures, playerId);
-			int heur = heuristic(captures, playerId);
-			predecessor(edges.get(0), captures, playerId);
+			ArrayList<Edge> container = new ArrayList<Edge>();
+			container.add(edges.get(0));
 			
-			return new Triple(heur, edges.get(0), depth);
+			successor(container, captures, playerId);
+			int heur = heuristic(captures, playerId);
+			predecessor(container, captures, playerId);
+			
+			return new Triple(heur, container, depth);
 		}
 		
 		edges.sort(prioritySort);
+		
+		ArrayList<ArrayList<Edge>> compoundMoves = generateMoves(verts, edges);
+		
 		List<Edge> copyEdges = new ArrayList<Edge>(); 
 		copyEdges.addAll(edges);
 		
-		for (Edge ee : edges ) {
+		for (ArrayList<Edge> edg : compoundMoves) { // for (Edge ee : edges ) {
 			
 			// apply the edge removal
-			boolean hasCaptured = successor(ee, captures, playerId);
-			index = copyEdges.indexOf(ee);
-			copyEdges.remove(index);
+			boolean hasCaptured = successor(edg, captures, playerId);
+			
+			for (Edge ee : edg) {
+				int index = copyEdges.indexOf(ee);
+				copyEdges.remove(index);
+				indexs.add(index);
+			}
 			
 			// Get the game score or margin at this layer
 			int heur = heuristic(captures, playerId);
@@ -239,16 +254,22 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 			}
 			
 			// Update scores or set the score to the first element when first run
-            if(s > score || bestEdge == null ) {
+            if(s > score || bestEdges == null ) {
                 score = s;
-                bestEdge = ee;
+                bestEdges = edg;
                 alpha = score > alpha ? score : alpha;
             }
             
 			// predecessor
-			predecessor(ee, captures, playerId);
-			copyEdges.add(index, ee);
-            
+			predecessor(edg, captures, playerId);
+			Collections.reverse(indexs);
+			Collections.reverse(edg);
+			for (Edge ee : edg) {
+				int index = indexs.remove(0);
+				copyEdges.add(index, ee);
+			}
+			Collections.reverse(edg);
+			
 			// Alpha Beta check
             if(alpha >= beta) break;
 
@@ -257,9 +278,81 @@ public class TipDots3 implements Player<DotsAndBoxes>{
             if (iters >= beamFactor) break;
 		}
 		
-		return new Triple(score, bestEdge, depth);
+		return new Triple(score, bestEdges, depth);
 	}
-    
+	
+	/**
+	 * Generate moves 
+	 */
+	private ArrayList<ArrayList<Edge>> generateMoves(Set<Vertex> verts, List<Edge> edges) {
+		ArrayList<ArrayList<Edge>> compoundMoves = new ArrayList<>();
+		
+		ArrayList<Edge> afterRemove = new ArrayList<Edge>();
+		afterRemove.addAll(edges);
+		
+		for (Edge ee : edges) { ee.setVisited(false); }
+		
+		for (Edge ee : edges) {
+		
+			if (ee.minDegree() == 1) {
+				ArrayList<Edge> moves = new ArrayList<Edge>();
+				ee.setVisited(true);
+				moves.add(ee);
+				afterRemove.remove(ee);
+				
+				Vertex curNode, nextNode;
+				curNode = ee.minDegreeVertex();
+				nextNode = ee.getOther(curNode);
+				
+				while (nextNode.getDegree() != 1) {
+					
+					if (nextNode.getDegree() != 2 || nextNode == curNode) break;
+					
+					for (Edge edge : nextNode.edges) {
+						System.out.println(edge + " " + edge.visited);
+					}
+					
+					Edge nextEdge = nextNode.getUnvisitedEdge();
+					nextEdge.setVisited(true);
+					moves.add(nextEdge);
+					afterRemove.remove(nextEdge);
+					
+					curNode = nextNode;
+					nextNode = nextEdge.getOther(nextNode);
+					
+				}
+				
+				compoundMoves.add(moves);
+
+				if (moves.size() > 1) {
+					ArrayList<Edge> altMoves = new ArrayList<Edge>();
+					altMoves.addAll(moves);
+					
+					if (nextNode.getDegree() == 1) {
+						if (moves.size() >= 3) {
+							
+							altMoves.remove(altMoves.size() - 1);
+							altMoves.remove(altMoves.size() - 1 - 1);
+							
+							compoundMoves.add(altMoves);
+						} 
+					} else {
+						altMoves.remove(altMoves.size() - 2);
+						compoundMoves.add(altMoves);
+					}
+				}
+			}
+		}
+		
+		for (Edge ed : afterRemove) {
+			ArrayList<Edge> moves = new ArrayList<Edge>();
+			moves.add(ed);
+			compoundMoves.add(moves);
+		}
+	
+		return compoundMoves;
+	}
+	
 	/**
 	 * Successor function 
 	 * @param edge A move to make and to update.
@@ -267,27 +360,33 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 	 * @param playerId The player who is capturing. 
 	 * @return
 	 */
-	private boolean successor(Edge edge, int[] captures, int playerId) {
+	private boolean successor(ArrayList<Edge> edges, int[] captures, int playerId) {
 		
-		Vertex v0 = edge.getV0(), v1 = edge.getV1();
+		Vertex v0, v1;
 		boolean capture = false;
 		
-		v0.removeEdge(edge);
-		if (v0.getDegree() == 0) {
-			capture = true;
-			captures[playerId-1]++;
-			v0.setOwner(playerId);
-		}
-		
-		if (v0 != v1) {
-			v1.removeEdge(edge);
-			if (v1.getDegree() == 0) {
+		for (Edge edge : edges) {
+			v0 = edge.getV0();
+			v1 = edge.getV1();
+			capture = false;
+			
+			v0.removeEdge(edge);
+			if (v0.getDegree() == 0) {
 				capture = true;
 				captures[playerId-1]++;
-				v1.setOwner(playerId);
+				v0.setOwner(playerId);
+			}
+			
+			if (v0 != v1) {
+				v1.removeEdge(edge);
+				if (v1.getDegree() == 0) {
+					capture = true;
+					captures[playerId-1]++;
+					v1.setOwner(playerId);
+				}
 			}
 		}
-		
+
 		return capture;
 	}
 	
@@ -298,21 +397,30 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 	 * @param playerId The player who is capturing. 
 	 * @return
 	 */
-	private void predecessor(Edge edge, int[] captures, int playerId) {
-		Vertex v0 = edge.getV0(), v1 = edge.getV1();
+	private void predecessor(ArrayList<Edge> edges, int[] captures, int playerId) {
+		Vertex v0, v1;
 		
-		if (v0.getDegree() == 0) {
-			v0.setOwner(0);
-			captures[playerId-1]--;
-		}
-		v0.addEdge(edge);
+		ArrayList<Edge> reverse = new ArrayList<Edge>();
+		reverse.addAll(edges);
+		Collections.reverse(reverse);
 		
-		if (v0 != v1) {
-			if (v1.getDegree() == 0) {
-				v1.setOwner(0);
+		for (Edge edge : reverse) {
+			v0 = edge.getV0();
+			v1 = edge.getV1();
+			 
+			if (v0.getDegree() == 0) {
+				v0.setOwner(0);
 				captures[playerId-1]--;
 			}
-			v1.addEdge(edge);
+			v0.addEdge(edge);
+			
+			if (v0 != v1) {
+				if (v1.getDegree() == 0) {
+					v1.setOwner(0);
+					captures[playerId-1]--;
+				}
+				v1.addEdge(edge);
+			}
 		}
 	}
 	
@@ -337,14 +445,14 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 	 * @param depth
 	 * @param start
 	 */
-    private void printStats(int score, int playerId, Edge ee, int depth, long start) {
+    private void printStats(int score, int playerId, ArrayList<Edge> ee, int depth, long start) {
         
         System.out.println("=======================");
         System.out.println("Tiptaco's Dots Bot 3 Statistics:");
         System.out.println("Player:      " + playerId + " ("+(playerId==1?"Blue":"Red")+")");
         System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + score);
-        System.out.println("Edge:    	(" + ee);
+        System.out.println("Edge:    	(" + ee.get(0));
         System.out.println("Depth:       " + depth);
         System.out.println("Time:        "  + (System.currentTimeMillis() - start) + "ms");
     }
@@ -383,16 +491,16 @@ public class TipDots3 implements Player<DotsAndBoxes>{
     }
     
     class Triple {
-    	Edge edge;
+    	ArrayList<Edge> edges;
     	int score, depth;
     	
-    	public Triple(int score, Edge edge) {
-    		this(score, edge, -1);
+    	public Triple(int score, ArrayList<Edge> edges) {
+    		this(score, edges, -1);
     	}
     	
-    	public Triple(int score, Edge edge, int depth) {
+    	public Triple(int score, ArrayList<Edge> edges, int depth) {
     		this.score = score;
-    		this.edge = edge;
+    		this.edges = edges;
     		this.depth = depth;
     	}
     }
@@ -441,6 +549,17 @@ public class TipDots3 implements Player<DotsAndBoxes>{
     		return owner;
     	}
     	
+    	public Edge getUnvisitedEdge() {
+    		
+    		for (Edge ee : edges) {
+    			if (!ee.getVisited()) {
+    				return ee;
+    			}
+    		}
+    		
+    		return null;
+    	}
+    	
     	public String toString() {
     		return "Vert (" + x + ", " + y + ")"; 
     	}
@@ -449,6 +568,7 @@ public class TipDots3 implements Player<DotsAndBoxes>{
     
     class Edge {
     	Vertex v0, v1;
+    	private boolean visited = false;
     	
     	public Edge() {}
     	
@@ -466,6 +586,18 @@ public class TipDots3 implements Player<DotsAndBoxes>{
     		return "Edge (" + v0 + " to " + v1 + ")";
     	}
     	
+    	public int minDegree() {
+    		return Math.min(v0.getDegree(), v1.getDegree());
+    	}
+    	
+    	public Vertex minDegreeVertex() {
+    		if (v0.getDegree() < v1.getDegree()) {
+    			return v0;
+    		} else {
+    			return v1;
+    		}
+    	}
+    	
     	public int getPriority() {
     		int d0 = v0.getDegree(), d1 = v1.getDegree();
     		int prio = 0;
@@ -479,5 +611,8 @@ public class TipDots3 implements Player<DotsAndBoxes>{
     	
     	public Vertex getV0() { return v0; }
     	public Vertex getV1() { return v1; }
+    	
+    	public boolean getVisited() { return visited; }
+    	public void setVisited(boolean visited) { this.visited = visited; }
     }
 }
