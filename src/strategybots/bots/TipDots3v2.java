@@ -20,23 +20,23 @@ import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Side;
 import strategybots.games.base.Game.Player;
 
-public class TipDots3 implements Player<DotsAndBoxes>{
+public class TipDots3v2 implements Player<DotsAndBoxes>{
 
 	private long time = 2000l;
 	private int maxDepth = 7;
 	private int turn = 0;
 	private int beamFactor = 10;
 	
-	public TipDots3() {
-		System.out.println("Tip's Dots and Boxes Bot 3 Loaded");
+	public TipDots3v2() {
+		System.out.println("Tip's Dots and Boxes Bot 3 v2 Loaded");
 	}
 	
-	public TipDots3(long millis) {
+	public TipDots3v2(long millis) {
 		this();
 		this.time = millis;
 	}
 	
-	public TipDots3(long millis, int beam) {
+	public TipDots3v2(long millis, int beam) {
 		this(millis);
 		this.beamFactor = beam;
 	}
@@ -249,8 +249,8 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 			
 			int s = heur;
 			if (depth != 0) {
-				s = (hasCaptured ? negamax(verts, copyEdges, captures, nextPlayer, depth-1, alpha, beta).score : 
-            		-negamax(verts, copyEdges, captures, nextPlayer, depth-1, -beta, -alpha).score);
+				s = (hasCaptured ? negamax(verts, copyEdges, captures, nextPlayer, depth-edg.size(), alpha, beta).score : 
+            		-negamax(verts, copyEdges, captures, nextPlayer, depth-edg.size(), -beta, -alpha).score);
 			}
 			
 			// Update scores or set the score to the first element when first run
@@ -308,18 +308,15 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 					
 					if (nextNode.getDegree() != 2 || nextNode == curNode) break;
 					
-					for (Edge edge : nextNode.edges) {
-						System.out.println(edge + " " + edge.visited);
-					}
-					
 					Edge nextEdge = nextNode.getUnvisitedEdge();
-					nextEdge.setVisited(true);
-					moves.add(nextEdge);
-					afterRemove.remove(nextEdge);
+					if (nextEdge != null) {
+						nextEdge.setVisited(true);
+						moves.add(nextEdge);
+						afterRemove.remove(nextEdge);
 					
-					curNode = nextNode;
-					nextNode = nextEdge.getOther(nextNode);
-					
+						curNode = nextNode;
+						nextNode = nextEdge.getOther(nextNode);
+					} else { break; }
 				}
 				
 				compoundMoves.add(moves);
@@ -448,7 +445,7 @@ public class TipDots3 implements Player<DotsAndBoxes>{
     private void printStats(int score, int playerId, ArrayList<Edge> ee, int depth, long start) {
         
         System.out.println("=======================");
-        System.out.println("Tiptaco's Dots Bot 3 Statistics:");
+        System.out.println("Tiptaco's Dots Bot 3 v2 Statistics:");
         System.out.println("Player:      " + playerId + " ("+(playerId==1?"Blue":"Red")+")");
         System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + score);
@@ -470,7 +467,7 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 	}; 
 	
 	@Override
-	public String getName() { return "TipTacos's Dots and Boxes 3 Bot"; }
+	public String getName() { return "TipTacos's Dots and Boxes 3 v2 Bot"; }
     
     class Board {
     	List<Edge> edges;
