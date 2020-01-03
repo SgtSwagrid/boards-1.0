@@ -171,7 +171,11 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	 * @return A new edge object.
 	 */
 	private Edge makeSide(Set<Vertex> verts, int x0, int y0, int x1, int y1) {
-		return new Edge(getVertex(verts, x0, y0), getVertex(verts, x1, y1));
+		Vertex v0 = getVertex(verts, x0, y0), v1 = getVertex(verts, x1, y1);
+		Edge edge = new Edge(v0, v1);
+		v0.addEdge(edge); 
+		v1.addEdge(edge);
+		return edge;
 	}
 	
 	/**
@@ -213,7 +217,6 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		List<Edge> bestEdges = null;
 				
 		if (movesLeft(edges) <= 1) {
-			System.out.println("TRIGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGER");
 			List<Edge> container = new ArrayList<Edge>();
 			container.add(edges.get(0));
 			
@@ -230,16 +233,18 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		for (List<Edge> edg : compoundMoves) { // for (Edge ee : edges ) {
 			
 			// apply the edge removal
-			System.out.println(heuristic(captures, playerId));
+			//System.out.println(heuristic(captures, playerId));
 			boolean hasCaptured = successor(edg, captures, playerId);
-			System.out.println(heuristic(captures, playerId) + " caps="+hasCaptured);
-			if (Math.abs(heuristic(captures, playerId)) > 25) System.out.println("OVERSIDE ^^");
+			//System.out.println(heuristic(captures, playerId) + " caps="+hasCaptured);
+			//if (Math.abs(heuristic(captures, playerId)) > 25) System.out.println("OVERSIDE ^^");
 			
 			// Get the game score or margin at this layer
 			int heur = heuristic(captures, playerId);
 			
 			// do minimax
 			int nextPlayer = (hasCaptured) ? playerId : (3-playerId);
+			
+			if (depth < 0) System.out.println("Illegal depth ");
 			
 			int s = (depth <= 0) ? heur : (hasCaptured ? negamax(verts, edges, captures, nextPlayer, depth-edg.size(), alpha, beta).score : 
             		-negamax(verts, edges, captures, nextPlayer, depth-edg.size(), -beta, -alpha).score);
@@ -534,10 +539,10 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     
     class Vertex {
     	private int x, y, owner;
-    	Set<Edge> edges;
+    	List<Edge> edges;
     	
     	public Vertex() {
-    		edges = new HashSet<Edge>();
+    		edges = new ArrayList<Edge>();
     	}
     	
     	public Vertex(int x, int y) {
@@ -551,7 +556,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     		edges.add(ee);
     	}
     	
-    	public Set<Edge> getEdges() {
+    	public List<Edge> getEdges() {
     		return edges;
     	}
     	

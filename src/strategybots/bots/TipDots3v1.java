@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import strategybots.bots.TipDots3v2.Edge;
+import strategybots.bots.TipDots3v2.Vertex;
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Side;
 import strategybots.games.base.Game.Player;
@@ -161,7 +163,11 @@ public class TipDots3v1 implements Player<DotsAndBoxes>{
 	 * @return A new edge object.
 	 */
 	private Edge makeSide(Set<Vertex> verts, int x0, int y0, int x1, int y1) {
-		return new Edge(getVertex(verts, x0, y0), getVertex(verts, x1, y1));
+		Vertex v0 = getVertex(verts, x0, y0), v1 = getVertex(verts, x1, y1);
+		Edge edge = new Edge(v0, v1);
+		v0.addEdge(edge); 
+		v1.addEdge(edge);
+		return edge;
 	}
 	
 	/**
