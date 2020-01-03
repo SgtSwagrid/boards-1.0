@@ -228,24 +228,19 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		}
 		
 		edges.sort(prioritySort);
-		List<List<Edge>> compoundMoves = generateMoves(verts, edges, beamFactor);
+		List<List<Edge>> compoundMoves = generateMoves(verts, edges, beamFactor*2);
 		
 		for (List<Edge> edg : compoundMoves) { // for (Edge ee : edges ) {
 			
 			// apply the edge removal
-			//System.out.println(heuristic(captures, playerId));
 			boolean hasCaptured = successor(edg, captures, playerId);
-			//System.out.println(heuristic(captures, playerId) + " caps="+hasCaptured);
-			//if (Math.abs(heuristic(captures, playerId)) > 25) System.out.println("OVERSIDE ^^");
 			
 			// Get the game score or margin at this layer
 			int heur = heuristic(captures, playerId);
 			
-			// do minimax
+			// do negamax
 			int nextPlayer = (hasCaptured) ? playerId : (3-playerId);
-			
-			if (depth < 0) System.out.println("Illegal depth ");
-			
+						
 			int s = (depth <= 0) ? heur : (hasCaptured ? negamax(verts, edges, captures, nextPlayer, depth-edg.size(), alpha, beta).score : 
             		-negamax(verts, edges, captures, nextPlayer, depth-edg.size(), -beta, -alpha).score);
 
@@ -259,13 +254,6 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
             
 			// predecessor
 			predecessor(edg, captures, playerId);
-			
-			//if (heur > 25 || heur < -25) {
-			//	System.out.println("Oversize " + edg.size());
-				//for (Edge edge : edg) {
-				//	System.out.println(edge + " mindeg=" + edge.minDegree() + " min=" + edge.minDegreeVertex());
-				//}
-			//}
 			
 			// Alpha Beta check
             if(alpha >= beta) break;
@@ -353,12 +341,9 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 				//if (output.size() > limit) break;
 			}
 		}
-		
-		//System.out.println("Middle gen");
-		
+				
 		for (Edge edge : edges) {
 			if (edge.isEnabled() && !edge.isVisited()) {
-				//System.out.println("Added simple " + edge.minDegree());
 				ArrayList<Edge> moves = new ArrayList<Edge>();
 				moves.add(edge);
 				edge.setVisited(true);
@@ -368,7 +353,6 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		}
 	
 		output.sort(prioritySortList);
-		//System.out.println("Finish gen with " + output.size());
 		return output;
 	}
 	
@@ -487,16 +471,23 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	public final static Comparator<Edge> prioritySort = new Comparator<Edge>() {         
 		@Override         
 		public int compare(Edge e1, Edge e2) {  
-			int p1 = e1.getPriority(), p2 = e2.getPriority();
-			return (p2 < p1 ? -1 : (p2 == p1 ? 0 : 1));           
+			int compare = 0;
+			
+			if (e1.isEnabled() != e2.isEnabled()) {
+				compare = e1.isEnabled() ? -1 : 1;
+			} else {
+				int p1 = e1.getPriority(), p2 = e2.getPriority();
+				compare = (p2 < p1 ? -1 : (p2 == p1 ? 0 : 1));
+			}
+			
+			return compare;
 		}     
 	}; 
 	
 	public final static Comparator<List<Edge>> prioritySortList = new Comparator<List<Edge>>() {         
 		@Override         
 		public int compare(List<Edge> e1, List<Edge> e2) {  
-			int p1 = e1.get(0).getPriority(), p2 = e2.get(0).getPriority();
-			return (p2 < p1 ? -1 : (p2 == p1 ? 0 : 1));           
+			return prioritySort.compare(e1.get(0), e2.get(0));      
 		}     
 	}; 
 	
@@ -614,7 +605,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     	}
     	
     	public String toString() {
-    		return "Edge (" + v0 + " to " + v1 + ")";
+    		return "Edge (" + v0 + " to " + v1 + ") p=" + getPriority();
     	}
     	
     	public int minDegree() {
