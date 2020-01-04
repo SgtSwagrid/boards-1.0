@@ -7,36 +7,34 @@ package strategybots.bots;
  */
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
-import strategybots.bots.TipDots.Node;
-import strategybots.bots.TipDots2.Move;
+import strategybots.bots.TipDots3v2.Edge;
+import strategybots.bots.TipDots3v2.Vertex;
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Side;
 import strategybots.games.base.Game.Player;
 
-public class TipDots3 implements Player<DotsAndBoxes>{
+public class TipDots3v1 implements Player<DotsAndBoxes>{
 
 	private long time = 2000l;
 	private int maxDepth = 7;
 	private int turn = 0;
 	private int beamFactor = 10;
 	
-	public TipDots3() {
-		System.out.println("Tip's Dots and Boxes Bot 3 Loaded");
+	public TipDots3v1() {
+		System.out.println("Tip's Dots and Boxes Bot 3 v1 Loaded");
 	}
 	
-	public TipDots3(long millis) {
+	public TipDots3v1(long millis) {
 		this();
 		this.time = millis;
 	}
 	
-	public TipDots3(long millis, int beam) {
+	public TipDots3v1(long millis, int beam) {
 		this(millis);
 		this.beamFactor = beam;
 	}
@@ -165,7 +163,11 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 	 * @return A new edge object.
 	 */
 	private Edge makeSide(Set<Vertex> verts, int x0, int y0, int x1, int y1) {
-		return new Edge(getVertex(verts, x0, y0), getVertex(verts, x1, y1));
+		Vertex v0 = getVertex(verts, x0, y0), v1 = getVertex(verts, x1, y1);
+		Edge edge = new Edge(v0, v1);
+		v0.addEdge(edge); 
+		v1.addEdge(edge);
+		return edge;
 	}
 	
 	/**
@@ -340,7 +342,7 @@ public class TipDots3 implements Player<DotsAndBoxes>{
     private void printStats(int score, int playerId, Edge ee, int depth, long start) {
         
         System.out.println("=======================");
-        System.out.println("Tiptaco's Dots Bot 3 Statistics:");
+        System.out.println("Tiptaco's Dots Bot 3 v1 Statistics:");
         System.out.println("Player:      " + playerId + " ("+(playerId==1?"Blue":"Red")+")");
         System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + score);
@@ -362,7 +364,7 @@ public class TipDots3 implements Player<DotsAndBoxes>{
 	}; 
 	
 	@Override
-	public String getName() { return "TipTacos's Dots and Boxes 3 Bot"; }
+	public String getName() { return "TipTacos's Dots and Boxes 3 v1 Bot"; }
     
     class Board {
     	List<Edge> edges;
