@@ -284,7 +284,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		for (Edge ee : edges) { ee.setVisited(false); }
 		
 		//System.out.println("Begin Generating Moves");
-		for (Edge edge : edges) {
+		/*for (Edge edge : edges) {
 		
 			// If this is a start of a chain
 			if (edge.isEnabled() && edge.minDegree() == 1) {
@@ -340,7 +340,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 				output.add(moves);
 				//if (output.size() > limit) break;
 			}
-		}
+		}*/
 				
 		for (Edge edge : edges) {
 			if (edge.isEnabled() && !edge.isVisited()) {
