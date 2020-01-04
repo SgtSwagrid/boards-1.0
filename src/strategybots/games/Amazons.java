@@ -1,366 +1,175 @@
 package strategybots.games;
 
-import java.util.Optional;
+import java.util.List;
 
-import strategybots.games.base.TileGame;
+import strategybots.games.base.Board;
+import strategybots.games.base.Game;
+import strategybots.games.base.State;
+import strategybots.games.base.State.Move;
+import strategybots.games.base.State.Piece;
+import swagui.graphics.Colour;
+import swagui.graphics.Texture;
+import swagui.tiles.Tile;
 
-/**
- * <b>Game of the Amazons implementation.</b><br>
- * <br>
- * Rules: <a href="https://en.wikipedia.org/wiki/Game_of_the_Amazons">Wikipedia</a><br>
- * <br>
- * Bot players can be made by implementing 'Player<Amazons>'.<br>
- * Human players can be made by instantiating 'AmazonsController'.
- * 
- * @author Alec Dorrington
- */
-public class Amazons extends TileGame {
+public class Amazons extends Game<Amazons> {
     
-    private static final long serialVersionUID = 2256458469805208278L;
+    @SafeVarargs
+    public Amazons(Player<Amazons>... players) {
+        this(10, 10, players);
+    }
+    
+    @SafeVarargs
+    public Amazons(int width, int height, Player<Amazons>... players) {
+        super(new AmazonsState(), players, new Board(width, height));
+    }
+    
+    public static class AmazonsState extends State<Amazons> {
 
-    /** Title of the window. */
-    private static final String TITLE = "Game of the Amazons";
-    
-    /** Default board dimensions. */
-    private static final int WIDTH = 10, HEIGHT = 10;
-    
-    /** Textures used for amazons. */
-    private static final String[] AMAZON_TEXTURES = new String[] {
-            "res/chess/white_queen.png", "res/chess/black_queen.png"};
-    
-    /** Textures used for arrows. */
-    private static final String[] ARROW_TEXTURES = new String[] {
-            "res/misc/white_dot.png", "res/misc/black_dot.png"};
-    
-    /** The display name of the colour of each player. */
-    private static final String[] COLOUR_NAMES = new String[] {
-            "White", "Black"};
-    
-    /** The piece which was moved on this turn. */
-    private Optional<Amazon> movedPiece = Optional.empty();
-    /** Whether a amazon has yet been moved on this turn. */
-    private volatile boolean amazonMoved = false;
-    
-    /**
-     * Asynchronously runs a new Game of the Amazons instance.
-     * @param width the width of the game board.
-     * @param height the height of the game board.
-     * @param player1 the first (white) player to participate.
-     * @param player2 the second (black) player to participate.
-     */
-    public Amazons(int width, int height, Player<Amazons> player1, Player<Amazons> player2) {
-        super(width, height, TITLE, player1, player2);
-    }
-    
-    /**
-     * Asynchronously runs a new Game of the Amazons instance,
-     * using a default board size of 10x10.
-     * @param player1 the first (white) player to participate.
-     * @param player2 the second (black) player to participate.
-     */
-    public Amazons(Player<Amazons> player1, Player<Amazons> player2) {
-        this(WIDTH, HEIGHT, player1, player2);
-    }
-    
-    /**
-     * Moves your amazon at the given position to a new position.<br>
-     * Must be called exactly once per turn, before 'shootArrow()' is called.<br>
-     * Move must be consistent with the rules of the game, or an exception will be thrown.
-     * @param x_from the current x position of the amazon.
-     * @param y_from the current y position of the amazon.
-     * @param x_to the new x position of the amazon.
-     * @param y_to the new y position of the amazon.
-     * @return whether the move was valid and successful.
-     */
-    public synchronized boolean moveAmazon(int x_from, int y_from, int x_to, int y_to) {
-        
-        //Ensure game is running and turn hasn't already been taken.
-        if(!isRunning() || turnDone()) return false;
-        
-        //Ensure positions are in bounds.
-        if(!inBounds(x_from, y_from) || !inBounds(x_to, y_to)) return false;
-        
-        //Ensure there is a piece at the from location.
-        if(!getPieceInst(x_from, y_from).isPresent()) return false;
-        
-        //Ensure amazon hasn't already been moved.
-        if(amazonMoved) return false;
-        
-        //Move the piece, subject to game constraints.
-        if(!getPieceInst(x_from, y_from).get().movePiece(x_to, y_to)) return false;
-        
-        //Remember the piece which was moved, for the arrow-shooting phase.
-        movedPiece = Optional.of((Amazon) getPieceInst(x_to, y_to).get());
-        amazonMoved = true;
-        return true;
-    }
-    
-    /**
-     * Shoots an arrow at a given position.<br>
-     * Must be called exactly once per turn, after 'moveAmazon()' is called.<br>
-     * Arrow will be fired from the most recently moved amazon.<br>
-     * Move must be consistent with the rules of the game, or an exception will be thrown.
-     * @param x the destination x position of the arrow.
-     * @param y the destination y position of the arrow.
-     * @return whether the move was valid and successful.
-     */
-    public synchronized boolean shootArrow(int x, int y) {
-        
-        //Ensure game is running and turn hasn't already been taken.
-        if(!isRunning() || turnDone()) return false;
-        
-        //Ensure actions are taken in the correct order.
-        if(!amazonMoved) return false;
-        
-        //Ensure position is in bounds.
-        if(!inBounds(x, y) ) return false;
-        
-        //Fire the arrow, subject to game constraints.
-        boolean success = movedPiece.get().shootArrow(x, y);
-        
-        if(success) endTurn();
-        return success;
-    }
-    
-    /**
-     * Returns the piece currently at the given position.<br>
-     * <table border="1">
-     * <tr><td>-1</td><td>Empty tile.</td></tr>
-     * <tr><td>0</td><td>Arrow.</td></tr>
-     * <tr><td>1</td><td>Amazon owned by player 1.</td></tr>
-     * <tr><td>2</td><td>Amazon owned by player 2.</td></tr>
-     * </table>
-     * @param x the x position at which to check for a piece.
-     * @param y the y position at which to check for a piece.
-     * @return the piece at (x, y) on the board.
-     */
-    public int getPiece(int x, int y) {
-        //Empty tile: '-1'.
-        if(!getPieceInst(x, y).isPresent()) return -1;
-        //Arrow: '0'.
-        else if(getPieceInst(x, y).get() instanceof Arrow) return 0;
-        //Amazon: ID of owner.
-        else return getPieceInst(x, y).get().getOwnerId();
-    }
-    
-    @Override
-    protected void init() {
-        
-        //Determine appropriate spacing for pieces given board size.
-        int h_indent = (getWidth() - 1) / 3;
-        int v_indent = (getHeight() - 1) / 3;
-        
-        //Place the amazons in their starting positions.
-        new Amazon(1, 0, v_indent);
-        new Amazon(1, h_indent, 0);
-        new Amazon(1, getWidth() - 1 - h_indent, 0);
-        new Amazon(1, getWidth() - 1, v_indent);
-        
-        new Amazon(2, 0, getHeight() - 1 - v_indent);
-        new Amazon(2, h_indent, getHeight() - 1);
-        new Amazon(2, getWidth() - 1 - h_indent, getHeight() - 1);
-        new Amazon(2, getWidth() - 1, getHeight() - 1 - v_indent);
-    }
-    
-    @Override
-    protected void preTurn() {
-        super.preTurn();
-        amazonMoved = false;
-    }
-    
-    @Override
-    protected void checkEnd() {
-        
-        //Check if any of the opponents pieces are free to move.
-        for(Piece piece : getPieces(getCurrentPlayerId() % 2 + 1)) {
-            
-            //Only consider amazons.
-            if(!(piece instanceof Amazon)) continue;
-            
-            //Look at all the surrounding tiles for each opponent piece.
-            for(int x = Math.max(piece.getCol() - 1, 0);
-                    x <= Math.min(piece.getCol() + 1, getWidth() - 1); x++) {
-                
-                for(int y = Math.max(piece.getRow() - 1, 0);
-                        y <= Math.min(piece.getRow() + 1, getHeight() - 1); y++) {
-                    
-                    //Player hasn't won if the opponent has somewhere to move.
-                    if(!getPieceInst(x, y).isPresent()) {
-                        return;
-                    }
-                }
-            }
-        }
-        //The opponent has nowhere to move, this player wins.
-        endGame(getCurrentPlayerId());
-    }
-    
-    @Override
-    protected String getPlayerName(int playerId) {
-        return getPlayer(playerId).getName() + " (" + COLOUR_NAMES[playerId - 1] + ")";
-    }
-    
-    /**
-     * Implementation of Player<Amazons> for use in inserting a human-controlled player.<br>
-     * Each AmazonsController will make moves based on mouse input on the game display window.
-     * @author Alec Dorrington
-     */
-    public static final class AmazonsController extends Controller<Amazons> {
-        
-        public AmazonsController() {}
-        
-        public AmazonsController(String name) { super(name); }
-        
+        private static final long serialVersionUID = 3249133840361374590L;
+
         @Override
-        public void onTileClicked(Amazons game, int playerId, int x, int y) {
-            
-            //Move a amazon.
-            if(!game.amazonMoved) {
-                moveAmazon(game, x, y);
-                
-            //Shoot an arrow.
-            } else if(!game.turnDone()) {
-                shootArrow(game, x, y);
-            }
-        }
-        
-        /**
-         * Select or move a amazon as appropriate.<br>
-         * To be called when a tile is clicked prior to any amazon movement.
-         * @param game the game being played.
-         * @param x the x position which was clicked.
-         * @param y the y position which was clicked.
-         */
-        private void moveAmazon(Amazons game, int x, int y) {
-            
-            //Select a amazon.
-            if(game.getPieceInst(x, y).isPresent()
-                    && game.getPieceInst(x, y).get() instanceof Amazon
-                    && game.getPieceInst(x, y).get().getOwnerId() == game.getCurrentPlayerId()) {
-                
-                selectPiece(game, game.getPieceInst(x, y).get());
-                
-            //Move the selected amazon.
-            } else if(getSelected().isPresent()) {
-                
-                //Try to move the selected piece to its new tile.
-                game.moveAmazon(getSelected().get().getCol(),
-                        getSelected().get().getRow(), x, y);
-                selectPiece(game, getSelected().get());
-            }
-        }
-        
-        /**
-         * Fire an arrow from the selected amazon to the given position.
-         * To be called when a tile is clicked after the amazon is moved.
-         * @param game the game being played.
-         * @param x the x position which was clicked.
-         * @param y the y position which was clicked.
-         */
-        private void shootArrow(Amazons game, int x, int y) {
-            
-            //Try to spawn an arrow at this location.
-            if(game.shootArrow(x, y)) {
-                unselectPiece(game);
-            }
-        }
-    }
-    
-    /**
-     * Represents a amazon instance on the board.
-     * @author Alec Dorrington
-     */
-    private class Amazon extends Piece {
-        
-        private static final long serialVersionUID = 7033301951880234533L;
-
-        Amazon(int ownerId, int x, int y) {
-            super(ownerId, x, y, AMAZON_TEXTURES[ownerId - 1]);
+        public State<Amazons> takeAction(Action<Amazons> action) {
+            // TODO Auto-generated method stub
+            return null;
         }
         
         @Override
-        public boolean movePiece(int x_to, int y_to) {
-            
-            //Ensure a move is valid before making it.
-            if(!validateMove(getCol(), getRow(), x_to, y_to)) return false;
-            
-            //Update the position of the piece.
-            setBoardPos(x_to, y_to);
-            return true;
+        public boolean validateAction(Action<Amazons> action) {
+            // TODO Auto-generated method stub
+            return false;
         }
-        
-        /**
-         * Will fire an arrow from this amazon to the given position, if such a move is valid.<br>
-         * Otherwise, an exception will be thrown.
-         * @param x_to the x position to shoot at.
-         * @param y_to the y position to shoot at.
-         * @return whether the move was valid and successful.
-         */
-        boolean shootArrow(int x_to, int y_to) {
-            
-            if(!validateMove(getCol(), getRow(), x_to, y_to)) return false;
-            new Arrow(getOwnerId(), x_to, y_to);
-            return true;
+
+        @Override
+        public List<Action<Amazons>> getActions() {
+            // TODO Auto-generated method stub
+            return null;
         }
+
+        @Override
+        public State<Amazons> clone() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+    }
+    
+    public static class AmazonsController extends Controller<Amazons> {
+
+        @Override
+        protected void init() {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        protected void destroy() {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        protected void onClick(State<Amazons> state, int x, int y) {
+            // TODO Auto-generated method stub
+            
+        }
+    }
+    
+    public static class Amazon extends Piece<Amazons> {
         
-        /**
-         * Ensures that a move is valid.<br>
-         * Throws an exception otherwise.
-         * @param x_from the x position from which a piece is moving.
-         * @param y_from the y position from which a piece is moving.
-         * @param x_to the x position to which a piece is moving.
-         * @param y_to the y position to which a piece is moving.
-         * @return whether the move was valid and successful.
-         */
-        boolean validateMove(int x_from, int y_from, int x_to, int y_to) {
+        private static final Texture WHITE = new Texture("res/chess/white_queen.png");
+        private static final Texture BLACK = new Texture("res/chess/black_queen.png");
+
+        public Amazon(Player<Amazons> owner, int x, int y) {
+            
+            super(owner, x, y, new Tile()
+                .setColour(Colour.WHITE)
+                .setTexture(owner.getPlayerId()==1 ? WHITE : BLACK));
+        }
+
+        @Override
+        public boolean validatePlace(State<Amazons> state, int x, int y) {
+            return false;
+        }
+
+        @Override
+        public boolean validateMove(State<Amazons> state, int x, int y) {
+            
+            int width = state.getGame().getBoard().getWidth();
+            int height = state.getGame().getBoard().getHeight();
             
             //Ensure piece is owned by the current player.
-            if(getOwnerId() != getCurrentPlayerId()) return false;
+            if(!(getOwner() == state.getCurrentPlayer())) return false;
             
-            //Ensure piece doesn't move on top of itself.
-            if(x_to == x_from && y_to == y_from) return false;
+            //Ensure piece isn't moved to its current location.
+            if(x == getX() && y == getY()) return false;
             
-            //Ensure piece doesn't move on top of another piece.
-            if(getPieceInst(x_to, y_to).isPresent()) return false;
+            //Ensure destination position is in bounds.
+            if(x < 0 || x >= width || y < 0 || y >= height) return false;
             
-            //Ensure piece moves in a straight line (incl. diagonally).
-            if(Math.abs(x_to - x_from) != Math.abs(y_to - y_from)
-                    && x_to != x_from && y_to != y_from) return false;
+            //Ensure amazon moves in a straight line.
+            if(Math.abs(x-getX()) != Math.abs(y-getY()) &&
+                x != getX() && y != getY()) return false;
             
+            int xSign = (int) Math.signum(x - getX());
+            int ySign = (int) Math.signum(y - getY());
+            int xx = getX() + xSign, yy = getY() + ySign;
             
-            int x_sign = (int) Math.signum(x_to - x_from);
-            int y_sign = (int) Math.signum(y_to - y_from);
-            
-            int xx = x_from + x_sign;
-            int yy = y_from + y_sign;
-            
-            //Ensure piece doesn't jump over any other pieces.
-            while(xx != x_to || yy != y_to) {
-                
-                if(getPieceInst(xx, yy).isPresent()) return false;
-                
-                xx += x_sign;
-                yy += y_sign;
+            //Ensure amazon has a clear path.
+            while(xx != x+xSign || yy != y+ySign) {
+                if(state.getPiece(xx, yy).isPresent()) return false;
+                xx += xSign; yy += ySign;
             }
             return true;
         }
     }
     
-    /**
-     * Represents an arrow instance fired onto the board.
-     * @author Alec Dorrington
-     */
-    private class Arrow extends Piece {
+    public static class Arrow extends Piece<Amazons> {
         
-        private static final long serialVersionUID = -799468057413175972L;
-
-        private Arrow(int ownerId, int x, int y) {
-            super(ownerId, x, y, ARROW_TEXTURES[ownerId - 1]);
+        private static final Texture WHITE = new Texture("res/misc/white_dot.png");
+        private static final Texture BLACK = new Texture("res/misc/black_dot.png");
+        
+        public Arrow(Player<Amazons> owner, int x, int y) {
+            
+            super(owner, x, y, new Tile()
+                .setColour(Colour.WHITE)
+                .setTexture(owner.getPlayerId()==1 ? WHITE : BLACK));
         }
-        
+
         @Override
-        public boolean movePiece(int x_to, int y_to) {
-            //Arrows can't be moved.
+        public boolean validatePlace(State<Amazons> state, int x, int y) {
+            
+            int width = state.getGame().getBoard().getWidth();
+            int height = state.getGame().getBoard().getHeight();
+            
+            //Ensure piece is owned by the current player.
+            if(!(getOwner() == state.getCurrentPlayer())) return false;
+            
+            //Ensure firing is preceded by the movement of an amazon.
+            if(!(state.getLatestAction() instanceof Move)) return false;
+            
+            //Ensure destination position is in bounds.
+            if(x < 0 || x >= width || y < 0 || y >= height) return false;
+            
+            //Ensure arrow is shot in a straight line.
+            if(Math.abs(x-getX()) != Math.abs(y-getY()) &&
+                x != getX() && y != getY()) return false;
+            
+            Move<Amazons> move = (Move<Amazons>) state.getLatestAction();
+            int xFrom = move.getX(), yFrom = move.getY();
+            
+            int xSign = (int) Math.signum(x - xFrom);
+            int ySign = (int) Math.signum(y - yFrom);
+            int xx = getX() + xSign, yy = getY() + ySign;
+            
+            //Ensure arrow has a clear path.
+            while(xx != x+xSign || yy != y+ySign) {
+                if(state.getPiece(xx, yy).isPresent()) return false;
+                xx += xSign; yy += ySign;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean validateMove(State<Amazons> state, int x, int y) {
             return false;
         }
     }

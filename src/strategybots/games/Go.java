@@ -1,2 +1,0 @@
-package strategybots.games;
-
