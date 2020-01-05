@@ -30,6 +30,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	private int turn = 0;
 	private int beamFactor = 10;
 		
+	private int width, height;
 	private int topMoves, topDepth;
 	
 	public TipDots3v2() {
@@ -49,6 +50,8 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	@Override
 	public void takeTurn(DotsAndBoxes game, int playerId) {
 
+		this.width = game.getWidth();
+		this.height = game.getHeight();
 		getBestMove(game, playerId);
 	}
 	
@@ -529,7 +532,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     
     
     class Vertex {
-    	private int x, y, owner;
+    	private int x, y, owner, pPrio;
     	Set<Edge> edges;
     	
     	public Vertex() {
@@ -541,6 +544,18 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     		this.x = x; 
     		this.y = y;
     		this.owner = 0;
+    		calculatePosPrio();
+    	}
+    	
+    	private void calculatePosPrio() {
+    		float sigX = (width - 1) / 2.0f, sigY = (height - 1) / 2.0f;
+    		int pX = Math.round(-Math.abs(x-sigX) + sigX);
+    		int pY = Math.round(-Math.abs(y-sigY) + sigY);
+    		pPrio = pX + pY;
+    	}
+    	
+    	public int getPosPrio() {
+    		return pPrio;
     	}
     	
     	public void addEdge(Edge ee) {
@@ -624,9 +639,10 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     		int d0 = v0.getDegree(), d1 = v1.getDegree();
     		int prio = 0;
     		
-    		prio += (d0 == 1 ? 10 : 0) + (d1 == 1 ? 10 : 0);
-    		prio += (d0 == 2 ? (d1 == 1 ? 10 : -10) : 0) + (d1 == 2 ? (d0 == 1 ? 10 : -10) : 0);
-    		prio += (d0 == 3 ? 2 : 0) + (d1 == 3 ? 2 : 0);
+    		prio += (d0 == 1 ? 100 : 0) + (d1 == 1 ? 100 : 0);
+    		prio += (d0 == 2 ? (d1 == 1 ? 90 : -90) : 0) + (d1 == 2 ? (d0 == 1 ? 90 : -90) : 0);
+    		//prio += (d0 == 3 ? 2 : 0) + (d1 == 3 ? 2 : 0);
+    		prio += v0.getPosPrio() + v1.getPosPrio();
     		
     		return prio;
     	}
