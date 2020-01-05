@@ -21,6 +21,10 @@ public abstract class Game<G extends Game<G>> {
         this.board = board;
     }
     
+    public int getWidth() { return board.getWidth(); }
+    
+    public int getHeight() { return board.getHeight(); }
+    
     public Player<G> getPlayer(int id) { return players[id-1]; }
     
     public int getNumPlayers() { return players.length; }
