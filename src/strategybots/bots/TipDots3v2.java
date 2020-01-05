@@ -28,9 +28,9 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	private long time = 2000l;
 	private int maxDepth = 7;
 	private int turn = 0;
-	private int beamFactor = 60;
-	
-	private int masterIters = 0;
+	private int beamFactor = 10;
+		
+	private int topMoves, topDepth;
 	
 	public TipDots3v2() {
 		System.out.println("Tip's Dots and Boxes Bot 3 v2 Loaded");
@@ -65,13 +65,14 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		
 		List<Edge> bestEdges = null;
 		int depth = 1, score = 0;
-		maxDepth = board.getEdges().size();
+		maxDepth = board.getEdges().size() + 1;
 		
 		// Use iterative deepening to run negaMax until the board is searched or we run out of time.
         for(; depth <= maxDepth; depth++) {
         	
-        	System.out.println("running depth " + depth);
-        	
+        	//System.out.println("running depth " + depth);
+        	topMoves = board.edges.size();
+        	topDepth = depth;
         	Triple result = negamax(board.verts, board.edges, scores, playerId, depth, -Integer.MAX_VALUE, Integer.MAX_VALUE);
         	score = result.score;
         	bestEdges = result.edges;
@@ -234,20 +235,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		}
 		
 		edges.sort(prioritySort);
-		
-		//List<Edge> nextEdges = copyActiveMoves(edges);
-		/*System.out.println("Current moves:");
-		for (Edge edge : edges) {
-			System.out.println(edge);
-		}*/
 		List<List<Edge>> compMoves = generateMoves(verts, edges, beamFactor);
-		
-		/*for (List<Edge> compMove : compMoves) {
-			System.out.println("  Move " + compMove.size());
-			for (Edge edge : compMove) {
-				System.out.println(edge);
-			}
-		}*/
 		
 		for (List<Edge> move : compMoves ) {
 			
@@ -256,20 +244,18 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 						
 			List<Edge> nextEdges = new ArrayList<Edge>();
 			nextEdges.addAll(edges);
-			
 			for (Edge edge : move) {
-				boolean succ = nextEdges.remove(edge);
-				if (!succ) System.out.println("you fool " + edge);
+				nextEdges.remove(edge);
 			}
 			
 			// Get the game score or margin at this layer
 			int heur = heuristic(captures, playerId);
 			
-			// do minimax
+			// Do negamax
 			int nextPlayer = (hasCaptured) ? playerId : (3-playerId);
 			
 			int s = heur;
-			if (depth > 0) {
+			if (depth > 0 && nextEdges.size() != 0) {
 				s = (hasCaptured ? negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), alpha, beta).score : 
             		-negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), -beta, -alpha).score);
 			}
@@ -295,26 +281,12 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		return new Triple(score, bestMove, depth);
 	}
 	
-	private int movesLeft(List<Edge> edges) {
-		int sum = 0;
-		for (Edge ee : edges) {
-			if (ee.isEnabled()) sum++;
-		}
-		return sum;
-	}
-	
-	private List<Edge> copyActiveMoves(List<Edge> edges) {
-		List<Edge> output = new ArrayList<Edge>();
-		for (Edge edge : edges) {
-			if (edge.isEnabled()) output.add(edge);
-		}
-		
-		output.sort(prioritySort);
-		return output;
-	}
-	
 	/**
-	 * Generate moves 
+	 * Generate the compound moves from a given set of vertexes and edges, up to a limit to save time.
+	 * @param verts
+	 * @param edges
+	 * @param limit
+	 * @return
 	 */
 	private List<List<Edge>> generateMoves(Set<Vertex> verts, List<Edge> edges, int limit) {
 		List<List<Edge>> output = new ArrayList<>();
@@ -326,7 +298,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		for (Edge edge : edges) {
 		
 			// If this edge is a start of a chain
-			if (edge.isEnabled() && edge.minDegree() == 1) {
+			if (edge.minDegree() == 1) {
 				List<Edge> moves = new ArrayList<Edge>();
 				
 				Vertex nextNode = edge.minDegreeVertex();;
@@ -369,8 +341,9 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 			}
 		}
 				
+		// For each of the edges that were not compound moves, add them singularly
 		for (Edge edge : edges) {
-			if (edge.isEnabled() && !edge.isVisited()) {
+			if (!edge.isVisited()) {
 				List<Edge> moves = new ArrayList<Edge>();
 				moves.add(edge);
 				edge.setVisited(true);
