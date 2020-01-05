@@ -16,6 +16,9 @@ import java.util.Set;
 
 import strategybots.bots.TipDots.Node;
 import strategybots.bots.TipDots2.Move;
+import strategybots.bots.TipDots3v1.Edge;
+import strategybots.bots.TipDots3v1.Triple;
+import strategybots.bots.TipDots3v1.Vertex;
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Side;
 import strategybots.games.base.Game.Player;
@@ -25,7 +28,9 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	private long time = 2000l;
 	private int maxDepth = 7;
 	private int turn = 0;
-	private int beamFactor = 10;
+	private int beamFactor = 60;
+	
+	private int masterIters = 0;
 	
 	public TipDots3v2() {
 		System.out.println("Tip's Dots and Boxes Bot 3 v2 Loaded");
@@ -57,7 +62,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		long start = System.currentTimeMillis();
 		Board board = getGraph(game, playerId);
 		int[] scores = getScores(game);
-
+		
 		List<Edge> bestEdges = null;
 		int depth = 1, score = 0;
 		maxDepth = board.getEdges().size();
@@ -214,9 +219,10 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	private Triple negamax(Set<Vertex> verts, List<Edge> edges, int[] captures, int playerId, int depth, int alpha, int beta) {
 		
 		int score = 0, iters = 0;
-		List<Edge> bestEdges = null;
-				
-		if (movesLeft(edges) <= 1) {
+		List<Edge> bestMove = null;
+		
+		if (edges.size() == 1) {
+			
 			List<Edge> container = new ArrayList<Edge>();
 			container.add(edges.get(0));
 			
@@ -228,33 +234,56 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		}
 		
 		edges.sort(prioritySort);
-		List<List<Edge>> compoundMoves = generateMoves(verts, edges, beamFactor*2);
 		
-		for (List<Edge> edg : compoundMoves) { // for (Edge ee : edges ) {
+		//List<Edge> nextEdges = copyActiveMoves(edges);
+		/*System.out.println("Current moves:");
+		for (Edge edge : edges) {
+			System.out.println(edge);
+		}*/
+		List<List<Edge>> compMoves = generateMoves(verts, edges, beamFactor);
+		
+		/*for (List<Edge> compMove : compMoves) {
+			System.out.println("  Move " + compMove.size());
+			for (Edge edge : compMove) {
+				System.out.println(edge);
+			}
+		}*/
+		
+		for (List<Edge> move : compMoves ) {
 			
 			// apply the edge removal
-			boolean hasCaptured = successor(edg, captures, playerId);
+			boolean hasCaptured = successor(move, captures, playerId);
+						
+			List<Edge> nextEdges = new ArrayList<Edge>();
+			nextEdges.addAll(edges);
+			
+			for (Edge edge : move) {
+				boolean succ = nextEdges.remove(edge);
+				if (!succ) System.out.println("you fool " + edge);
+			}
 			
 			// Get the game score or margin at this layer
 			int heur = heuristic(captures, playerId);
 			
-			// do negamax
+			// do minimax
 			int nextPlayer = (hasCaptured) ? playerId : (3-playerId);
-						
-			int s = (depth <= 0) ? heur : (hasCaptured ? negamax(verts, edges, captures, nextPlayer, depth-edg.size(), alpha, beta).score : 
-            		-negamax(verts, edges, captures, nextPlayer, depth-edg.size(), -beta, -alpha).score);
-
+			
+			int s = heur;
+			if (depth > 0) {
+				s = (hasCaptured ? negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), alpha, beta).score : 
+            		-negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), -beta, -alpha).score);
+			}
 			
 			// Update scores or set the score to the first element when first run
-            if(s > score || bestEdges == null ) {
+            if(s > score || bestMove == null ) {
                 score = s;
-                bestEdges = edg;
+                bestMove = move;
                 alpha = score > alpha ? score : alpha;
             }
             
 			// predecessor
-			predecessor(edg, captures, playerId);
-			
+			predecessor(move, captures, playerId);
+            
 			// Alpha Beta check
             if(alpha >= beta) break;
 
@@ -263,7 +292,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
             if (iters >= beamFactor) break;
 		}
 		
-		return new Triple(score, bestEdges, depth);
+		return new Triple(score, bestMove, depth);
 	}
 	
 	private int movesLeft(List<Edge> edges) {
@@ -272,6 +301,16 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 			if (ee.isEnabled()) sum++;
 		}
 		return sum;
+	}
+	
+	private List<Edge> copyActiveMoves(List<Edge> edges) {
+		List<Edge> output = new ArrayList<Edge>();
+		for (Edge edge : edges) {
+			if (edge.isEnabled()) output.add(edge);
+		}
+		
+		output.sort(prioritySort);
+		return output;
 	}
 	
 	/**
@@ -284,71 +323,59 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 		for (Edge ee : edges) { ee.setVisited(false); }
 		
 		//System.out.println("Begin Generating Moves");
-		/*for (Edge edge : edges) {
+		for (Edge edge : edges) {
 		
-			// If this is a start of a chain
+			// If this edge is a start of a chain
 			if (edge.isEnabled() && edge.minDegree() == 1) {
-				ArrayList<Edge> moves = new ArrayList<Edge>();
-				edge.setVisited(true);
-				moves.add(edge);
+				List<Edge> moves = new ArrayList<Edge>();
 				
-				Vertex curNode, nextNode;
-				Edge nextEdge = edge, lastEdge;
-				curNode = edge.minDegreeVertex();
-				nextNode = edge.getOther(curNode);
+				Vertex nextNode = edge.minDegreeVertex();;
+				Edge nextEdge = edge;
 				
-				while (nextNode.getDegree() == 2 && curNode != nextNode) {
-					// Do standard expansion
-					lastEdge = nextEdge;
-					nextEdge = nextNode.getUnvisitedEdge();
-					if (nextEdge != null && nextEdge.isEnabled()) {
-						nextEdge.setVisited(true);
-						moves.add(nextEdge);
-						
-						curNode = nextNode;
-						nextNode = nextEdge.getOther(nextNode);
-					} else { 
-						nextEdge = lastEdge;
-						break;
-					}
-				}
-				
-				// Special Terminal Cases begin here
-				if (nextNode.getDegree() == 1) {
-					// apply the two ended double cross, provided it is long enough
-					if (moves.size() >= 3) {
-						List<Edge> altMoves = new ArrayList<>();
-						altMoves.addAll(moves);
-						altMoves.remove(altMoves.size() - 3);
-						altMoves.remove(altMoves.size() - 1);
-						output.add(altMoves);
-					}
-	
-				} else if (curNode == nextNode || nextNode.getDegree() == 3 || nextNode.getDegree() == 4) {
-					// Terminates at an open split or board edge
-					// Add in the final move to the main moves set
+				do {
+					nextNode = nextEdge.getOther(nextNode);
+					
 					nextEdge.setVisited(true);
 					moves.add(nextEdge);
 					
-					// create an alternate move set with double cross
-					List<Edge> altMoves = new ArrayList<>();
+					if (nextNode.getDegree() == 2) {
+						nextEdge = nextNode.getUnvisitedEdge();
+						if (nextEdge == null) break;
+					} else {
+						break;
+					}
+					
+				} while (true);
+				
+				output.add(moves);
+				
+				// Terminal conditions
+				if (nextNode.getDegree() == 1 && moves.size() >= 3) {
+					List<Edge> altMoves = new ArrayList<Edge>();
+					altMoves.addAll(moves);
+					altMoves.remove(altMoves.size() - 3);
+					altMoves.remove(altMoves.size() - 1);
+					output.add(altMoves);
+				}
+				
+				if (nextNode.getDegree() != 1 && moves.size() >= 2) {
+					List<Edge> altMoves = new ArrayList<Edge>();
 					altMoves.addAll(moves);
 					altMoves.remove(altMoves.size() - 2);
 					output.add(altMoves);
 				}
-
-				output.add(moves);
-				//if (output.size() > limit) break;
+				
+				if (output.size() > limit) break;
 			}
-		}*/
+		}
 				
 		for (Edge edge : edges) {
 			if (edge.isEnabled() && !edge.isVisited()) {
-				ArrayList<Edge> moves = new ArrayList<Edge>();
+				List<Edge> moves = new ArrayList<Edge>();
 				moves.add(edge);
 				edge.setVisited(true);
 				output.add(moves);
-				//if (output.size() > limit) break;
+				if (output.size() > limit) break;
 			}
 		}
 	
@@ -363,16 +390,16 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	 * @param playerId The player who is capturing. 
 	 * @return
 	 */
-	private boolean successor(List<Edge> container, int[] captures, int playerId) {
+	private boolean successor(List<Edge> edges, int[] captures, int playerId) {
 		
 		Vertex v0, v1;
 		boolean capture = false;
 		
-		for (Edge edge : container) {
+		for (Edge edge : edges) {
+		
 			v0 = edge.getV0();
 			v1 = edge.getV1();
 			capture = false;
-			
 			edge.setEnabled(false);
 			
 			v0.removeEdge(edge);
@@ -391,7 +418,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 				}
 			}
 		}
-
+		
 		return capture;
 	}
 	
@@ -403,14 +430,14 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	 * @return
 	 */
 	private void predecessor(List<Edge> edges, int[] captures, int playerId) {
-		Vertex v0, v1;
 		
+		Vertex v0, v1;
 		Collections.reverse(edges);
 		
-		for (Edge edge : edges) {
+		for ( Edge edge : edges) {
+			
 			v0 = edge.getV0();
 			v1 = edge.getV1();
-			 
 			edge.setEnabled(true);
 			
 			if (v0.getDegree() == 0) {
@@ -530,10 +557,10 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     
     class Vertex {
     	private int x, y, owner;
-    	List<Edge> edges;
+    	Set<Edge> edges;
     	
     	public Vertex() {
-    		edges = new ArrayList<Edge>();
+    		edges = new HashSet<Edge>();
     	}
     	
     	public Vertex(int x, int y) {
@@ -547,7 +574,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     		edges.add(ee);
     	}
     	
-    	public List<Edge> getEdges() {
+    	public Set<Edge> getEdges() {
     		return edges;
     	}
     	
@@ -605,7 +632,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     	}
     	
     	public String toString() {
-    		return "Edge (" + v0 + " to " + v1 + ") p=" + getPriority();
+    		return "Edge (" + v0 + " to " + v1 + ") p=" + getPriority() + "e=" + enabled;
     	}
     	
     	public int minDegree() {

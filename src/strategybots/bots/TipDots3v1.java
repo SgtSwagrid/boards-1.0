@@ -9,6 +9,7 @@ package strategybots.bots;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -165,8 +166,10 @@ public class TipDots3v1 implements Player<DotsAndBoxes>{
 	private Edge makeSide(Set<Vertex> verts, int x0, int y0, int x1, int y1) {
 		Vertex v0 = getVertex(verts, x0, y0), v1 = getVertex(verts, x1, y1);
 		Edge edge = new Edge(v0, v1);
+		
 		v0.addEdge(edge); 
-		v1.addEdge(edge);
+		if (v0 != v1) v1.addEdge(edge); 
+		
 		return edge;
 	}
 	
@@ -227,7 +230,7 @@ public class TipDots3v1 implements Player<DotsAndBoxes>{
 			boolean hasCaptured = successor(ee, captures, playerId);
 			index = copyEdges.indexOf(ee);
 			copyEdges.remove(index);
-			
+						
 			// Get the game score or margin at this layer
 			int heur = heuristic(captures, playerId);
 			
@@ -402,10 +405,10 @@ public class TipDots3v1 implements Player<DotsAndBoxes>{
     
     class Vertex {
     	private int x, y, owner;
-    	Set<Edge> edges;
+    	List<Edge> edges;
     	
     	public Vertex() {
-    		edges = new HashSet<Edge>();
+    		edges = new ArrayList<Edge>();
     	}
     	
     	public Vertex(int x, int y) {
@@ -419,7 +422,7 @@ public class TipDots3v1 implements Player<DotsAndBoxes>{
     		edges.add(ee);
     	}
     	
-    	public Set<Edge> getEdges() {
+    	public List<Edge> getEdges() {
     		return edges;
     	}
     	
