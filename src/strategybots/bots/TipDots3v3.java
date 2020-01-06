@@ -4,7 +4,7 @@ package strategybots.bots;
  * Date: 5 Jan 2019
  * 
  * A Minimax + Alpha beta pruning bot to play Dots and Boxes. Currently implemented with 
- * the help of domain specific knowledge
+ * the help of domain specific knowledge and zobrist hashing
  */
 
 import java.util.ArrayList;
@@ -15,16 +15,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import strategybots.bots.TipDots.Node;
-import strategybots.bots.TipDots2.Move;
-import strategybots.bots.TipDots3v1.Edge;
-import strategybots.bots.TipDots3v1.Triple;
-import strategybots.bots.TipDots3v1.Vertex;
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Side;
 import strategybots.games.base.Game.Player;
 
-public class TipDots3v2 implements Player<DotsAndBoxes>{
+public class TipDots3v3 implements Player<DotsAndBoxes>{
 
 	private long time = 2000l;
 	private int maxDepth = 7;
@@ -34,18 +29,25 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	private int width, height;
 	private int topMoves, topDepth;
 	
-	public TipDots3v2() {
-		System.out.println("Tip's Dots and Boxes Bot 3 v2 Loaded");
+	// Zobrist Variables
+	
+	public TipDots3v3() {
+		System.out.println("Tip's Dots and Boxes Bot 3 v3 Loaded");
 	}
 	
-	public TipDots3v2(long millis) {
+	public TipDots3v3(long millis) {
 		this();
 		this.time = millis;
 	}
 	
-	public TipDots3v2(long millis, int beam) {
+	public TipDots3v3(long millis, int beam) {
 		this(millis);
 		this.beamFactor = beam;
+	}
+	
+	@Override 
+	public void init(DotsAndBoxes game, int playerId) {
+		
 	}
 	
 	@Override
@@ -96,36 +98,13 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	 */
 	private void playMove(DotsAndBoxes game, List<Edge> bestEdges) {
 		
-		int width = game.getWidth(), height = game.getHeight();
 		Side side = Side.TOP;
+		Vertex v0 = null;
 		
 		for (Edge edge : bestEdges) {
 		
-			Vertex v0 = edge.getV0(), v1 = edge.getV1();
-
-			if (v0 != v1) {  // Nodes aren't the same, can infer direction
-				if (v0.x == v1.x) {
-					if (v0.y < v1.y)  side = Side.TOP;  else  side = Side.BOTTOM; 
-				} else if (v0.y == v1.y) {
-					if (v0.x < v1.x)  side = Side.RIGHT;  else  side = Side.LEFT;
-				}
-			} else { // Nodes are the same, so this is an edge piece
-				
-				if (v0.x == 0 && v0.y == 0) {
-					if (game.hasLine(Side.BOTTOM, v0.x, v0.y))  side = Side.LEFT;  else  side = Side.BOTTOM;
-				} else if (v0.x == width-1 && v0.y == 0) {
-					if (game.hasLine(Side.BOTTOM, v0.x, v0.y)) side = Side.RIGHT;  else side = Side.BOTTOM;
-				} else if (v0.x == width-1 && v0.y == height-1) { 
-					if (game.hasLine(Side.TOP, v0.x, v0.y)) side = Side.RIGHT; else side = Side.TOP;
-				} else if (v0.x == 0 && v0.y == height-1) {
-					if (game.hasLine(Side.TOP, v0.x, v0.y)) side = Side.LEFT; else side = Side.TOP;
-				} else {
-					if (v0.x == 0)  side = Side.LEFT;
-					if (v0.x == width-1)  side = Side.RIGHT;
-					if (v0.y == 0)  side = Side.BOTTOM;
-					if (v0.y == height-1)  side = Side.TOP;
-				}
-			}
+			v0 = edge.getV0();
+			side = edge.getSide();
 			
 			game.drawLine(side, v0.x, v0.y);
 		}
@@ -154,16 +133,16 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 			for (int y = 0 ; y < height ; y++) {
 				// Check for right col
 				if (x == width - 1 && !game.hasLine(Side.RIGHT, x, y)) 
-					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y));
+					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y, Side.RIGHT));
 				// Check for Top row
 				if (y == height - 1 && !game.hasLine(Side.TOP, x, y)) 
-					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y)); 
+					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y, Side.TOP)); 
 				// check bottom, with special condition bottom row
 				if (!game.hasLine(Side.BOTTOM, x, y))
-					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y == 0 ? 0 : (y-1)));
+					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y == 0 ? 0 : (y-1), Side.BOTTOM));
 				// Left check, with special condition for col 0
 				if (!game.hasLine(Side.LEFT, x, y))
-					board.getEdges().add(makeSide(board.getVerts(), x, y, x == 0 ? 0 : (x-1), y));
+					board.getEdges().add(makeSide(board.getVerts(), x, y, x == 0 ? 0 : (x-1), y, Side.LEFT));
 			}
 		}
 		
@@ -180,9 +159,9 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	 * @param y1
 	 * @return A new edge object.
 	 */
-	private Edge makeSide(Set<Vertex> verts, int x0, int y0, int x1, int y1) {
+	private Edge makeSide(Set<Vertex> verts, int x0, int y0, int x1, int y1, Side side) {
 		Vertex v0 = getVertex(verts, x0, y0), v1 = getVertex(verts, x1, y1);
-		Edge edge = new Edge(v0, v1);
+		Edge edge = new Edge(v0, v1, side);
 		v0.addEdge(edge); 
 		v1.addEdge(edge);
 		return edge;
@@ -459,7 +438,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     private void printStats(int score, int playerId, List<Edge> ee, int depth, long start) {
         
         System.out.println("=======================");
-        System.out.println("Tiptaco's Dots Bot 3 v2 Statistics:");
+        System.out.println("Tiptaco's Dots Bot 3 v3 Statistics:");
         System.out.println("Player:      " + playerId + " ("+(playerId==1?"Blue":"Red")+")");
         System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + score);
@@ -496,7 +475,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	}; 
 	
 	@Override
-	public String getName() { return "TipTacos's Dots and Boxes 3 v2 Bot"; }
+	public String getName() { return "TipTacos's Dots and Boxes 3 v3 Bot"; }
     
     class Board {
     	List<Edge> edges;
@@ -607,13 +586,17 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     class Edge {
     	Vertex v0, v1;
     	private boolean visited = false, enabled = true;
+    	private DotsAndBoxes.Side side;
+    	private int UID = -1;
     	
     	public Edge() {}
     	
-    	public Edge(Vertex v0, Vertex v1) {
+    	public Edge(Vertex v0, Vertex v1, DotsAndBoxes.Side side) {
     		this.v0 = v0;
     		this.v1 = v1;
-    		if (v0 == null || v1 == null) { System.out.println("WRONG"); }
+    		if (v0 == null || v1 == null) { System.out.println("Empty Node Warning"); }
+    		this.side = side;
+    		generateUID();
     	}
     	
     	public Vertex getOther(Vertex vIn) {
@@ -621,7 +604,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     	}
     	
     	public String toString() {
-    		return "Edge (" + v0 + " to " + v1 + ") p=" + getPriority() + "e=" + enabled;
+    		return "Edge (" + v0 + " to " + v1 + ") p=" + getPriority() + " e=" + enabled;
     	}
     	
     	public int minDegree() {
@@ -648,6 +631,17 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     		return prio;
     	}
     	
+    	private void generateUID() {
+    		if (side == Side.BOTTOM || side == Side.TOP) {
+    			UID = (v0.x + v0.y * width) + (side == Side.BOTTOM ? 0 : width);
+    		} else {
+    			UID = (width * (height+1)) + (v0.y + v0.x * height) + (side == Side.LEFT ? 0 : height);
+    		}
+    	}
+    	
+    	public int getUID() { return UID; }
+    	public Side getSide() { return side; }
+    	
     	public Vertex getV0() { return v0; }
     	public Vertex getV1() { return v1; }
     	
@@ -656,5 +650,63 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     	
     	public boolean isEnabled() { return enabled; }
     	public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    }
+    
+    class Zobrist {
+  	
+    	private long zobrist[];
+    	
+    	private int tableSize, currentSize;
+    	private ZobristEntry table[];
+    	
+    	public Zobrist(int tableSize) {
+    		Random rand = new Random(System.currentTimeMillis());
+    		
+    		int maxEntries = width * height + 2 * width + 2 * height - 1;
+    		zobrist = new long[maxEntries];
+    		for (int ii = 0 ; ii < maxEntries; ii++) {
+    			zobrist[ii] = rand.nextLong();
+    		}
+    		
+    		this.tableSize = tableSize;
+    		table = new ZobristEntry[tableSize];
+    		currentSize = 0;
+    	}
+    	
+    	public void putElement(ZobristEntry zobE) {
+    		
+    	}
+    	
+    	public long getHash(List<Edge> edges) {
+    		
+    		long newKey = 0l;
+    		
+    		for (Edge edge : edges) {
+    			newKey ^= edge.getUID();
+    		}
+    		
+    		return newKey;
+    	}
+    	
+    }
+    
+    class ZobristEntry {
+    	private long key;
+    	private int alpha, beta;
+    	List<Edge> bestMove;
+    	
+    	public ZobristEntry(long key, List<Edge> bestMove, int alpha, int beta) {
+    		this.key = key;
+    		this.bestMove = bestMove;
+    		this.alpha = alpha;
+    		this.beta = beta;
+    	}
+    	
+    	public ZobristEntry(Zobrist zob, List<Edge> edges, List<Edge> bestMove, int alpha, int beta) {
+    		this.key = zob.getHash(edges);
+    		this.bestMove = bestMove;
+    		this.alpha = alpha;
+    		this.beta = beta;
+    	}
     }
 }
