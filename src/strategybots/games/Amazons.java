@@ -60,7 +60,10 @@ public final class Amazons extends Game<Amazons> {
             return null;
         }
         
-        public static class MoveAmazon extends Move<Amazons> {
+        @Override
+        protected void endTurn() { super.endTurn(); }
+        
+        public static final class MoveAmazon extends Move<Amazons> {
             
             private static final long serialVersionUID = 5008360178081158142L;
             
@@ -81,7 +84,7 @@ public final class Amazons extends Game<Amazons> {
             }
         }
         
-        public static class ShootArrow extends Place<Amazons> {
+        public static final class ShootArrow extends Place<Amazons> {
             
             private static final long serialVersionUID = -935579828716369553L;
             
@@ -98,7 +101,7 @@ public final class Amazons extends Game<Amazons> {
             @Override
             protected void apply(State<Amazons> state) {
                 super.apply(state);
-                state.endTurn();
+                endTurn(state);
             }
         }
     }

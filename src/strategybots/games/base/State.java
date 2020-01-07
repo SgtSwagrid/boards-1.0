@@ -140,7 +140,9 @@ public abstract class State<G extends Game<G>>
         
         private Tile tile;
         
-        protected Piece(Player<G> owner, int x, int y, Tile tile) {
+        protected Piece(Player<G> owner,
+                int x, int y, Tile tile) {
+            
             this.owner = owner;
             this.x = x;
             this.y = y;
@@ -166,9 +168,9 @@ public abstract class State<G extends Game<G>>
             state.pieces[x][y] = null;
         }
         
-        protected abstract boolean validatePlace(State<G> state, int x, int y);
+        protected abstract boolean validatePlace(int x, int y);
         
-        protected abstract boolean validateMove(State<G> state, int x, int y);
+        protected abstract boolean validateMove(int x, int y);
         
         @Override
         @SuppressWarnings("unchecked")
@@ -192,12 +194,16 @@ public abstract class State<G extends Game<G>>
         protected abstract boolean validate(State<G> state);
         
         protected abstract void apply(State<G> state);
+        
+        //protected final void movePiece()
+        
+        protected final void endTurn(State<G> state) { state.endTurn(); }
     }
     
     protected static class Place<G extends Game<G>> extends Action<G> {
         
         private static final long serialVersionUID = 5586739554752729927L;
-
+        
         @Override
         protected boolean validate(State<G> state) {
             // TODO Auto-generated method stub
@@ -222,12 +228,14 @@ public abstract class State<G extends Game<G>>
         private int xTo, yTo;
         
         protected Move(State<G> state, int xFrom, int yFrom, int xTo, int yTo) {
+            
             this.piece = state.getPiece(xFrom, yFrom).orElseGet(null);
             this.xFrom = xFrom; this.yFrom = yFrom;
             this.xTo = xTo; this.yTo = yTo;
         }
         
         protected Move(Piece<G> piece, int xTo, int yTo) {
+            
             this.piece = piece;
             xFrom = piece.getX(); yFrom = piece.getY();
             this.xTo = xTo; this.yTo = yTo;
@@ -264,7 +272,7 @@ public abstract class State<G extends Game<G>>
                     || yTo >= height) return false;
             
             //Ensure specific piece is able to make the move.
-            if(!piece.validateMove(state, xTo, yTo)) return false;
+            if(!piece.validateMove(xTo, yTo)) return false;
             
             return true;
         }
