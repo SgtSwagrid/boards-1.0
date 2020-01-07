@@ -30,6 +30,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 	private int topMoves, topDepth;
 	
 	// Zobrist Variables
+	Zobrist zobrist;
 	
 	public TipDots3v3() {
 		System.out.println("Tip's Dots and Boxes Bot 3 v3 Loaded");
@@ -47,15 +48,16 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 	
 	@Override 
 	public void init(DotsAndBoxes game, int playerId) {
-		
+
+		this.width = game.getWidth();
+		this.height = game.getHeight();
+		zobrist = new Zobrist(1000000);
 	}
 	
 	@Override
 	public void takeTurn(DotsAndBoxes game, int playerId) {
-
-		this.width = game.getWidth();
-		this.height = game.getHeight();
 		getBestMove(game, playerId);
+		System.out.println("Zobrist R=" + zobrist.getFillRatio());
 	}
 	
 	/**
@@ -217,6 +219,15 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 			return new Triple(heur, container, depth);
 		}
 		
+		ZobristEntry zobObj = new ZobristEntry(zobrist, edges, null, depth, alpha, beta);
+		// Lookup this position
+		ZobristEntry zobExist = zobrist.get(zobObj.getKey());
+		
+		if (zobExist != null && zobExist.getKey() == zobObj.getKey() && zobExist.depth >= depth ) {
+			alpha = Math.min(alpha, zobExist.getAlpha());
+			beta = Math.max(beta, zobExist.getBeta());
+		}
+		
 		edges.sort(prioritySort);
 		List<List<Edge>> compMoves = generateMoves(verts, edges, beamFactor);
 		
@@ -260,6 +271,11 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
             iters++;
             if (iters >= beamFactor) break;
 		}
+		
+		zobObj.setBestMove(bestMove);
+		zobObj.setAlpha(alpha);
+		zobObj.setBeta(beta);
+		zobrist.putElement(zobObj);
 		
 		return new Triple(score, bestMove, depth);
 	}
@@ -662,7 +678,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     	public Zobrist(int tableSize) {
     		Random rand = new Random(System.currentTimeMillis());
     		
-    		int maxEntries = width * height + 2 * width + 2 * height - 1;
+    		int maxEntries = width * (height + 1) + height * (width + 1);
     		zobrist = new long[maxEntries];
     		for (int ii = 0 ; ii < maxEntries; ii++) {
     			zobrist[ii] = rand.nextLong();
@@ -674,7 +690,40 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     	}
     	
     	public void putElement(ZobristEntry zobE) {
+    		int index = (int) Math.floorMod(zobE.getKey(), tableSize);
     		
+    		//System.out.println(currentSize + ": Index at " + index +  " is " + table[index]);
+    		
+    		if (table[index] == null) {
+    			table[index] = zobE;
+    			currentSize++;
+    		} else {
+    			// Replace deeper
+    			if (zobE.depth > table[index].depth) {
+    				table[index] = zobE;
+    			}
+    		}
+    	}
+    	
+    	public ZobristEntry get(long hash) {
+    		//System.out.println(hash + " MOD " + tableSize + " = " + (int) Math.floorMod(hash, tableSize));
+    		return table[(int) Math.floorMod(hash, tableSize)];
+    	}
+    	
+    	public long updateHash(long inputHash, List<Edge> edges) {
+    		long hash = inputHash;
+    		for (Edge edge : edges) {
+    			hash = updateHash(hash, edge);
+    		}
+    		return hash;
+    	}
+    	
+    	public long updateHash(long inputHash, Edge edge) {
+    		return inputHash ^ zobrist[edge.getUID()];
+    	}
+    	
+    	public float getFillRatio() {
+    		return (float)((float)currentSize / tableSize);
     	}
     	
     	public long getHash(List<Edge> edges) {
@@ -682,7 +731,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     		long newKey = 0l;
     		
     		for (Edge edge : edges) {
-    			newKey ^= edge.getUID();
+    			newKey ^= zobrist[edge.getUID()];
     		}
     		
     		return newKey;
@@ -692,21 +741,56 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     
     class ZobristEntry {
     	private long key;
-    	private int alpha, beta;
+    	private int depth;
+		private int alpha, beta;
     	List<Edge> bestMove;
     	
-    	public ZobristEntry(long key, List<Edge> bestMove, int alpha, int beta) {
+    	public ZobristEntry(long key, List<Edge> bestMove, int depth, int alpha, int beta) {
     		this.key = key;
     		this.bestMove = bestMove;
+    		this.depth = depth;
     		this.alpha = alpha;
     		this.beta = beta;
     	}
     	
-    	public ZobristEntry(Zobrist zob, List<Edge> edges, List<Edge> bestMove, int alpha, int beta) {
+    	public ZobristEntry(Zobrist zob, List<Edge> edges, List<Edge> bestMove, int depth, int alpha, int beta) {
     		this.key = zob.getHash(edges);
     		this.bestMove = bestMove;
+    		this.depth = depth;
     		this.alpha = alpha;
     		this.beta = beta;
     	}
+    	
+    	public List<Edge> getBestMove() {
+			return bestMove;
+		}    	
+    	
+		public void setBestMove(List<Edge> bestMove) {
+			this.bestMove = bestMove;
+		}
+
+		public long getKey() {
+			return key;
+		}
+
+		public int getDepth() {
+			return depth;
+		}
+
+		public int getAlpha() {
+			return alpha;
+		}
+		
+		public void setAlpha(int alpha) {
+			this.alpha = alpha;
+		}
+
+		public int getBeta() {
+			return beta;
+		}
+		
+		public void setBeta(int beta) {
+			this.beta = beta;
+		}
     }
 }
