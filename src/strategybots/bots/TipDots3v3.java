@@ -24,7 +24,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 	private long time = 2000l;
 	private int maxDepth = 7;
 	private int turn = 0;
-	private int beamFactor = 10;
+	private int beamFactor = 60;
 		
 	private int width, height;
 	private int topMoves, topDepth;
@@ -79,6 +79,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
         for(; depth <= maxDepth; depth++) {
         	
         	//System.out.println("running depth " + depth);
+        	zobrist.resetTable();
         	topMoves = board.edges.size();
         	topDepth = depth;
         	Triple result = negamax(board.verts, board.edges, scores, playerId, depth, -Integer.MAX_VALUE, Integer.MAX_VALUE);
@@ -207,27 +208,36 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 		int score = 0, iters = 0;
 		List<Edge> bestMove = null;
 		
+		long zobHash = zobrist.getHash(edges);
+		// Lookup this position
+		ZobristEntry zobExist = zobrist.get(zobHash);
+		
+		if (zobExist != null && zobExist.getKey() == zobHash && zobExist.depth >= depth) {
+			if (zobExist.getAlpha() <= alpha) {
+				//System.out.println("Alpha terminal");
+				return new Triple(zobExist.getAlpha(), zobExist.getBestMove());
+			} else if (zobExist.getBeta() >= beta) {
+				//System.out.println("Beta terminal");
+				return new Triple(zobExist.getBeta(), zobExist.getBestMove());
+			}
+		}
+		
 		if (edges.size() == 1) {
 			
 			List<Edge> container = new ArrayList<Edge>();
 			container.add(edges.get(0));
 			
 			successor(container, captures, playerId);
-			int heur = heuristic(captures, playerId);
+			int finalScore = heuristic(captures, playerId);
 			predecessor(container, captures, playerId);
 			
-			return new Triple(heur, container, depth);
+			// Depth 0 (terminal) hashtable put
+			zobrist.putElement(zobHash, container, depth, finalScore, finalScore);
+			
+			return new Triple(finalScore, container, depth);
 		}
-		
-		ZobristEntry zobObj = new ZobristEntry(zobrist, edges, null, depth, alpha, beta);
-		// Lookup this position
-		ZobristEntry zobExist = zobrist.get(zobObj.getKey());
-		
-		if (zobExist != null && zobExist.getKey() == zobObj.getKey() && zobExist.depth >= depth ) {
-			alpha = Math.min(alpha, zobExist.getAlpha());
-			beta = Math.max(beta, zobExist.getBeta());
-		}
-		
+	
+		// Negamax as requried
 		edges.sort(prioritySort);
 		List<List<Edge>> compMoves = generateMoves(verts, edges, beamFactor);
 		
@@ -258,24 +268,28 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
             if(s > score || bestMove == null ) {
                 score = s;
                 bestMove = move;
-                alpha = score > alpha ? score : alpha;
+                
+                if (score > alpha) {
+                	alpha = score;
+                	
+        			zobrist.putElement(zobHash, bestMove, depth-1, alpha, beta);
+                }
             }
             
 			// predecessor
 			predecessor(move, captures, playerId);
-            
+			
 			// Alpha Beta check
-            if(alpha >= beta) break;
+            if(alpha >= beta) {
+            	break;
+            }
 
 			// Beam check
             iters++;
             if (iters >= beamFactor) break;
 		}
 		
-		zobObj.setBestMove(bestMove);
-		zobObj.setAlpha(alpha);
-		zobObj.setBeta(beta);
-		zobrist.putElement(zobObj);
+		//zobrist.putElement(zobHash, bestMove, depth, alpha, beta);
 		
 		return new Triple(score, bestMove, depth);
 	}
@@ -685,15 +699,21 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     		}
     		
     		this.tableSize = tableSize;
+    		resetTable();
+    	}
+    	
+    	public void resetTable() {
     		table = new ZobristEntry[tableSize];
     		currentSize = 0;
     	}
     	
+    	public void putElement(long hash, List<Edge> bestMove, int depth, int alpha, int beta) {
+    		putElement(new ZobristEntry(hash, bestMove, depth, alpha, beta));
+    	}
+    	
     	public void putElement(ZobristEntry zobE) {
     		int index = (int) Math.floorMod(zobE.getKey(), tableSize);
-    		
-    		//System.out.println(currentSize + ": Index at " + index +  " is " + table[index]);
-    		
+    		    		
     		if (table[index] == null) {
     			table[index] = zobE;
     			currentSize++;
