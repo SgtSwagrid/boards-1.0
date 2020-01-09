@@ -21,10 +21,12 @@ import strategybots.games.base.Game.Player;
 
 public class TipDots3v3 implements Player<DotsAndBoxes>{
 
+    public static enum Type { UNDEFINED, EXACT, UPPER, LOWER };
+	
 	private long time = 2000l;
 	private int maxDepth = 7;
 	private int turn = 0;
-	private int beamFactor = 60;
+	private int beamFactor = 120;
 		
 	private int width, height;
 	private int topMoves, topDepth;
@@ -51,7 +53,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 
 		this.width = game.getWidth();
 		this.height = game.getHeight();
-		zobrist = new Zobrist(1000000);
+		zobrist = new Zobrist(611953*2);
 	}
 	
 	@Override
@@ -79,7 +81,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
         for(; depth <= maxDepth; depth++) {
         	
         	//System.out.println("running depth " + depth);
-        	zobrist.resetTable();
+        	//zobrist.resetTable();
         	topMoves = board.edges.size();
         	topDepth = depth;
         	Triple result = negamax(board.verts, board.edges, scores, playerId, depth, -Integer.MAX_VALUE, Integer.MAX_VALUE);
@@ -205,25 +207,30 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 	 */
 	private Triple negamax(Set<Vertex> verts, List<Edge> edges, int[] captures, int playerId, int depth, int alpha, int beta) {
 		
-		int score = 0, iters = 0;
-		List<Edge> bestMove = null;
+		// Save original alpha
+		int previousAlpha = alpha;
 		
-		long zobHash = zobrist.getHash(edges);
-		// Lookup this position
-		ZobristEntry zobExist = zobrist.get(zobHash);
+		// TT lookup
+		long ttHash = zobrist.getHash(edges);
+		ZobristEntry ttEntry = zobrist.get(ttHash);
 		
-		if (zobExist != null && zobExist.getKey() == zobHash && zobExist.depth >= depth) {
-			if (zobExist.getAlpha() <= alpha) {
-				//System.out.println("Alpha terminal");
-				return new Triple(zobExist.getAlpha(), zobExist.getBestMove());
-			} else if (zobExist.getBeta() >= beta) {
-				//System.out.println("Beta terminal");
-				return new Triple(zobExist.getBeta(), zobExist.getBestMove());
+		if (ttEntry != null && ttEntry.getDepth() >= depth) {
+			if (ttEntry.getType() == Type.EXACT) {
+				return new Triple(ttEntry.getScore(), ttEntry.getBestMove());
+			} else if (ttEntry.getType() == Type.LOWER) {
+				alpha = ttEntry.getScore() > alpha ? ttEntry.getScore() : alpha;
+			} else if (ttEntry.getType() == Type.UPPER) {
+				beta = ttEntry.getScore() < beta ? ttEntry.getScore() : beta;
+			}
+			
+			if (alpha >= beta) {
+				return new Triple(ttEntry.getScore(), ttEntry.getBestMove());
 			}
 		}
-		
+
+		// Depth 0 and Terminal State check
 		if (edges.size() == 1) {
-			
+			// return the score after the last edge added
 			List<Edge> container = new ArrayList<Edge>();
 			container.add(edges.get(0));
 			
@@ -231,21 +238,22 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 			int finalScore = heuristic(captures, playerId);
 			predecessor(container, captures, playerId);
 			
-			// Depth 0 (terminal) hashtable put
-			zobrist.putElement(zobHash, container, depth, finalScore, finalScore);
-			
 			return new Triple(finalScore, container, depth);
 		}
-	
-		// Negamax as requried
-		edges.sort(prioritySort);
-		List<List<Edge>> compMoves = generateMoves(verts, edges, beamFactor);
 		
+		// generate next moves and order them
+		edges.sort(prioritySort);
+		List<List<Edge>> compMoves = generateMoves(verts, edges, beamFactor*2);
+		
+		int score = -Integer.MAX_VALUE, iters = 0;
+		List<Edge> bestMove = null;
+		
+		// For each child node from a move
 		for (List<Edge> move : compMoves ) {
 			
 			// apply the edge removal
 			boolean hasCaptured = successor(move, captures, playerId);
-						
+
 			List<Edge> nextEdges = new ArrayList<Edge>();
 			nextEdges.addAll(edges);
 			for (Edge edge : move) {
@@ -255,13 +263,17 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 			// Get the game score or margin at this layer
 			int heur = heuristic(captures, playerId);
 			
-			// Do negamax
+			// --- Do primary negamax --- 
 			int nextPlayer = (hasCaptured) ? playerId : (3-playerId);
 			
+			// Set score to the value of the board, or do negamax if depth allows
 			int s = heur;
 			if (depth > 0 && nextEdges.size() != 0) {
-				s = (hasCaptured ? negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), alpha, beta).score : 
-            		-negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), -beta, -alpha).score);
+				if (hasCaptured) { // Take another turn
+					s = negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), alpha, beta).score;
+				} else {
+					s = -negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), -beta, -alpha).score;
+				}           		
 			}
 			
 			// Update scores or set the score to the first element when first run
@@ -269,27 +281,32 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
                 score = s;
                 bestMove = move;
                 
-                if (score > alpha) {
-                	alpha = score;
-                	
-        			zobrist.putElement(zobHash, bestMove, depth-1, alpha, beta);
-                }
+                // alpha = Math.max(alpha, score);
+                alpha = alpha > score ? alpha : score;
             }
             
-			// predecessor
+			// Predecessor. Undo the move
 			predecessor(move, captures, playerId);
 			
 			// Alpha Beta check
-            if(alpha >= beta) {
-            	break;
-            }
+            if(alpha >= beta) break;
 
 			// Beam check
-            iters++;
-            if (iters >= beamFactor) break;
+            if (iters++ >= beamFactor) break;
 		}
 		
-		//zobrist.putElement(zobHash, bestMove, depth, alpha, beta);
+		// Update the transposition table
+		ZobristEntry ttNew = new ZobristEntry(ttHash, bestMove, depth, score, Type.UNDEFINED);
+		
+		if (score <= previousAlpha) {
+			ttNew.setType(Type.UPPER);
+		} else if (score >= beta) {
+			ttNew.setType(Type.LOWER);
+		} else {
+			ttNew.setType(Type.EXACT);
+		}
+		
+		zobrist.putElement(ttNew);
 		
 		return new Triple(score, bestMove, depth);
 	}
@@ -707,8 +724,8 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     		currentSize = 0;
     	}
     	
-    	public void putElement(long hash, List<Edge> bestMove, int depth, int alpha, int beta) {
-    		putElement(new ZobristEntry(hash, bestMove, depth, alpha, beta));
+    	public void putElement(long hash, List<Edge> bestMove, int depth, int value, Type type) {
+    		putElement(new ZobristEntry(hash, bestMove, depth, value, type));
     	}
     	
     	public void putElement(ZobristEntry zobE) {
@@ -718,16 +735,21 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     			table[index] = zobE;
     			currentSize++;
     		} else {
-    			// Replace deeper
-    			if (zobE.depth > table[index].depth) {
+    			// Replace deeper or equal depth
+    			if (zobE.depth >= table[index].depth) {
     				table[index] = zobE;
     			}
     		}
     	}
     	
     	public ZobristEntry get(long hash) {
-    		//System.out.println(hash + " MOD " + tableSize + " = " + (int) Math.floorMod(hash, tableSize));
-    		return table[(int) Math.floorMod(hash, tableSize)];
+
+    		ZobristEntry found = table[(int) Math.floorMod(hash, tableSize)];
+    		if (found != null && found.getKey() == hash) {
+    			return found;
+    		}
+    		
+    		return null;
     	}
     	
     	public long updateHash(long inputHash, List<Edge> edges) {
@@ -760,28 +782,30 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     }
     
     class ZobristEntry {
-    	private long key;
+    	
+      	private long key;
     	private int depth;
-		private int alpha, beta;
+    	private Type type = Type.UNDEFINED;
+		private int score;
     	List<Edge> bestMove;
     	
-    	public ZobristEntry(long key, List<Edge> bestMove, int depth, int alpha, int beta) {
+    	public ZobristEntry(long key, List<Edge> bestMove, int depth, int score, Type type) {
     		this.key = key;
     		this.bestMove = bestMove;
     		this.depth = depth;
-    		this.alpha = alpha;
-    		this.beta = beta;
+    		this.score = score;
+    		this.type = type;
     	}
     	
-    	public ZobristEntry(Zobrist zob, List<Edge> edges, List<Edge> bestMove, int depth, int alpha, int beta) {
+    	public ZobristEntry(Zobrist zob, List<Edge> edges, List<Edge> bestMove, int depth, int score, Type type) {
     		this.key = zob.getHash(edges);
     		this.bestMove = bestMove;
     		this.depth = depth;
-    		this.alpha = alpha;
-    		this.beta = beta;
+    		this.score = score;
+    		this.type = type;
     	}
-    	
-    	public List<Edge> getBestMove() {
+
+		public List<Edge> getBestMove() {
 			return bestMove;
 		}    	
     	
@@ -797,20 +821,20 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 			return depth;
 		}
 
-		public int getAlpha() {
-			return alpha;
+		public int getScore() {
+			return score;
 		}
 		
-		public void setAlpha(int alpha) {
-			this.alpha = alpha;
+		public void setScore(int score) {
+    		this.score = score;
 		}
 
-		public int getBeta() {
-			return beta;
+		public Type getType() {
+			return type;
 		}
 		
-		public void setBeta(int beta) {
-			this.beta = beta;
+		public void setType(Type type) {
+    		this.type = type;
 		}
     }
 }
