@@ -4,7 +4,7 @@ package strategybots.bots;
  * Date: 5 Jan 2019
  * 
  * A Minimax + Alpha beta pruning bot to play Dots and Boxes. Currently implemented with 
- * the help of domain specific knowledge
+ * the help of domain specific knowledge and zobrist hashing
  */
 
 import java.util.ArrayList;
@@ -15,45 +15,51 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import strategybots.bots.TipDots.Node;
-import strategybots.bots.TipDots2.Move;
-import strategybots.bots.TipDots3v1.Edge;
-import strategybots.bots.TipDots3v1.Triple;
-import strategybots.bots.TipDots3v1.Vertex;
 import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Side;
 import strategybots.games.base.Game.Player;
 
-public class TipDots3v2 implements Player<DotsAndBoxes>{
+public class TipDots3v3 implements Player<DotsAndBoxes>{
 
+    public static enum Type { UNDEFINED, EXACT, UPPER, LOWER };
+	
 	private long time = 2000l;
 	private int maxDepth = 7;
 	private int turn = 0;
-	private int beamFactor = 10;
+	private int beamFactor = 120;
 		
 	private int width, height;
 	private int topMoves, topDepth;
 	
-	public TipDots3v2() {
-		System.out.println("Tip's Dots and Boxes Bot 3 v2 Loaded");
+	// Zobrist Variables
+	Zobrist zobrist;
+	
+	public TipDots3v3() {
+		System.out.println("Tip's Dots and Boxes Bot 3 v3 Loaded");
 	}
 	
-	public TipDots3v2(long millis) {
+	public TipDots3v3(long millis) {
 		this();
 		this.time = millis;
 	}
 	
-	public TipDots3v2(long millis, int beam) {
+	public TipDots3v3(long millis, int beam) {
 		this(millis);
 		this.beamFactor = beam;
 	}
 	
-	@Override
-	public void takeTurn(DotsAndBoxes game, int playerId) {
+	@Override 
+	public void init(DotsAndBoxes game, int playerId) {
 
 		this.width = game.getWidth();
 		this.height = game.getHeight();
+		zobrist = new Zobrist(611953*2);
+	}
+	
+	@Override
+	public void takeTurn(DotsAndBoxes game, int playerId) {
 		getBestMove(game, playerId);
+		System.out.println("Zobrist R=" + zobrist.getFillRatio());
 	}
 	
 	/**
@@ -75,6 +81,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
         for(; depth <= maxDepth; depth++) {
         	
         	//System.out.println("running depth " + depth);
+        	//zobrist.resetTable();
         	topMoves = board.edges.size();
         	topDepth = depth;
         	Triple result = negamax(board.verts, board.edges, scores, playerId, depth, -Integer.MAX_VALUE, Integer.MAX_VALUE);
@@ -96,36 +103,13 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	 */
 	private void playMove(DotsAndBoxes game, List<Edge> bestEdges) {
 		
-		int width = game.getWidth(), height = game.getHeight();
 		Side side = Side.TOP;
+		Vertex v0 = null;
 		
 		for (Edge edge : bestEdges) {
 		
-			Vertex v0 = edge.getV0(), v1 = edge.getV1();
-
-			if (v0 != v1) {  // Nodes aren't the same, can infer direction
-				if (v0.x == v1.x) {
-					if (v0.y < v1.y)  side = Side.TOP;  else  side = Side.BOTTOM; 
-				} else if (v0.y == v1.y) {
-					if (v0.x < v1.x)  side = Side.RIGHT;  else  side = Side.LEFT;
-				}
-			} else { // Nodes are the same, so this is an edge piece
-				
-				if (v0.x == 0 && v0.y == 0) {
-					if (game.hasLine(Side.BOTTOM, v0.x, v0.y))  side = Side.LEFT;  else  side = Side.BOTTOM;
-				} else if (v0.x == width-1 && v0.y == 0) {
-					if (game.hasLine(Side.BOTTOM, v0.x, v0.y)) side = Side.RIGHT;  else side = Side.BOTTOM;
-				} else if (v0.x == width-1 && v0.y == height-1) { 
-					if (game.hasLine(Side.TOP, v0.x, v0.y)) side = Side.RIGHT; else side = Side.TOP;
-				} else if (v0.x == 0 && v0.y == height-1) {
-					if (game.hasLine(Side.TOP, v0.x, v0.y)) side = Side.LEFT; else side = Side.TOP;
-				} else {
-					if (v0.x == 0)  side = Side.LEFT;
-					if (v0.x == width-1)  side = Side.RIGHT;
-					if (v0.y == 0)  side = Side.BOTTOM;
-					if (v0.y == height-1)  side = Side.TOP;
-				}
-			}
+			v0 = edge.getV0();
+			side = edge.getSide();
 			
 			game.drawLine(side, v0.x, v0.y);
 		}
@@ -154,16 +138,16 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 			for (int y = 0 ; y < height ; y++) {
 				// Check for right col
 				if (x == width - 1 && !game.hasLine(Side.RIGHT, x, y)) 
-					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y));
+					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y, Side.RIGHT));
 				// Check for Top row
 				if (y == height - 1 && !game.hasLine(Side.TOP, x, y)) 
-					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y)); 
+					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y, Side.TOP)); 
 				// check bottom, with special condition bottom row
 				if (!game.hasLine(Side.BOTTOM, x, y))
-					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y == 0 ? 0 : (y-1)));
+					board.getEdges().add(makeSide(board.getVerts(), x, y, x, y == 0 ? 0 : (y-1), Side.BOTTOM));
 				// Left check, with special condition for col 0
 				if (!game.hasLine(Side.LEFT, x, y))
-					board.getEdges().add(makeSide(board.getVerts(), x, y, x == 0 ? 0 : (x-1), y));
+					board.getEdges().add(makeSide(board.getVerts(), x, y, x == 0 ? 0 : (x-1), y, Side.LEFT));
 			}
 		}
 		
@@ -180,9 +164,9 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	 * @param y1
 	 * @return A new edge object.
 	 */
-	private Edge makeSide(Set<Vertex> verts, int x0, int y0, int x1, int y1) {
+	private Edge makeSide(Set<Vertex> verts, int x0, int y0, int x1, int y1, Side side) {
 		Vertex v0 = getVertex(verts, x0, y0), v1 = getVertex(verts, x1, y1);
-		Edge edge = new Edge(v0, v1);
+		Edge edge = new Edge(v0, v1, side);
 		v0.addEdge(edge); 
 		v1.addEdge(edge);
 		return edge;
@@ -223,29 +207,53 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	 */
 	private Triple negamax(Set<Vertex> verts, List<Edge> edges, int[] captures, int playerId, int depth, int alpha, int beta) {
 		
-		int score = 0, iters = 0;
-		List<Edge> bestMove = null;
+		// Save original alpha
+		int previousAlpha = alpha;
 		
-		if (edges.size() == 1) {
+		// TT lookup
+		long ttHash = zobrist.getHash(edges);
+		ZobristEntry ttEntry = zobrist.get(ttHash);
+		
+		if (ttEntry != null && ttEntry.getDepth() >= depth) {
+			if (ttEntry.getType() == Type.EXACT) {
+				return new Triple(ttEntry.getScore(), ttEntry.getBestMove());
+			} else if (ttEntry.getType() == Type.LOWER) {
+				alpha = ttEntry.getScore() > alpha ? ttEntry.getScore() : alpha;
+			} else if (ttEntry.getType() == Type.UPPER) {
+				beta = ttEntry.getScore() < beta ? ttEntry.getScore() : beta;
+			}
 			
+			if (alpha >= beta) {
+				return new Triple(ttEntry.getScore(), ttEntry.getBestMove());
+			}
+		}
+
+		// Depth 0 and Terminal State check
+		if (edges.size() == 1) {
+			// return the score after the last edge added
 			List<Edge> container = new ArrayList<Edge>();
 			container.add(edges.get(0));
 			
 			successor(container, captures, playerId);
-			int heur = heuristic(captures, playerId);
+			int finalScore = heuristic(captures, playerId);
 			predecessor(container, captures, playerId);
 			
-			return new Triple(heur, container, depth);
+			return new Triple(finalScore, container, depth);
 		}
 		
+		// generate next moves and order them
 		edges.sort(prioritySort);
-		List<List<Edge>> compMoves = generateMoves(verts, edges, beamFactor);
+		List<List<Edge>> compMoves = generateMoves(verts, edges, beamFactor*2);
 		
+		int score = -Integer.MAX_VALUE, iters = 0;
+		List<Edge> bestMove = null;
+		
+		// For each child node from a move
 		for (List<Edge> move : compMoves ) {
 			
 			// apply the edge removal
 			boolean hasCaptured = successor(move, captures, playerId);
-						
+
 			List<Edge> nextEdges = new ArrayList<Edge>();
 			nextEdges.addAll(edges);
 			for (Edge edge : move) {
@@ -255,32 +263,50 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 			// Get the game score or margin at this layer
 			int heur = heuristic(captures, playerId);
 			
-			// Do negamax
+			// --- Do primary negamax --- 
 			int nextPlayer = (hasCaptured) ? playerId : (3-playerId);
 			
+			// Set score to the value of the board, or do negamax if depth allows
 			int s = heur;
 			if (depth > 0 && nextEdges.size() != 0) {
-				s = (hasCaptured ? negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), alpha, beta).score : 
-            		-negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), -beta, -alpha).score);
+				if (hasCaptured) { // Take another turn
+					s = negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), alpha, beta).score;
+				} else {
+					s = -negamax(verts, nextEdges, captures, nextPlayer, depth-move.size(), -beta, -alpha).score;
+				}           		
 			}
 			
 			// Update scores or set the score to the first element when first run
             if(s > score || bestMove == null ) {
                 score = s;
                 bestMove = move;
-                alpha = score > alpha ? score : alpha;
+                
+                // alpha = Math.max(alpha, score);
+                alpha = alpha > score ? alpha : score;
             }
             
-			// predecessor
+			// Predecessor. Undo the move
 			predecessor(move, captures, playerId);
-            
+			
 			// Alpha Beta check
             if(alpha >= beta) break;
 
 			// Beam check
-            iters++;
-            if (iters >= beamFactor) break;
+            if (iters++ >= beamFactor) break;
 		}
+		
+		// Update the transposition table
+		ZobristEntry ttNew = new ZobristEntry(ttHash, bestMove, depth, score, Type.UNDEFINED);
+		
+		if (score <= previousAlpha) {
+			ttNew.setType(Type.UPPER);
+		} else if (score >= beta) {
+			ttNew.setType(Type.LOWER);
+		} else {
+			ttNew.setType(Type.EXACT);
+		}
+		
+		zobrist.putElement(ttNew);
 		
 		return new Triple(score, bestMove, depth);
 	}
@@ -459,7 +485,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     private void printStats(int score, int playerId, List<Edge> ee, int depth, long start) {
         
         System.out.println("=======================");
-        System.out.println("Tiptaco's Dots Bot 3 v2 Statistics:");
+        System.out.println("Tiptaco's Dots Bot 3 v3 Statistics:");
         System.out.println("Player:      " + playerId + " ("+(playerId==1?"Blue":"Red")+")");
         System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + score);
@@ -496,7 +522,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
 	}; 
 	
 	@Override
-	public String getName() { return "TipTacos's Dots and Boxes 3 v2 Bot"; }
+	public String getName() { return "TipTacos's Dots and Boxes 3 v3 Bot"; }
     
     class Board {
     	List<Edge> edges;
@@ -607,13 +633,17 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     class Edge {
     	Vertex v0, v1;
     	private boolean visited = false, enabled = true;
+    	private DotsAndBoxes.Side side;
+    	private int UID = -1;
     	
     	public Edge() {}
     	
-    	public Edge(Vertex v0, Vertex v1) {
+    	public Edge(Vertex v0, Vertex v1, DotsAndBoxes.Side side) {
     		this.v0 = v0;
     		this.v1 = v1;
-    		if (v0 == null || v1 == null) { System.out.println("WRONG"); }
+    		if (v0 == null || v1 == null) { System.out.println("Empty Node Warning"); }
+    		this.side = side;
+    		generateUID();
     	}
     	
     	public Vertex getOther(Vertex vIn) {
@@ -621,7 +651,7 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     	}
     	
     	public String toString() {
-    		return "Edge (" + v0 + " to " + v1 + ") p=" + getPriority() + "e=" + enabled;
+    		return "Edge (" + v0 + " to " + v1 + ") p=" + getPriority() + " e=" + enabled;
     	}
     	
     	public int minDegree() {
@@ -648,6 +678,17 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     		return prio;
     	}
     	
+    	private void generateUID() {
+    		if (side == Side.BOTTOM || side == Side.TOP) {
+    			UID = (v0.x + v0.y * width) + (side == Side.BOTTOM ? 0 : width);
+    		} else {
+    			UID = (width * (height+1)) + (v0.y + v0.x * height) + (side == Side.LEFT ? 0 : height);
+    		}
+    	}
+    	
+    	public int getUID() { return UID; }
+    	public Side getSide() { return side; }
+    	
     	public Vertex getV0() { return v0; }
     	public Vertex getV1() { return v1; }
     	
@@ -656,5 +697,144 @@ public class TipDots3v2 implements Player<DotsAndBoxes>{
     	
     	public boolean isEnabled() { return enabled; }
     	public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    }
+    
+    class Zobrist {
+  	
+    	private long zobrist[];
+    	
+    	private int tableSize, currentSize;
+    	private ZobristEntry table[];
+    	
+    	public Zobrist(int tableSize) {
+    		Random rand = new Random(System.currentTimeMillis());
+    		
+    		int maxEntries = width * (height + 1) + height * (width + 1);
+    		zobrist = new long[maxEntries];
+    		for (int ii = 0 ; ii < maxEntries; ii++) {
+    			zobrist[ii] = rand.nextLong();
+    		}
+    		
+    		this.tableSize = tableSize;
+    		resetTable();
+    	}
+    	
+    	public void resetTable() {
+    		table = new ZobristEntry[tableSize];
+    		currentSize = 0;
+    	}
+    	
+    	public void putElement(long hash, List<Edge> bestMove, int depth, int value, Type type) {
+    		putElement(new ZobristEntry(hash, bestMove, depth, value, type));
+    	}
+    	
+    	public void putElement(ZobristEntry zobE) {
+    		int index = (int) Math.floorMod(zobE.getKey(), tableSize);
+    		    		
+    		if (table[index] == null) {
+    			table[index] = zobE;
+    			currentSize++;
+    		} else {
+    			// Replace deeper or equal depth
+    			if (zobE.depth >= table[index].depth) {
+    				table[index] = zobE;
+    			}
+    		}
+    	}
+    	
+    	public ZobristEntry get(long hash) {
+
+    		ZobristEntry found = table[(int) Math.floorMod(hash, tableSize)];
+    		if (found != null && found.getKey() == hash) {
+    			return found;
+    		}
+    		
+    		return null;
+    	}
+    	
+    	public long updateHash(long inputHash, List<Edge> edges) {
+    		long hash = inputHash;
+    		for (Edge edge : edges) {
+    			hash = updateHash(hash, edge);
+    		}
+    		return hash;
+    	}
+    	
+    	public long updateHash(long inputHash, Edge edge) {
+    		return inputHash ^ zobrist[edge.getUID()];
+    	}
+    	
+    	public float getFillRatio() {
+    		return (float)((float)currentSize / tableSize);
+    	}
+    	
+    	public long getHash(List<Edge> edges) {
+    		
+    		long newKey = 0l;
+    		
+    		for (Edge edge : edges) {
+    			newKey ^= zobrist[edge.getUID()];
+    		}
+    		
+    		return newKey;
+    	}
+    	
+    }
+    
+    class ZobristEntry {
+    	
+      	private long key;
+    	private int depth;
+    	private Type type = Type.UNDEFINED;
+		private int score;
+    	List<Edge> bestMove;
+    	
+    	public ZobristEntry(long key, List<Edge> bestMove, int depth, int score, Type type) {
+    		this.key = key;
+    		this.bestMove = bestMove;
+    		this.depth = depth;
+    		this.score = score;
+    		this.type = type;
+    	}
+    	
+    	public ZobristEntry(Zobrist zob, List<Edge> edges, List<Edge> bestMove, int depth, int score, Type type) {
+    		this.key = zob.getHash(edges);
+    		this.bestMove = bestMove;
+    		this.depth = depth;
+    		this.score = score;
+    		this.type = type;
+    	}
+
+		public List<Edge> getBestMove() {
+			return bestMove;
+		}    	
+    	
+		public void setBestMove(List<Edge> bestMove) {
+			this.bestMove = bestMove;
+		}
+
+		public long getKey() {
+			return key;
+		}
+
+		public int getDepth() {
+			return depth;
+		}
+
+		public int getScore() {
+			return score;
+		}
+		
+		public void setScore(int score) {
+    		this.score = score;
+		}
+
+		public Type getType() {
+			return type;
+		}
+		
+		public void setType(Type type) {
+    		this.type = type;
+		}
     }
 }
