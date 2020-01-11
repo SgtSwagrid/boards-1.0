@@ -686,14 +686,14 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 			// Assume square
 			switch(sym) {
 			case 3:
-				dx = dy - height / 2 + width / 2;
-				dy = -dx + width / 2 + height / 2;
+				dx = dy - (height - 1) / 2 + (width - 1) / 2;
+				dy = -dx + (width - 1) / 2 + (height - 1) / 2;
 			case 2:
-				dx = dy - height / 2 + width / 2;
-				dy = -dx + width / 2 + height / 2;
+				dx = dy - (height - 1) / 2 + (width - 1) / 2;
+				dy = -dx + (width - 1) / 2 + (height - 1) / 2;
 			case 1:
-				dx = dy - height / 2 + width / 2;
-				dy = -dx + width / 2 + height / 2;
+				dx = dy - (height - 1) / 2 + (width - 1) / 2;
+				dy = -dx + (width - 1) / 2 + (height - 1) / 2;
 			case 0:
 				// Base case nothing
 				break;
