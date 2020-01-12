@@ -633,7 +633,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     class Edge {
     	Vertex v0, v1;
     	private boolean visited = false, enabled = true;
-    	private DotsAndBoxes.Side side;
+    	private DotsAndBoxes.Side side = null;
     	private int UID = -1;
     	
     	public Edge() {}
@@ -682,32 +682,59 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     		int UID = -1;
     		int dx = v0.x, dy = v0.y;
     		
+    		Side side = this.side;
+    		
+    		if (sym <= 3) {
+    			for (int ii = sym; sym > 0; sym--) {
+    				
+    				//System.out.println("Input " + dx + ", " + dy + " side=" + side);
+    				
+    				dx = dy - (height - 1) / 2 + (width - 1) / 2;
+    				dy = -dx + (width - 1) / 2 + (height - 1) / 2;
+    				
+    				if (side == Side.TOP) side = Side.RIGHT;
+    				else if (side == Side.RIGHT) side = Side.BOTTOM;
+    				else if (side == Side.BOTTOM) side = Side.LEFT;
+    				else if (side == Side.LEFT) side = Side.TOP;
+    				
+    				//System.out.println("OUTPUT " + dx + ", " + dy + " side=" + side);
+    			}
+    		}
     		
 			// Assume square
 			switch(sym) {
-			case 3:
-				dx = dy - (height - 1) / 2 + (width - 1) / 2;
-				dy = -dx + (width - 1) / 2 + (height - 1) / 2;
-			case 2:
-				dx = dy - (height - 1) / 2 + (width - 1) / 2;
-				dy = -dx + (width - 1) / 2 + (height - 1) / 2;
-			case 1:
-				dx = dy - (height - 1) / 2 + (width - 1) / 2;
-				dy = -dx + (width - 1) / 2 + (height - 1) / 2;
-			case 0:
-				// Base case nothing
-				break;
 			case 4:
-				dx = dy - height / 2 + width / 2;
-				dy = -dx + width / 2 + height / 2;
-			case 5:
-				dx = dy - height / 2 + width / 2;
-				dy = -dx + width / 2 + height / 2;
-			case 6:
-				dx = dy - height / 2 + width / 2;
-				dy = -dx + width / 2 + height / 2;
-			case 7:
 				dx = (width - 1) - dx;
+
+				if (side == Side.RIGHT) side = Side.LEFT; 
+				else if (side == Side.LEFT) side = Side.RIGHT;
+				
+				break; //dy = -dx + width / 2 + height / 2;
+			case 5:
+				dy = (height - 1) - dy;
+				
+				if (side == Side.TOP) side = Side.BOTTOM; 
+				else if (side == Side.BOTTOM) side = Side.TOP;
+				
+				//dx = dy - height / 2 + width / 2;
+				//dy = -dx + width / 2 + height / 2;
+				break;
+			case 6:
+				dx = (width - 1) - dx;
+				dy = (height - 1) - dy;
+				
+				if (side == Side.TOP) side = Side.RIGHT;
+				else if (side == Side.RIGHT) side = Side.BOTTOM;
+				else if (side == Side.BOTTOM) side = Side.LEFT;
+				else if (side == Side.LEFT) side = Side.TOP;
+				
+				break;
+				//dx = dy - height / 2 + width / 2;
+				//dy = -dx + width / 2 + height / 2;
+			case 7:
+				int ddx = dy;
+				dy = dx;
+				dx = ddx;
 				break;
 			}
 
@@ -795,6 +822,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     			ZobristEntry zE = get(hashSym);
     			if (zE != null && zE.getKey() == hashSym) {
     				match = zE;
+    				if (ii != 0) System.out.println("Matched with " + ii);
     				break;
     			}
     		}
