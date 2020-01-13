@@ -817,7 +817,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     	public ZobristEntry get(List<Edge> edges) {
     		ZobristEntry match = null;
     		
-    		for (int ii = 0 ; ii < 4 ; ii++) {
+    		for (int ii = 0 ; ii < 1 ; ii++) {
     			long hashSym = getHash(edges, ii);
     			ZobristEntry zE = get(hashSym);
     			if (zE != null && zE.getKey() == hashSym) {
