@@ -19,7 +19,7 @@ import strategybots.games.DotsAndBoxes;
 import strategybots.games.DotsAndBoxes.Side;
 import strategybots.games.base.Game.Player;
 
-public class TipDots3v3 implements Player<DotsAndBoxes>{
+public class TipDots3v4 implements Player<DotsAndBoxes>{
 
     public static enum Type { UNDEFINED, EXACT, UPPER, LOWER };
 	
@@ -34,16 +34,16 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 	// Zobrist Variables
 	Zobrist zobrist;
 	
-	public TipDots3v3() {
+	public TipDots3v4() {
 		System.out.println("Tip's Dots and Boxes Bot 3 v3 Loaded");
 	}
 	
-	public TipDots3v3(long millis) {
+	public TipDots3v4(long millis) {
 		this();
 		this.time = millis;
 	}
 	
-	public TipDots3v3(long millis, int beam) {
+	public TipDots3v4(long millis, int beam) {
 		this(millis);
 		this.beamFactor = beam;
 	}
@@ -212,7 +212,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
 		
 		// TT lookup
 		long ttHash = zobrist.getHash(edges);
-		ZobristEntry ttEntry = zobrist.get(ttHash);
+		ZobristEntry ttEntry = zobrist.get(edges);
 		
 		if (ttEntry != null && ttEntry.getDepth() >= depth) {
 			if (ttEntry.getType() == Type.EXACT) {
@@ -633,7 +633,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     class Edge {
     	Vertex v0, v1;
     	private boolean visited = false, enabled = true;
-    	private DotsAndBoxes.Side side;
+    	private DotsAndBoxes.Side side = null;
     	private int UID = -1;
     	
     	public Edge() {}
@@ -643,7 +643,7 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     		this.v1 = v1;
     		if (v0 == null || v1 == null) { System.out.println("Empty Node Warning"); }
     		this.side = side;
-    		generateUID();
+    		this.UID = generateUID(0);
     	}
     	
     	public Vertex getOther(Vertex vIn) {
@@ -678,15 +678,77 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     		return prio;
     	}
     	
-    	private void generateUID() {
-    		if (side == Side.BOTTOM || side == Side.TOP) {
-    			UID = (v0.x + v0.y * width) + (side == Side.BOTTOM ? 0 : width);
-    		} else {
-    			UID = (width * (height+1)) + (v0.y + v0.x * height) + (side == Side.LEFT ? 0 : height);
+    	private int generateUID(int sym) {
+    		int UID = -1;
+    		int dx = v0.x, dy = v0.y;
+    		
+    		Side side = this.side;
+    		
+    		if (sym <= 3) {
+    			for (int ii = sym; sym > 0; sym--) {
+    				
+    				//System.out.println("Input " + dx + ", " + dy + " side=" + side);
+    				
+    				dx = dy - (height - 1) / 2 + (width - 1) / 2;
+    				dy = -dx + (width - 1) / 2 + (height - 1) / 2;
+    				
+    				if (side == Side.TOP) side = Side.RIGHT;
+    				else if (side == Side.RIGHT) side = Side.BOTTOM;
+    				else if (side == Side.BOTTOM) side = Side.LEFT;
+    				else if (side == Side.LEFT) side = Side.TOP;
+    				
+    				//System.out.println("OUTPUT " + dx + ", " + dy + " side=" + side);
+    			}
     		}
+    		
+			// Assume square
+			switch(sym) {
+			case 4:
+				dx = (width - 1) - dx;
+
+				if (side == Side.RIGHT) side = Side.LEFT; 
+				else if (side == Side.LEFT) side = Side.RIGHT;
+				
+				break; //dy = -dx + width / 2 + height / 2;
+			case 5:
+				dy = (height - 1) - dy;
+				
+				if (side == Side.TOP) side = Side.BOTTOM; 
+				else if (side == Side.BOTTOM) side = Side.TOP;
+				
+				//dx = dy - height / 2 + width / 2;
+				//dy = -dx + width / 2 + height / 2;
+				break;
+			case 6:
+				dx = (width - 1) - dx;
+				dy = (height - 1) - dy;
+				
+				if (side == Side.TOP) side = Side.RIGHT;
+				else if (side == Side.RIGHT) side = Side.BOTTOM;
+				else if (side == Side.BOTTOM) side = Side.LEFT;
+				else if (side == Side.LEFT) side = Side.TOP;
+				
+				break;
+				//dx = dy - height / 2 + width / 2;
+				//dy = -dx + width / 2 + height / 2;
+			case 7:
+				int ddx = dy;
+				dy = dx;
+				dx = ddx;
+				break;
+			}
+
+			if (side == Side.BOTTOM || side == Side.TOP) {
+				UID = (dx + dy * width) + (side == Side.BOTTOM ? 0 : width);
+			} else {
+    			UID = (width * (height+1)) + (dy + dx * height) + (side == Side.LEFT ? 0 : height);
+			}
+    		
+    		return UID;
     	}
     	
     	public int getUID() { return UID; }
+    	public int getUID(int sym) { return generateUID(sym); }
     	public Side getSide() { return side; }
     	
     	public Vertex getV0() { return v0; }
@@ -752,6 +814,22 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     		return null;
     	}
     	
+    	public ZobristEntry get(List<Edge> edges) {
+    		ZobristEntry match = null;
+    		
+    		for (int ii = 0 ; ii < 1 ; ii++) {
+    			long hashSym = getHash(edges, ii);
+    			ZobristEntry zE = get(hashSym);
+    			if (zE != null && zE.getKey() == hashSym) {
+    				match = zE;
+    				if (ii != 0) System.out.println("Matched with " + ii);
+    				break;
+    			}
+    		}
+    		
+    		return match;
+    	}
+    	
     	public long updateHash(long inputHash, List<Edge> edges) {
     		long hash = inputHash;
     		for (Edge edge : edges) {
@@ -774,6 +852,17 @@ public class TipDots3v3 implements Player<DotsAndBoxes>{
     		
     		for (Edge edge : edges) {
     			newKey ^= zobrist[edge.getUID()];
+    		}
+    		
+    		return newKey;
+    	}
+    	
+    	public long getHash(List<Edge> edges, int sym) {
+    		
+    		long newKey = 0l;
+    		
+    		for (Edge edge : edges) {
+    			newKey ^= zobrist[edge.getUID(sym)];
     		}
     		
     		return newKey;
