@@ -1,10 +1,6 @@
 package strategybots.games.base;
 
-import java.util.Optional;
-import java.util.function.BiConsumer;
-
 import strategybots.games.base.State.*;
-import swagui.graphics.Colour;
 
 public abstract class Game<G extends Game<G>> {
     
@@ -29,20 +25,6 @@ public abstract class Game<G extends Game<G>> {
     public Board getBoard() { return board; }
     
     public boolean isRunning() { return running; }
-    
-    public void forEachSquare(BiConsumer<Integer, Integer> action) {
-        
-        for(int x = 0; x < getWidth(); x++) {
-            for(int y = 0; y < getHeight(); y++) {
-                action.accept(x, y);
-            }
-        }
-    }
-    
-    public boolean inBounds(int x, int y) {
-        
-        return x >= 0 && x < getWidth() && y >= 0 && y < getHeight();
-    }
     
     protected void setBoard(Board board) {
         this.board = board;
@@ -73,7 +55,7 @@ public abstract class Game<G extends Game<G>> {
     
     private void run() {
         
-        while(running) {
+        while(running && !state.isTerminal()) {
             
             int turn = state.getTurnNum();
             
@@ -90,11 +72,15 @@ public abstract class Game<G extends Game<G>> {
                     (newState.getTurnNum() == turn+1 &&
                         newState.getNumActions() == 0))) {
                 
-                System.out.println("hello");
                 state = newState;
                 board.setState(newState);
             }
         }
+        if(state.getWinner().isPresent()) {
+            System.out.println("Winner: " + state.getWinner().get()
+                    + ", P" + state.getWinner().get().getPlayerId());
+        }
+        running = false;
     }
     
     public static abstract class Player<G extends Game<G>> {
@@ -116,21 +102,17 @@ public abstract class Game<G extends Game<G>> {
     public static abstract class Controller
             <G extends Game<G>> extends Player<G> {
         
-        private Game<G> game;
-        private Piece<G> selected;
         private volatile Action<G> action;
         
         @Override
         protected void init(Game<G> game, int playerId) {
             
-            this.game = game;
-            
             game.getBoard().onClick((x, y) -> {
                 State<G> state = game.getState();
                 
-                if(state.getCurrentPlayerId() == playerId) {
-                    while(action != null) {}
-                    action = onClick(state, x, y, playerId);
+                if(state.getCurrentPlayerId() == playerId && game.running) {
+                    while(action != null && game.running) {}
+                    action = onClick(game, state, x, y, playerId);
                 }
             });
         }
@@ -140,30 +122,15 @@ public abstract class Game<G extends Game<G>> {
                 State<G> state, int playerId) {
             
             action = null;
-            while(action == null && game.isRunning()) {}
+            while(action == null && game.running) {}
             return game.isRunning() ? action : new None<>();
         }
         
         @Override
         protected void destroy(Game<G> game, int playerId) {}
         
-        protected abstract Action<G> onClick(State<G> state,
-                int x, int y, int playerId);
-        
-        protected void selectPiece(Piece<G> piece, Colour colour) {
-            unselectPiece();
-            selected = piece;
-            game.board.setColour(piece.getX(), piece.getY(), colour);
-        }
-        
-        protected void unselectPiece() {
-            selected = null;
-            game.board.resetColours();
-        }
-        
-        protected Optional<Piece<G>> getSelectedPiece() {
-            return Optional.ofNullable(selected);
-        }
+        protected abstract Action<G> onClick(Game<G> game,
+                State<G> state, int x, int y, int playerId);
         
         @Override
         public String toString() { return "Controller"; }

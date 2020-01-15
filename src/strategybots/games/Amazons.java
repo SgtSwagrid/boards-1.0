@@ -1,5 +1,7 @@
 package strategybots.games;
 
+import java.util.Optional;
+
 import strategybots.games.base.Board;
 import strategybots.games.base.Game;
 import strategybots.games.base.State;
@@ -10,20 +12,22 @@ import swagui.tiles.Tile;
 
 public final class Amazons extends Game<Amazons> {
     
+    private final int WIDTH = 10, HEIGHT = 10;
+    
     @SuppressWarnings("unchecked")
     public Amazons(Player<Amazons> player1, Player<Amazons> player2) {
         
-        setBoard(new Board(10, 10));
+        setBoard(new Board(WIDTH, HEIGHT));
         setPlayers(player1, player2);
-        setState(new MutableState<>(new AmazonsState(this))
+        setState(new MutableState<>(new AmazonsState(this), true)
             .placePiece(new Amazon(player1, 0, 3))
             .placePiece(new Amazon(player1, 3, 0))
-            .placePiece(new Amazon(player1, 6, 0))
-            .placePiece(new Amazon(player1, 9, 3))
-            .placePiece(new Amazon(player2, 0, 6))
-            .placePiece(new Amazon(player2, 3, 9))
-            .placePiece(new Amazon(player2, 6, 9))
-            .placePiece(new Amazon(player2, 9, 6))
+            .placePiece(new Amazon(player1, WIDTH-4, 0))
+            .placePiece(new Amazon(player1, WIDTH-1, 3))
+            .placePiece(new Amazon(player2, 0, HEIGHT-4))
+            .placePiece(new Amazon(player2, 3, HEIGHT-1))
+            .placePiece(new Amazon(player2, WIDTH-4, HEIGHT-1))
+            .placePiece(new Amazon(player2, WIDTH-1, HEIGHT-4))
             .getState());
         start();
     }
@@ -57,7 +61,36 @@ public final class Amazons extends Game<Amazons> {
         }
         
         @Override
-        protected boolean canEndTurn() {
+        public boolean isTerminal() {
+            return getWinner().isPresent();
+        }
+        
+        @Override
+        public Optional<Player<Amazons>> getWinner() {
+            
+            //For each of the current player's amazons.
+            for(Piece<Amazons> piece : getPieces(getCurrentPlayer())) {
+                if(!(piece instanceof Amazon)) continue;
+                
+                //Search for an adjacent free space.
+                for(int xx = -1; xx <= 1; xx++) {
+                    for(int yy = -1; yy <= 1; yy++) {
+                        int x = piece.getX()+xx, y = piece.getY()+yy;
+                        
+                        //The game isn't over if an amazon can be moved.
+                        if(getGame().getBoard().inBounds(x, y) &&
+                                !getPiece(x, y).isPresent()) {
+                            return Optional.empty();
+                        }
+                    }
+                }
+            }
+            //The opponent wins if the player can't move.
+            return Optional.of(getNextPlayer());
+        }
+        
+        @Override
+        public boolean canEndTurn() {
             return getNumActions() == 2;
         }
     }
@@ -115,32 +148,45 @@ public final class Amazons extends Game<Amazons> {
     }
     
     public static final class AmazonsController extends Controller<Amazons> {
+        
+        private static final Colour HIGHLIGHT = Colour.NAVAL;
+        
+        private Piece<Amazons> selected;
 
         @Override
-        protected Action<Amazons> onClick(State<Amazons> state,
-                int x, int y, int playerId) {
+        protected Action<Amazons> onClick(Game<Amazons> game,
+                State<Amazons> state, int x, int y, int playerId) {
             
             Piece<Amazons> piece = state.getPiece(x, y).orElse(null);
-            Piece<Amazons> selected = getSelectedPiece().orElse(null);
             
             if(state.getNumActions() == 0) {
                 
                 if(piece != null && piece instanceof Amazon &&
                         piece.getOwner() == this) {
                     
-                    selectPiece(piece, Colour.WHITE);
-                    return new None<>();
+                    selected = piece;
+                    game.getBoard().highlight(x, y, HIGHLIGHT);
                     
                 } else if(selected != null && piece == null) {
                     
-                    unselectPiece();
-                    return new Move<>(selected, x, y);
+                    Action<Amazons> action = new Move<>(selected, x, y);
+                    
+                    if(state.takeAction(action).isValid()) {
+                        game.getBoard().highlight(x, y, HIGHLIGHT);
+                        return new Move<>(selected, x, y);
+                    }
                 }
                 
             } else if(state.getNumActions() == 1) {
                 
-                return new Place<>(new Arrow(this, x, y))
-                    .andThen(new EndTurn<>());
+                Action<Amazons> action = new Place<>(new Arrow(this, x, y))
+                        .andThen(new EndTurn<>());
+                
+                if(state.takeAction(action).isValid()) {
+                    selected = null;
+                    game.getBoard().clearHighlights();
+                    return action;
+                }
             }
             return new None<>();
         }

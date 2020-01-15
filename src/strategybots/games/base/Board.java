@@ -23,9 +23,6 @@ import swagui.window.Window;
  */
 public class Board {
     
-    private static final Colour SPICED_BUTTERNUT = Colour.hex(0xFFDA79);
-    private static final Colour MANDARIN_SORBET = Colour.hex(0xFFB142);
-    
     /** Scene in which the board tiles are placed. */
     private Scene2D scene = new Scene2D();
     /** Input handler for the board. */
@@ -40,8 +37,8 @@ public class Board {
     private Frame[][] board;
     
     /** Function for determining board colours. */
-    private BiFunction<Integer, Integer, Colour> colours =
-        (x, y) -> (x+y)%2==0 ? SPICED_BUTTERNUT : MANDARIN_SORBET;
+    private BiFunction<Integer, Integer, Colour> background = (x, y) ->
+            (x+y)%2==0 ? Colour.SPICED_BUTTERNUT : Colour.MANDARIN_SORBET;
     
     /** Functions for determining row/column widths/heights. */
     private Function<Integer, Integer> cols = c -> 1, rows = r -> 1;
@@ -65,8 +62,9 @@ public class Board {
      * @param colours function for determining tile colours.
      * @return this board.
      */
-    public Board setColours(BiFunction<Integer, Integer, Colour> colours) {
-        this.colours = colours;
+    public Board setBackground(BiFunction<Integer, Integer, Colour> colours) {
+        this.background = colours;
+        clearHighlights();
         return this;
     }
     
@@ -118,7 +116,9 @@ public class Board {
      * @param colour of tile.
      * @return this board.
      */
-    public Board setColour(int x, int y, Colour colour) {
+    public Board highlight(int x, int y, Colour colour) {
+        
+        clearHighlights();
         board[x][y].setColour(colour);
         return this;
     }
@@ -128,11 +128,11 @@ public class Board {
      * Used to undo any calls to setColour().
      * @return this board.
      */
-    public Board resetColours() {
+    public Board clearHighlights() {
         
         for(int x = 0; x < width; x++) {
             for(int y = 0; y < height; y++) {
-                board[x][y].setColour(colours.apply(x, y));
+                board[x][y].setColour(background.apply(x, y));
             }
         }
         return this;
@@ -146,7 +146,7 @@ public class Board {
     public Board setState(State<?> state) {
         
         //For each grid square on the board.
-        state.getGame().forEachSquare((x, y) -> {
+        forEachSquare((x, y) -> {
             
             //Remove all previous pieces.
             board[x][y].clearChildren();
@@ -160,12 +160,31 @@ public class Board {
         return this;
     }
     
+    public void forEachSquare(BiConsumer<Integer, Integer> action) {
+        
+        for(int x = 0; x < getWidth(); x++) {
+            for(int y = 0; y < getHeight(); y++) {
+                action.accept(x, y);
+            }
+        }
+    }
+    
+    public boolean inBounds(int x, int y) {
+        
+        return x >= 0 && x < getWidth() && y >= 0 && y < getHeight();
+    }
+    
     /**
      * Show the board, blocking execution until exit.
      */
     public void show() {
         window.open();
     }
+    
+    /**
+     * @return the window in which the board is shown.
+     */
+    public Window getWindow() { return window; }
     
     /**
      * Initialize the board.
@@ -198,7 +217,7 @@ public class Board {
                         .forEach(c -> c.accept(x, y)))
                     .setFill(Fill.FILL_PARENT)
                     .setHWeight(cols.apply(x))
-                    .setColour(colours.apply(x, y));
+                    .setColour(background.apply(x, y));
                 
                 //Add grid square to board and row.
                 board[x][y] = square;

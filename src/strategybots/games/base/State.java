@@ -39,6 +39,7 @@ public abstract class State<G extends Game<G>>
     
     private Piece<G>[][] board;
     private Map<Player<G>, List<Piece<G>>> pieces = new HashMap<>();
+    private Map<Player<G>, Integer> scores = new HashMap<>();
     
     @SuppressWarnings("unchecked")
     public State(G game) {
@@ -47,6 +48,7 @@ public abstract class State<G extends Game<G>>
         board = new Piece[game.getWidth()][game.getHeight()];
         for(int i = 0; i < game.getNumPlayers(); i++) {
             pieces.put(game.getPlayer(i+1), new LinkedList<>());
+            scores.put(game.getPlayer(i+1), 0);
         }
         currentPlayer = game.getPlayer(1);
         turnStart = this;
@@ -54,12 +56,16 @@ public abstract class State<G extends Game<G>>
     }
     
     public Optional<Piece<G>> getPiece(int x, int y) {
-        return !game.inBounds(x, y) ? Optional.empty() :
+        return !game.getBoard().inBounds(x, y) ? Optional.empty() :
             Optional.ofNullable(board[x][y]);
     }
     
     public List<Piece<G>> getPieces(Player<G> owner) {
         return Collections.unmodifiableList(pieces.get(owner));
+    }
+    
+    public int getScore(Player<G> player) {
+        return scores.get(player);
     }
     
     public List<Action<G>> getActionsSince(State<G> state) {
@@ -99,6 +105,14 @@ public abstract class State<G extends Game<G>>
         return currentPlayer.getPlayerId();
     }
     
+    public Player<G> getNextPlayer() {
+        return game.getPlayer(getNextPlayerId());
+    }
+    
+    public int getNextPlayerId() {
+        return currentPlayer.getPlayerId()%game.getNumPlayers() + 1;
+    }
+    
     public State<G> takeAction(Action<G> action) {
         
         if(action instanceof None) {
@@ -110,7 +124,7 @@ public abstract class State<G extends Game<G>>
             
         } else {
             
-            MutableState<G> newState = new MutableState<>(this);
+            MutableState<G> newState = new MutableState<>(this, false);
             newState.getState().previousState = this;
             newState.getState().latestAction = action;
             
@@ -120,7 +134,11 @@ public abstract class State<G extends Game<G>>
         }
     }
     
-    protected abstract boolean canEndTurn();
+    public abstract boolean isTerminal();
+    
+    public abstract Optional<Player<G>> getWinner();
+    
+    public abstract boolean canEndTurn();
     
     @Override
     @SuppressWarnings("unchecked")
@@ -132,13 +150,17 @@ public abstract class State<G extends Game<G>>
             
             //Copy the board.
             Piece<G>[][] board = new Piece[game.getWidth()][game.getHeight()];
-            game.forEachSquare((x, y) -> board[x][y] = state.board[x][y]);
+            game.getBoard().forEachSquare((x, y) ->
+                board[x][y] = state.board[x][y]);
             state.board = board;
             
             //Copy the pieces.
             state.pieces = state.pieces.entrySet().stream()
                 .collect(Collectors.toMap(Entry::getKey,
                     p -> new LinkedList<>(p.getValue())));
+            
+            //Copy the scores.
+            state.scores = new HashMap<>(state.scores);
             
             return state;
             
@@ -153,9 +175,15 @@ public abstract class State<G extends Game<G>>
         private State<G> state;
         public State<G> getState() { return state; }
         
-        public MutableState(State<G> state) {
+        public MutableState(State<G> state, boolean initial) {
+            
             this.state = state.clone();
-            this.state.valid = false;
+            this.state.valid = initial;
+            
+            if(initial) {
+                this.state.previousState = null;
+                this.state.latestAction = null;
+            }
         }
         
         public MutableState<G> endTurn() {
@@ -197,9 +225,15 @@ public abstract class State<G extends Game<G>>
             return this;
         }
         
-        public MutableState<G> setPlayer(int playerId) {
+        public MutableState<G> setPlayer(Player<G> player) {
             
-            state.currentPlayer = state.game.getPlayer(playerId);
+            state.currentPlayer = player;
+            return this;
+        }
+        
+        public MutableState<G> setScore(Player<G> player, int score) {
+            
+            state.scores.put(player,  score);
             return this;
         }
     }
@@ -333,7 +367,7 @@ public abstract class State<G extends Game<G>>
         
         @Override
         protected boolean validate(State<G> state) {
-            return state.game.inBounds(piece.getX(), piece.getY())
+            return state.game.getBoard().inBounds(piece.getX(), piece.getY())
                 && (piece.owner == state.currentPlayer || piece.owner == null)
                 && piece.validatePlace(state);
         }
@@ -384,8 +418,9 @@ public abstract class State<G extends Game<G>>
         
         @Override
         protected boolean validate(State<G> state) {
-            return state.game.inBounds(xTo, yTo)
+            return state.game.getBoard().inBounds(xTo, yTo)
                 && (piece.owner == state.currentPlayer || piece.owner == null)
+                && !(piece.x == xTo && piece.y == yTo)
                 && piece.validateMove(state, xTo, yTo);
         }
     }
