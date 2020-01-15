@@ -45,7 +45,8 @@ public abstract class State<G extends Game<G>>
     public State(G game) {
         
         this.game = game;
-        board = new Piece[game.getWidth()][game.getHeight()];
+        board = new Piece[game.getBoard().getWidth()]
+                [game.getBoard().getHeight()];
         for(int i = 0; i < game.getNumPlayers(); i++) {
             pieces.put(game.getPlayer(i+1), new LinkedList<>());
             scores.put(game.getPlayer(i+1), 0);
@@ -149,7 +150,8 @@ public abstract class State<G extends Game<G>>
             State<G> state = (State<G>) super.clone();
             
             //Copy the board.
-            Piece<G>[][] board = new Piece[game.getWidth()][game.getHeight()];
+            Piece<G>[][] board = new Piece[game.getBoard().getWidth()]
+                    [game.getBoard().getHeight()];
             game.getBoard().forEachSquare((x, y) ->
                 board[x][y] = state.board[x][y]);
             state.board = board;

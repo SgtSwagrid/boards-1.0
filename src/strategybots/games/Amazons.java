@@ -12,24 +12,24 @@ import swagui.tiles.Tile;
 
 public final class Amazons extends Game<Amazons> {
     
-    private final int WIDTH = 10, HEIGHT = 10;
+    private static final int WIDTH = 10, HEIGHT = 10;
     
     @SuppressWarnings("unchecked")
     public Amazons(Player<Amazons> player1, Player<Amazons> player2) {
         
-        setBoard(new Board(WIDTH, HEIGHT));
-        setPlayers(player1, player2);
-        setState(new MutableState<>(new AmazonsState(this), true)
-            .placePiece(new Amazon(player1, 0, 3))
-            .placePiece(new Amazon(player1, 3, 0))
-            .placePiece(new Amazon(player1, WIDTH-4, 0))
-            .placePiece(new Amazon(player1, WIDTH-1, 3))
-            .placePiece(new Amazon(player2, 0, HEIGHT-4))
-            .placePiece(new Amazon(player2, 3, HEIGHT-1))
-            .placePiece(new Amazon(player2, WIDTH-4, HEIGHT-1))
-            .placePiece(new Amazon(player2, WIDTH-1, HEIGHT-4))
-            .getState());
-        start();
+        start(
+            new Board(WIDTH, HEIGHT),
+            new MutableState<>(new AmazonsState(this), true)
+                .placePiece(new Amazon(player1, 0, 3))
+                .placePiece(new Amazon(player1, 3, 0))
+                .placePiece(new Amazon(player1, WIDTH-4, 0))
+                .placePiece(new Amazon(player1, WIDTH-1, 3))
+                .placePiece(new Amazon(player2, 0, HEIGHT-4))
+                .placePiece(new Amazon(player2, 3, HEIGHT-1))
+                .placePiece(new Amazon(player2, WIDTH-4, HEIGHT-1))
+                .placePiece(new Amazon(player2, WIDTH-1, HEIGHT-4))
+                .getState(),
+            player1, player2);
     }
     
     private static boolean isQueensMove(State<Amazons> state,
