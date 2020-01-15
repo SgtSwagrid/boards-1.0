@@ -1,6 +1,7 @@
 package strategybots;
 
 import strategybots.bots.SwagMNK;
+import strategybots.bots.TipDots3v3;
 import strategybots.bots.TipMCTS;
 import strategybots.bots.legacy.SwagC4;
 import strategybots.games.Amazons;
@@ -36,7 +37,7 @@ public class Launch {
     private static final int REVERSI = 9;
     private static final int TICTACTOE = 10;
     
-    private static final int GAME = TICTACTOE;
+    private static final int GAME = DOTSANDBOXES;
     
     public static void main(String[] args) {
         
@@ -48,7 +49,7 @@ public class Launch {
             case CHOMP: new Chomp(new ChompController(), new ChompController()); break;
             case CLOBBER: new Clobber(new ClobberController(), new ClobberController()); break;
             case CONNECTFOUR: new ConnectFour(new SwagC4(2000), new TipMCTS(2000)); break;
-            case DOTSANDBOXES: new DotsAndBoxes(5, 5, new DotsController(), new DotsController()); break;
+            case DOTSANDBOXES: new DotsAndBoxes(5, 5, new DotsController(), new TipDots3v3()); break;
             case PENTAGO: new Pentago(new PentagoController(), new PentagoController()); break;
             case REVERSI: new Reversi(new ReversiController(), new ReversiController()); break;
             case TICTACTOE: new TicTacToe(new TicTacToeController(), new SwagMNK(2000)); break;
