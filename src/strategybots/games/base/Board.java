@@ -43,7 +43,7 @@ public class Board {
     private BiFunction<Integer, Integer, Colour> colours =
         (x, y) -> (x+y)%2==0 ? SPICED_BUTTERNUT : MANDARIN_SORBET;
     
-    /** Functions for determining row/column widths. */
+    /** Functions for determining row/column widths/heights. */
     private Function<Integer, Integer> cols = c -> 1, rows = r -> 1;
     
     /** Callback functions for when the board is left-clicked. */
@@ -57,6 +57,7 @@ public class Board {
     public Board(int width, int height) {
         this.width = width;
         this.height = height;
+        init();
     }
     
     /**
@@ -111,9 +112,65 @@ public class Board {
     public int getHeight() { return height; }
     
     /**
+     * Set the colour of a particular board tile.
+     * @param x coordinate of tile.
+     * @param y coordinate of tile.
+     * @param colour of tile.
+     * @return this board.
+     */
+    public Board setColour(int x, int y, Colour colour) {
+        board[x][y].setColour(colour);
+        return this;
+    }
+    
+    /**
+     * Reset the background tile colours of the board.
+     * Used to undo any calls to setColour().
+     * @return this board.
+     */
+    public Board resetColours() {
+        
+        for(int x = 0; x < width; x++) {
+            for(int y = 0; y < height; y++) {
+                board[x][y].setColour(colours.apply(x, y));
+            }
+        }
+        return this;
+    }
+    
+    /**
+     * Display a game state on the board.
+     * @param state to show.
+     * @return this board.
+     */
+    public Board setState(State<?> state) {
+        
+        //For each grid square on the board.
+        state.getGame().forEachSquare((x, y) -> {
+            
+            //Remove all previous pieces.
+            board[x][y].clearChildren();
+            
+            //If there is a new piece here, add it to the square.
+            if(state.getPiece(x, y).isPresent()) {
+                board[x][y].addTile(state.getPiece(x, y).get().getTile());
+            }
+        });
+        scene.update();
+        return this;
+    }
+    
+    /**
      * Show the board, blocking execution until exit.
      */
     public void show() {
+        window.open();
+    }
+    
+    /**
+     * Initialize the board.
+     */
+    private void init() {
         
         board = new Frame[width][height];
         
@@ -150,27 +207,6 @@ public class Board {
             grid.addTile(row, 0);
         });
         scene.getBackground().addTile(grid);
-        window.open();
-    }
-    
-    /**
-     * Display a game state on the board.
-     * @param state to show.
-     * @return this board.
-     */
-    public Board setState(State<?> state) {
-        
-        //For each grid square on the board.
-        state.forEachSquare((x, y) -> {
-            
-            //Remove all previous pieces.
-            board[x][y].clearChildren();
-            
-            //If there is a new piece here, add it to the square.
-            if(state.getPiece(x, y).isPresent()) {
-                board[x][y].addTile(state.getPiece(x, y).get().getTile());
-            }
-        });
-        return this;
+        scene.update();
     }
 }

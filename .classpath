@@ -3,5 +3,5 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="lib/SwagUI v1.1d.jar"/>
-	<classpathentry kind="output" path="bin1"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

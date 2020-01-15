@@ -1,22 +1,8 @@
-# Eclipse directories
+# Class Files
 /bin/
-/.classpath/
-/.project/
-/.settings/
-
-# Compiled class file
 *.class
 
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# Package Files
 *.war
 *.nar
 *.ear
@@ -24,6 +10,14 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Log Files
+*.log
+
+# VM Crash Logs
 hs_err_pid*
-/bin1/
+
+# BlueJ Files
+*.ctxt
+
+# J2ME Files
+.mtj.tmp/

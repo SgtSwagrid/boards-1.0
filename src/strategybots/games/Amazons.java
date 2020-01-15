@@ -1,30 +1,34 @@
 package strategybots.games;
 
-import java.util.List;
-
-import strategybots.games.Amazons.AmazonsState.MoveAmazon;
 import strategybots.games.base.Board;
 import strategybots.games.base.Game;
 import strategybots.games.base.State;
-import strategybots.games.base.State.Action;
-import strategybots.games.base.State.Piece;
+import strategybots.games.base.State.*;
 import swagui.graphics.Colour;
 import swagui.graphics.Texture;
 import swagui.tiles.Tile;
 
 public final class Amazons extends Game<Amazons> {
     
-    @SafeVarargs
-    public Amazons(Player<Amazons>... players) {
-        this(10, 10, players);
+    @SuppressWarnings("unchecked")
+    public Amazons(Player<Amazons> player1, Player<Amazons> player2) {
+        
+        setBoard(new Board(10, 10));
+        setPlayers(player1, player2);
+        setState(new MutableState<>(new AmazonsState(this))
+            .placePiece(new Amazon(player1, 0, 3))
+            .placePiece(new Amazon(player1, 3, 0))
+            .placePiece(new Amazon(player1, 6, 0))
+            .placePiece(new Amazon(player1, 9, 3))
+            .placePiece(new Amazon(player2, 0, 6))
+            .placePiece(new Amazon(player2, 3, 9))
+            .placePiece(new Amazon(player2, 6, 9))
+            .placePiece(new Amazon(player2, 9, 6))
+            .getState());
+        start();
     }
     
-    @SafeVarargs
-    public Amazons(int width, int height, Player<Amazons>... players) {
-        super(new AmazonsState(), players, new Board(width, height));
-    }
-    
-    private static boolean validateQueensMove(State<Amazons> state,
+    private static boolean isQueensMove(State<Amazons> state,
             int xFrom, int yFrom, int xTo, int yTo) {
         
         //Ensure arrow is shot in a straight line.
@@ -48,82 +52,13 @@ public final class Amazons extends Game<Amazons> {
 
         private static final long serialVersionUID = 3249133840361374590L;
         
-        @Override
-        public boolean validateAction(Action<Amazons> action) {
-            // TODO Auto-generated method stub
-            return false;
-        }
-
-        @Override
-        public List<Action<Amazons>> getActions() {
-            // TODO Auto-generated method stub
-            return null;
+        public AmazonsState(Amazons game) {
+            super(game);
         }
         
         @Override
-        protected void endTurn() { super.endTurn(); }
-        
-        public static final class MoveAmazon extends Move<Amazons> {
-            
-            private static final long serialVersionUID = 5008360178081158142L;
-            
-            public MoveAmazon(State<Amazons> state,
-                    int xFrom, int yFrom, int xTo, int yTo) {
-                super(state, xFrom, yFrom, xTo, yTo);
-            }
-            
-            public MoveAmazon(State<Amazons> state,
-                    Piece<Amazons> piece, int xTo, int yTo) {
-                super(piece, xTo, yTo);
-            }
-
-            @Override
-            protected boolean validate(State<Amazons> state) {
-                return state.getNumActions() == 1
-                        && super.validate(state);
-            }
-        }
-        
-        public static final class ShootArrow extends Place<Amazons> {
-            
-            private static final long serialVersionUID = -935579828716369553L;
-            
-            public ShootArrow(State<Amazons> state, int x, int y) {
-                //super(state, new Arrow(state.getCurrentPlayer(), x, y));
-            }
-
-            @Override
-            protected boolean validate(State<Amazons> state) {
-                return state.getLatestAction() instanceof MoveAmazon
-                        && super.validate(state);
-            }
-
-            @Override
-            protected void apply(State<Amazons> state) {
-                super.apply(state);
-                endTurn(state);
-            }
-        }
-    }
-    
-    public static final class AmazonsController extends Controller<Amazons> {
-
-        @Override
-        protected void init() {
-            // TODO Auto-generated method stub
-            
-        }
-
-        @Override
-        protected void destroy() {
-            // TODO Auto-generated method stub
-            
-        }
-
-        @Override
-        protected void onClick(State<Amazons> state, int x, int y) {
-            // TODO Auto-generated method stub
-            
+        protected boolean canEndTurn() {
+            return getNumActions() == 2;
         }
     }
     
@@ -142,15 +77,13 @@ public final class Amazons extends Game<Amazons> {
         }
 
         @Override
-        public boolean validatePlace(State<Amazons> state, int x, int y) {
-            return false;
-        }
-
-        @Override
-        public boolean validateMove(State<Amazons> state, int x, int y) {
+        public boolean validateMove(State<Amazons> state, int xTo, int yTo) {
             
-            return validateQueensMove(state, getX(), getY(), x, y) &&
-                state.getNumActions() == 0;
+            //Ensure amazon is moved before shooting an arrow.
+            if(state.getNumActions() != 0) return false;
+            
+            //Ensure movement is queen's move.
+            return isQueensMove(state, getX(), getY(), xTo, yTo);
         }
     }
     
@@ -169,14 +102,47 @@ public final class Amazons extends Game<Amazons> {
         }
 
         @Override
-        public boolean validatePlace(State<Amazons> state, int x, int y) {
-            MoveAmazon move = (MoveAmazon)state.getLatestAction();
-            return validateQueensMove(state, move.getXTo(), move.getYTo(), x, y);
+        public boolean validatePlace(State<Amazons> state) {
+            
+            //Ensure arrow is shot after moving an amazon.
+            if(state.getNumActions() != 1) return false;
+            
+            //Ensure arrow trajectory is queen's move.
+            Move<Amazons> move = (Move<Amazons>) state.getLatestAction();
+            int xFrom = move.getXTo(), yFrom = move.getYTo();
+            return isQueensMove(state,  xFrom, yFrom, getX(), getY());
         }
-        
+    }
+    
+    public static final class AmazonsController extends Controller<Amazons> {
+
         @Override
-        public boolean validateMove(State<Amazons> state, int x, int y) {
-            return false;
+        protected Action<Amazons> onClick(State<Amazons> state,
+                int x, int y, int playerId) {
+            
+            Piece<Amazons> piece = state.getPiece(x, y).orElse(null);
+            Piece<Amazons> selected = getSelectedPiece().orElse(null);
+            
+            if(state.getNumActions() == 0) {
+                
+                if(piece != null && piece instanceof Amazon &&
+                        piece.getOwner() == this) {
+                    
+                    selectPiece(piece, Colour.WHITE);
+                    return new None<>();
+                    
+                } else if(selected != null && piece == null) {
+                    
+                    unselectPiece();
+                    return new Move<>(selected, x, y);
+                }
+                
+            } else if(state.getNumActions() == 1) {
+                
+                return new Place<>(new Arrow(this, x, y))
+                    .andThen(new EndTurn<>());
+            }
+            return new None<>();
         }
     }
 }
