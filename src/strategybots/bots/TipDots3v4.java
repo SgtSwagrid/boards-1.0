@@ -35,7 +35,7 @@ public class TipDots3v4 implements Player<DotsAndBoxes>{
 	Zobrist zobrist;
 	
 	public TipDots3v4() {
-		System.out.println("Tip's Dots and Boxes Bot 3 v3 Loaded");
+		System.out.println("Tip's Dots and Boxes Bot 3 v4 Loaded");
 	}
 	
 	public TipDots3v4(long millis) {
@@ -485,7 +485,7 @@ public class TipDots3v4 implements Player<DotsAndBoxes>{
     private void printStats(int score, int playerId, List<Edge> ee, int depth, long start) {
         
         System.out.println("=======================");
-        System.out.println("Tiptaco's Dots Bot 3 v3 Statistics:");
+        System.out.println("Tiptaco's Dots Bot 3 v4 Statistics:");
         System.out.println("Player:      " + playerId + " ("+(playerId==1?"Blue":"Red")+")");
         System.out.println("Turn:        " + turn++);
         System.out.println("Expectation: " + score);
@@ -522,7 +522,7 @@ public class TipDots3v4 implements Player<DotsAndBoxes>{
 	}; 
 	
 	@Override
-	public String getName() { return "TipTacos's Dots and Boxes 3 v3 Bot"; }
+	public String getName() { return "TipTacos's Dots and Boxes 3 v4 Bot"; }
     
     class Board {
     	List<Edge> edges;
@@ -817,7 +817,7 @@ public class TipDots3v4 implements Player<DotsAndBoxes>{
     	public ZobristEntry get(List<Edge> edges) {
     		ZobristEntry match = null;
     		
-    		for (int ii = 0 ; ii < 1 ; ii++) {
+    		for (int ii = 0 ; ii < 4 ; ii++) {
     			long hashSym = getHash(edges, ii);
     			ZobristEntry zE = get(hashSym);
     			if (zE != null && zE.getKey() == hashSym) {
