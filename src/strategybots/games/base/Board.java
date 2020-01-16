@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import swagui.graphics.Colour;
+import swagui.graphics.Gradient;
 import swagui.input.Button;
 import swagui.input.InputHandler;
 import swagui.layouts.Frame;
@@ -37,7 +38,7 @@ public class Board {
     private Frame[][] board;
     
     /** Function for determining board colours. */
-    private BiFunction<Integer, Integer, Colour> background = (x, y) ->
+    private BiFunction<Integer, Integer, Gradient> background = (x, y) ->
             (x+y)%2==0 ? Colour.SPICED_BUTTERNUT : Colour.MANDARIN_SORBET;
     
     /** Functions for determining row/column widths/heights. */
@@ -62,7 +63,7 @@ public class Board {
      * @param colours function for determining tile colours.
      * @return this board.
      */
-    public Board setBackground(BiFunction<Integer, Integer, Colour> colours) {
+    public Board setBackground(BiFunction<Integer, Integer, Gradient> colours) {
         this.background = colours;
         clearHighlights();
         return this;
@@ -116,7 +117,7 @@ public class Board {
      * @param colour of tile.
      * @return this board.
      */
-    public Board highlight(int x, int y, Colour colour) {
+    public Board highlight(int x, int y, Gradient colour) {
         
         clearHighlights();
         board[x][y].setColour(colour);
@@ -125,7 +126,7 @@ public class Board {
     
     /**
      * Reset the background tile colours of the board.
-     * Used to undo any calls to setColour().
+     * Used to undo any calls to setGradient().
      * @return this board.
      */
     public Board clearHighlights() {
@@ -160,13 +161,24 @@ public class Board {
         return this;
     }
     
-    public void forEachSquare(BiConsumer<Integer, Integer> action) {
+    /**
+     * Set the title of the window in which the board is shown.
+     * @param title of the window for the board.
+     * @return this board.
+     */
+    public Board setTitle(String title) {
+        window.setTitle(title);
+        return this;
+    }
+    
+    public Board forEachSquare(BiConsumer<Integer, Integer> action) {
         
         for(int x = 0; x < getWidth(); x++) {
             for(int y = 0; y < getHeight(); y++) {
                 action.accept(x, y);
             }
         }
+        return this;
     }
     
     public boolean inBounds(int x, int y) {

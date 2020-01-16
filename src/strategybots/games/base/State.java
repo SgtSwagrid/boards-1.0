@@ -47,13 +47,14 @@ public abstract class State<G extends Game<G>>
         this.game = game;
         board = new Piece[game.getBoard().getWidth()]
                 [game.getBoard().getHeight()];
+        currentPlayer = game.getPlayer(1);
+        latestAction = new None<>();
+        turnStart = this;
+        
         for(int i = 0; i < game.getNumPlayers(); i++) {
             pieces.put(game.getPlayer(i+1), new LinkedList<>());
             scores.put(game.getPlayer(i+1), 0);
         }
-        currentPlayer = game.getPlayer(1);
-        turnStart = this;
-        latestAction = new None<>();
     }
     
     public Optional<Piece<G>> getPiece(int x, int y) {
@@ -125,13 +126,13 @@ public abstract class State<G extends Game<G>>
             
         } else {
             
-            MutableState<G> newState = new MutableState<>(this, false);
-            newState.getState().previousState = this;
-            newState.getState().latestAction = action;
+            State<G> newState = clone();
+            newState.previousState = this;
+            newState.latestAction = action;
             
             action.apply(newState);
-            newState.getState().valid = valid && action.validate(this);
-            return newState.getState();
+            newState.valid = valid && action.validate(this);
+            return newState;
         }
     }
     
@@ -140,6 +141,42 @@ public abstract class State<G extends Game<G>>
     public abstract Optional<Player<G>> getWinner();
     
     public abstract boolean canEndTurn();
+    
+    protected void endTurn() {
+        
+        int numPlayers = game.getNumPlayers();
+        int playerId = getCurrentPlayerId() % numPlayers + 1;
+        
+        currentPlayer = game.getPlayer(playerId);
+        
+        turnStart = this;
+    }
+    
+    protected void placePiece(Piece<G> piece) {
+        
+        //Remove piece originally in this position if present.
+        Piece<G> oldPiece = board[piece.x][piece.y];
+        if(oldPiece != null) {
+            pieces.get(oldPiece.owner).remove(oldPiece);
+        }
+        //Add new piece to board.
+        board[piece.x][piece.y] = piece;
+        pieces.get(piece.owner).add(piece);
+    }
+    
+    protected void removePiece(Piece<G> piece) {
+        board[piece.x][piece.y] = null;
+        pieces.get(piece.owner).remove(piece);
+    }
+    
+    protected void movePiece(Piece<G> piece, int xTo, int yTo) {
+        removePiece(piece);
+        placePiece(piece.atPosition(xTo, yTo));
+    }
+    
+    protected void setScore(Player<G> player, int score) {
+        scores.put(player,  score);
+    }
     
     @Override
     @SuppressWarnings("unchecked")
@@ -170,74 +207,6 @@ public abstract class State<G extends Game<G>>
             e.printStackTrace();
         }
         return null;
-    }
-    
-    public static class MutableState<G extends Game<G>> {
-        
-        private State<G> state;
-        public State<G> getState() { return state; }
-        
-        public MutableState(State<G> state, boolean initial) {
-            
-            this.state = state.clone();
-            this.state.valid = initial;
-            
-            if(initial) {
-                this.state.previousState = null;
-                this.state.latestAction = null;
-            }
-        }
-        
-        public MutableState<G> endTurn() {
-            
-            int numPlayers = state.game.getNumPlayers();
-            int playerId = state.getCurrentPlayerId() % numPlayers + 1;
-            
-            state.currentPlayer = state.game.getPlayer(playerId);
-            
-            state.turnStart = state;
-            return this;
-        }
-        
-        public MutableState<G> placePiece(Piece<G> piece) {
-            
-            //Remove piece originally in this position if present.
-            Piece<G> oldPiece = state.board[piece.x][piece.y];
-            if(oldPiece != null) {
-                state.pieces.get(oldPiece.owner).remove(oldPiece);
-            }
-            //Add new piece to board.
-            state.board[piece.x][piece.y] = piece;
-            state.pieces.get(piece.owner).add(piece);
-            
-            return this;
-        }
-        
-        public MutableState<G> removePiece(Piece<G> piece) {
-            
-            state.board[piece.x][piece.y] = null;
-            state.pieces.get(piece.owner).remove(piece);
-            return this;
-        }
-        
-        public MutableState<G> movePiece(Piece<G> piece, int xTo, int yTo) {
-            
-            removePiece(piece);
-            placePiece(piece.atPosition(xTo, yTo));
-            return this;
-        }
-        
-        public MutableState<G> setPlayer(Player<G> player) {
-            
-            state.currentPlayer = player;
-            return this;
-        }
-        
-        public MutableState<G> setScore(Player<G> player, int score) {
-            
-            state.scores.put(player,  score);
-            return this;
-        }
     }
     
     public static abstract class Piece<G extends Game<G>>
@@ -299,7 +268,7 @@ public abstract class State<G extends Game<G>>
         
         private static final long serialVersionUID = -4793558180828857910L;
         
-        protected abstract void apply(MutableState<G> state);
+        protected abstract void apply(State<G> state);
         
         protected abstract boolean validate(State<G> state);
         
@@ -313,7 +282,7 @@ public abstract class State<G extends Game<G>>
         private static final long serialVersionUID = -2429198943864560223L;
 
         @Override
-        protected void apply(MutableState<G> state) {}
+        protected void apply(State<G> state) {}
 
         @Override
         protected boolean validate(State<G> state) { return false; }
@@ -330,7 +299,7 @@ public abstract class State<G extends Game<G>>
         }
 
         @Override
-        protected void apply(MutableState<G> state) {}
+        protected void apply(State<G> state) {}
 
         @Override
         protected boolean validate(State<G> state) { return false; }
@@ -341,7 +310,7 @@ public abstract class State<G extends Game<G>>
         private static final long serialVersionUID = 2363771191741897828L;
 
         @Override
-        protected void apply(MutableState<G> state) {
+        protected void apply(State<G> state) {
             state.endTurn();
         }
 
@@ -363,7 +332,7 @@ public abstract class State<G extends Game<G>>
         }
         
         @Override
-        protected void apply(MutableState<G> state) {
+        protected void apply(State<G> state) {
             state.placePiece(piece);
         }
         
@@ -387,7 +356,7 @@ public abstract class State<G extends Game<G>>
         }
         
         @Override
-        protected void apply(MutableState<G> state) {
+        protected void apply(State<G> state) {
             state.removePiece(piece);
         }
         
@@ -414,7 +383,7 @@ public abstract class State<G extends Game<G>>
         }
         
         @Override
-        protected void apply(MutableState<G> state) {
+        protected void apply(State<G> state) {
             state.movePiece(piece, xTo, yTo);
         }
         

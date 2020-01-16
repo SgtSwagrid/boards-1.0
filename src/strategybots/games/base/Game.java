@@ -12,6 +12,10 @@ import strategybots.games.base.State.*;
  */
 public abstract class Game<G extends Game<G>> {
     
+    private final Board board;
+    /** @return The board on which the game is played. */
+    public Board getBoard() { return board; }
+    
     private volatile State<G> state;
     /** @return The current state of the game. */
     public State<G> getState() { return state; }
@@ -22,32 +26,33 @@ public abstract class Game<G extends Game<G>> {
     /** @return the number of players participating in the game. */
     public int getNumPlayers() { return players.length; }
     
-    private Board board;
-    /** @return The board on which the game is played. */
-    public Board getBoard() { return board; }
-    
     private volatile boolean running = false;
     /** @return Whether the game is currently in progress. */
     public boolean isRunning() { return running; }
     
     /**
-     * Start the game.
-     * @param board the board on which the game is played.
-     * @param state the initial state of the game.
-     * @param players the players participating in the game.
+     * Initialize the game with the given board and players.
+     * @param board on which the game is played.
+     * @param players participating in the game.
      */
-    @SuppressWarnings("unchecked")
-    protected void start(Board board, State<G> state, Player<G>... players) {
+    @SafeVarargs
+    protected Game(Board board, Player<G>... players) {
         
-        //Set the board.
         this.board = board;
-        
-        //Set and initialize the players.
         this.players = players;
+        
+        //Initialize the players.
         for(int i = 0; i < players.length; i++) {
             players[i].playerId = i+1;
             players[i].init(this, i+1);
         }
+    }
+    
+    /**
+     * Start the game.
+     * @param state the initial state of the game.
+     */
+    protected void start(State<G> state) {
         
         //Set the state.
         this.state = state;
@@ -59,7 +64,7 @@ public abstract class Game<G extends Game<G>> {
         board.show();
         running = false;
         
-        //Finalize players.
+        //Finalize the players.
         for(int i = 0; i < players.length; i++) {
             players[i].destroy(this, i+1);
         }
